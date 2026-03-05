@@ -164,6 +164,23 @@ export const setPasswordSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+export const adminUpdateEventSchema = z.object({
+  title: z.string().min(1).optional(),
+  type: z.enum(["training", "match", "tournament", "touch_rugby", "social"]).optional(),
+  date: z.string().optional(),
+  time: z.string().optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  clubId: z.number().optional(),
+});
+
+export const adminUpdateClubSchema = z.object({
+  name: z.string().min(1).optional(),
+  location: z.string().optional(),
+  description: z.string().optional(),
+  trainingSchedule: z.string().optional(),
+});
+
 export type Federation = typeof federations.$inferSelect;
 export type InsertFederation = z.infer<typeof insertFederationSchema>;
 export type Club = typeof clubs.$inferSelect;

@@ -15,6 +15,7 @@ import ProfilePage from "@/pages/profile";
 import CompleteProfilePage from "@/pages/complete-profile";
 import ClubDetailPage from "@/pages/club-detail";
 import EventDetailPage from "@/pages/event-detail";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
@@ -102,6 +103,7 @@ function AppContent() {
           <Route path="/train" component={TrainPage} />
           <Route path="/profile" component={ProfilePage} />
           <Route path="/complete-profile" component={CompleteProfilePage} />
+          <Route path="/admin" component={AdminPage} />
           <Route path="/clubs/:id" component={ClubDetailPage} />
           <Route path="/events/:id" component={EventDetailPage} />
           <Route component={NotFound} />

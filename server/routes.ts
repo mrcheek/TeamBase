@@ -6,7 +6,7 @@ import { pool } from "./db";
 import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema } from "@shared/schema";
+import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema } from "@shared/schema";
 import { seedDatabase } from "./seed";
 
 const scryptAsync = promisify(scrypt);
@@ -51,6 +51,17 @@ export async function registerRoutes(
   function requireAuth(req: Request, res: Response, next: Function) {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
+    }
+    next();
+  }
+
+  async function requireAdmin(req: Request, res: Response, next: Function) {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
     }
     next();
   }
@@ -211,7 +222,7 @@ export async function registerRoutes(
     res.json(safeAtt);
   });
 
-  app.post("/api/events", requireAuth, async (req: Request, res: Response) => {
+  app.post("/api/events", requireAdmin, async (req: Request, res: Response) => {
     try {
       const data = insertEventSchema.parse(req.body);
       const event = await storage.createEvent(data);
@@ -321,6 +332,83 @@ export async function registerRoutes(
   app.get("/api/user/attendance", requireAuth, async (req: Request, res: Response) => {
     const att = await storage.getUserAttendance(req.session.userId!);
     res.json(att);
+  });
+
+  app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
+    const stats = await storage.getAdminStats(1);
+    res.json(stats);
+  });
+
+  app.get("/api/admin/users", requireAdmin, async (_req: Request, res: Response) => {
+    const allUsers = await storage.getAllUsers(1);
+    const safeUsers = allUsers.map(({ password: _, ...u }) => u);
+    res.json(safeUsers);
+  });
+
+  app.patch("/api/admin/users/:id/role", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { role } = req.body;
+      if (!role || !["player", "coach", "personnel", "admin"].includes(role)) {
+        return res.status(400).json({ message: "Invalid role" });
+      }
+      const updated = await storage.updateUserRole(parseInt(req.params.id), role);
+      if (!updated) return res.status(404).json({ message: "User not found" });
+      const { password: _, ...safeUser } = updated;
+      res.json(safeUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/admin/memberships", requireAdmin, async (req: Request, res: Response) => {
+    const status = req.query.status as string | undefined;
+    const all = await storage.getAllMemberships(status);
+    const safe = all.map(({ user: { password: _, ...u }, ...rest }) => ({ ...rest, user: u }));
+    res.json(safe);
+  });
+
+  app.patch("/api/admin/memberships/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const { status } = req.body;
+      if (!status || !["active", "pending", "rejected", "inactive"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      await storage.updateMembershipStatus(parseInt(req.params.id), status);
+      res.json({ message: "Membership updated" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/admin/events/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const data = adminUpdateEventSchema.parse(req.body);
+      const updated = await storage.updateEvent(parseInt(req.params.id), data as any);
+      if (!updated) return res.status(404).json({ message: "Event not found" });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/admin/events/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      await storage.deleteEvent(parseInt(req.params.id));
+      res.json({ message: "Event deleted" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/admin/clubs/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const data = adminUpdateClubSchema.parse(req.body);
+      const updated = await storage.updateClub(parseInt(req.params.id), data as any);
+      if (!updated) return res.status(404).json({ message: "Club not found" });
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   });
 
   return httpServer;

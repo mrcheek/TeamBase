@@ -1,5 +1,6 @@
 import { useLocation, Link } from "wouter";
-import { Home, Trophy, Dumbbell, User, Circle } from "lucide-react";
+import { Home, Trophy, Dumbbell, User, Circle, Shield } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -11,6 +12,17 @@ const navItems = [
 
 export function BottomNav() {
   const [location] = useLocation();
+  const { user } = useAuth();
+
+  const items = user?.role === "admin"
+    ? [
+        navItems[0],
+        navItems[1],
+        navItems[2],
+        { path: "/admin", label: "Admin", icon: Shield },
+        navItems[4],
+      ]
+    : navItems;
 
   return (
     <nav
@@ -18,7 +30,7 @@ export function BottomNav() {
       data-testid="nav-bottom"
     >
       <div className="flex items-end justify-around max-w-lg mx-auto px-2 pb-1 pt-1">
-        {navItems.map((item) => {
+        {items.map((item) => {
           const isActive =
             item.path === "/"
               ? location === "/"

@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray } from "drizzle-orm";
+import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, clubs, federations, memberships, events, attendance, activities, xpTransactions,
@@ -48,6 +48,14 @@ export interface IStorage {
 
   getLeaderboard(federationId?: number): Promise<User[]>;
   getClubLeaderboard(federationId?: number): Promise<{ club: Club; score: number }[]>;
+
+  getAllUsers(federationId?: number): Promise<User[]>;
+  getAllMemberships(status?: string): Promise<(Membership & { user: User; club: Club })[]>;
+  updateEvent(eventId: number, data: Partial<Event>): Promise<Event | undefined>;
+  deleteEvent(eventId: number): Promise<void>;
+  updateClub(clubId: number, data: Partial<Club>): Promise<Club | undefined>;
+  updateUserRole(userId: number, role: string): Promise<User | undefined>;
+  getAdminStats(federationId?: number): Promise<{ totalUsers: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -246,6 +254,66 @@ export class DatabaseStorage implements IStorage {
       result.push({ club, score });
     }
     return result.sort((a, b) => b.score - a.score);
+  }
+
+  async getAllUsers(federationId?: number): Promise<User[]> {
+    if (federationId) {
+      return db.select().from(users).where(eq(users.federationId, federationId)).orderBy(desc(users.createdAt));
+    }
+    return db.select().from(users).orderBy(desc(users.createdAt));
+  }
+
+  async getAllMemberships(status?: string): Promise<(Membership & { user: User; club: Club })[]> {
+    let rows;
+    if (status) {
+      rows = await db.select().from(memberships).where(eq(memberships.status, status)).orderBy(desc(memberships.joinedAt));
+    } else {
+      rows = await db.select().from(memberships).orderBy(desc(memberships.joinedAt));
+    }
+    const result: (Membership & { user: User; club: Club })[] = [];
+    for (const row of rows) {
+      const user = await this.getUser(row.userId);
+      const club = await this.getClub(row.clubId);
+      if (user && club) result.push({ ...row, user, club });
+    }
+    return result;
+  }
+
+  async updateEvent(eventId: number, data: Partial<Event>): Promise<Event | undefined> {
+    const { id, createdAt, ...safeData } = data as any;
+    const [updated] = await db.update(events).set(safeData).where(eq(events.id, eventId)).returning();
+    return updated;
+  }
+
+  async deleteEvent(eventId: number): Promise<void> {
+    await db.delete(attendance).where(eq(attendance.eventId, eventId));
+    await db.delete(events).where(eq(events.id, eventId));
+  }
+
+  async updateClub(clubId: number, data: Partial<Club>): Promise<Club | undefined> {
+    const { id, ...safeData } = data as any;
+    const [updated] = await db.update(clubs).set(safeData).where(eq(clubs.id, clubId)).returning();
+    return updated;
+  }
+
+  async updateUserRole(userId: number, role: string): Promise<User | undefined> {
+    const [updated] = await db.update(users).set({ role }).where(eq(users.id, userId)).returning();
+    return updated;
+  }
+
+  async getAdminStats(federationId?: number): Promise<{ totalUsers: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }> {
+    const allUsers = await this.getAllUsers(federationId);
+    const pendingRows = await db.select().from(memberships).where(eq(memberships.status, "pending"));
+    const today = new Date().toISOString().split("T")[0];
+    const allEvents = await this.getEvents(federationId);
+    const upcoming = allEvents.filter((e) => e.date >= today);
+    const allClubs = await this.getClubs(federationId);
+    return {
+      totalUsers: allUsers.length,
+      pendingMemberships: pendingRows.length,
+      upcomingEvents: upcoming.length,
+      totalClubs: allClubs.length,
+    };
   }
 }
 
