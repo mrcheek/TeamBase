@@ -55,7 +55,7 @@ export interface IStorage {
   deleteEvent(eventId: number): Promise<void>;
   updateClub(clubId: number, data: Partial<Club>): Promise<Club | undefined>;
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
-  getAdminStats(federationId?: number): Promise<{ totalUsers: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }>;
+  getAdminStats(federationId?: number): Promise<{ totalUsers: number; totalPlayers: number; totalSupporters: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -301,8 +301,10 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async getAdminStats(federationId?: number): Promise<{ totalUsers: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }> {
+  async getAdminStats(federationId?: number): Promise<{ totalUsers: number; totalPlayers: number; totalSupporters: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }> {
     const allUsers = await this.getAllUsers(federationId);
+    const totalPlayers = allUsers.filter((u) => u.role === "player").length;
+    const totalSupporters = allUsers.filter((u) => u.role === "supporter").length;
     const pendingRows = await db.select().from(memberships).where(eq(memberships.status, "pending"));
     const today = new Date().toISOString().split("T")[0];
     const allEvents = await this.getEvents(federationId);
@@ -310,6 +312,8 @@ export class DatabaseStorage implements IStorage {
     const allClubs = await this.getClubs(federationId);
     return {
       totalUsers: allUsers.length,
+      totalPlayers,
+      totalSupporters,
       pendingMemberships: pendingRows.length,
       upcomingEvents: upcoming.length,
       totalClubs: allClubs.length,

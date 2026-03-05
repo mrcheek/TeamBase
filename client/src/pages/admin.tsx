@@ -79,6 +79,8 @@ export default function AdminPage() {
 function OverviewTab() {
   const { data: stats, isLoading } = useQuery<{
     totalUsers: number;
+    totalPlayers: number;
+    totalSupporters: number;
     pendingMemberships: number;
     upcomingEvents: number;
     totalClubs: number;
@@ -89,7 +91,9 @@ function OverviewTab() {
   }
 
   const statCards = [
-    { label: "Total Players", value: stats?.totalUsers ?? 0, icon: Users, color: "text-blue-600 bg-blue-100" },
+    { label: "Total Members", value: stats?.totalUsers ?? 0, icon: Users, color: "text-blue-600 bg-blue-100" },
+    { label: "Players", value: stats?.totalPlayers ?? 0, icon: Users, color: "text-cyan-600 bg-cyan-100" },
+    { label: "Supporters", value: stats?.totalSupporters ?? 0, icon: Users, color: "text-pink-600 bg-pink-100" },
     { label: "Pending Approvals", value: stats?.pendingMemberships ?? 0, icon: Shield, color: "text-amber-600 bg-amber-100" },
     { label: "Upcoming Events", value: stats?.upcomingEvents ?? 0, icon: Calendar, color: "text-emerald-600 bg-emerald-100" },
     { label: "Active Clubs", value: stats?.totalClubs ?? 0, icon: Building2, color: "text-purple-600 bg-purple-100" },
