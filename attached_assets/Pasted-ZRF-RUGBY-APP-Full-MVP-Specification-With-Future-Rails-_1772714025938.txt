@@ -1,0 +1,631 @@
+ZRF RUGBY APP
+Full MVP Specification (With Future Rails)
+1. Product Principles
+
+The ZRF app is designed to become the digital infrastructure of rugby in Zanzibar.
+
+The system must support:
+
+Players
+
+Clubs
+
+Federation administrators
+
+Supporters
+
+SMS-only members
+
+Core goals:
+
+Track who plays rugby
+
+Track where rugby happens
+
+Track who participates
+
+Support player development
+
+Strengthen club culture
+
+Support rugby growth
+
+The app must be:
+
+Mobile-first (PWA)
+
+Low bandwidth friendly
+
+Accessible to non-smartphone users (SMS/USSD)
+
+Bilingual (English / Swahili)
+
+2. System Architecture
+
+The platform is designed with a multi-federation structure to allow future expansion.
+
+Example structure:
+
+Platform
+   └ Federation
+        └ Clubs
+             └ Members
+                  └ Events
+
+Example:
+
+Platform
+ ├ Zanzibar Rugby Federation
+ │   ├ Sharks RFC
+ │   ├ Stone Town RFC
+ │   └ Pemba RFC
+ │
+ ├ Tanzania Rugby Union
+ ├ Kenya Rugby Union
+ └ Uganda Rugby Union
+
+For MVP only Zanzibar Rugby Federation is active.
+
+All system objects include:
+
+federation_id
+3. Core MVP Features (10)
+
+These features must exist at launch.
+
+1. User Accounts & Rugby Profiles
+
+Each user has a rugby identity.
+
+Required fields:
+
+full name
+
+phone number
+
+portrait photo (mandatory)
+
+role (player / coach / supporter / admin)
+
+club membership
+
+preferred language
+
+Rule:
+
+Portrait photo required to activate membership
+
+Photos appear in:
+
+profiles
+
+membership cards
+
+attendance lists
+
+activity feed
+
+2. Registration Workflow (Myself / A Friend)
+
+The system supports self-registration and proxy registration.
+
+Register Myself
+
+Standard sign-up.
+
+Register A Friend
+
+Used when a player:
+
+has no smartphone
+
+needs help registering
+
+is being registered by a coach/admin
+
+Fields collected:
+
+name
+
+phone number
+
+club
+
+role
+
+portrait photo
+
+Status:
+
+Pending → Club admin approval → Active
+
+The friend can later claim their profile using phone verification.
+
+3. SMS-Only Members
+
+Members without smartphones can still participate.
+
+SMS members can:
+
+be registered
+
+appear in club rosters
+
+be checked in by admins
+
+receive SMS updates
+
+SMS notifications include:
+
+training reminders
+
+event updates
+
+match notifications
+
+federation announcements
+
+4. Club Directory & Membership
+
+Users can browse clubs.
+
+Club pages include:
+
+club logo
+
+location
+
+description
+
+training schedule
+
+club administrators
+
+member list
+
+Membership flow:
+
+Apply → Admin approval → Membership active
+5. Events & Rugby Calendar
+
+Clubs can create events.
+
+Event types:
+
+training
+
+touch rugby
+
+match
+
+tournament
+
+social event
+
+Event page includes:
+
+date
+
+time
+
+location
+
+club
+
+attendee list
+
+Events support:
+
+QR check-in
+
+admin roster check-in
+
+6. Ultra-Simple Check-In (Central Button)
+
+Check-in is the primary action in the app.
+
+Bottom navigation:
+
+Home | Play | ⬤ Check-In | Train | Profile
+
+Check-in options:
+
+Scan Event QR
+
+Quick Activity
+
+Selfie Check-in
+
+Goal:
+
+Check-in in under 5 seconds
+7. Activity Tracking
+
+Members can log rugby-related activities.
+
+Examples:
+
+SAQ training
+
+gym
+
+running
+
+recovery
+
+watching rugby
+
+team social
+
+Rules:
+
+1 check-in per activity per day
+
+Selfie posts can provide bonus XP.
+
+8. XP System & Membership Tiers
+
+Participation earns XP.
+
+Example tier system:
+
+Tier	Colour
+Green	starter
+Royal Blue	active
+Silver	elite
+Gold	ambassador
+
+XP contributes to:
+
+player progression
+
+club score
+
+leaderboards
+
+9. Digital Membership Card
+
+Every member receives a digital rugby membership card.
+
+Card includes:
+
+portrait photo
+
+member name
+
+club
+
+tier colour
+
+QR code
+
+Uses:
+
+event entry
+
+attendance verification
+
+future partner discounts
+
+10. Club Score System
+
+Clubs accumulate points through member activity and development.
+
+Formula:
+
+Club Score =
+50% of member XP
++ club contributions
+
+Club contributions include:
+
+hosting events
+
+registering players
+
+certifying coaches
+
+qualifying referees
+
+Example leaderboard:
+
+ZRF Club Rankings
+1. Sharks RFC
+2. Stone Town RFC
+3. Pemba RFC
+4. Access Channels
+
+The platform supports three access modes.
+
+Mobile App (PWA)
+
+Primary user interface.
+
+Features include:
+
+full profile
+
+events
+
+training library
+
+activity feed
+
+membership card
+
+SMS Channel
+
+For members without smartphones.
+
+SMS supports:
+
+event reminders
+
+training notifications
+
+urgent updates
+
+USSD Rails (Future Expansion)
+
+Basic USSD menu structure prepared.
+
+Example menu:
+
+1. My Membership
+2. Next Event
+3. RSVP
+4. Check-In
+5. Language
+6. Help
+
+USSD allows users to:
+
+view membership status
+
+see upcoming events
+
+confirm attendance
+
+Full USSD interaction may be expanded later.
+
+5. Skeleton Modules (Future Rails)
+
+These features exist structurally but remain minimal at launch.
+
+Fixtures & Results
+
+Basic match reporting.
+
+Example:
+
+Sharks RFC 22
+Stone Town RFC 17
+
+Future expansion:
+
+league tables
+
+player stats
+
+Photo Wall
+
+Allows manual photo uploads.
+
+Future integration:
+
+Instagram feeds
+
+hashtag aggregation
+
+Leaderboards
+
+Basic rankings:
+
+top players
+
+top clubs
+
+Future:
+
+seasonal rankings
+
+participation metrics
+
+Rugby Map
+
+Displays:
+
+club locations
+
+event locations
+
+Future:
+
+live rugby activity
+
+Partner Discounts
+
+Partner listing:
+
+name
+
+offer
+
+eligibility tier
+
+Future:
+
+QR discount verification
+
+6. Data Model Overview
+
+Core entities:
+
+Federation
+Club
+User
+Membership
+Event
+Attendance
+Activity
+XP Transaction
+Club Score
+Training Library Item
+
+Every entity includes:
+
+federation_id
+7. Navigation Structure
+
+Bottom navigation uses four tabs + central action.
+
+Home | Play | ⬤ Check-In | Train | Profile
+Home
+
+activity feed
+
+announcements
+
+photos
+
+Play
+
+events
+
+fixtures
+
+clubs
+
+rugby map
+
+Check-In
+
+QR scan
+
+activity check-in
+
+selfie check-in
+
+Train
+
+rugby drills
+
+SAQ drills
+
+fitness sessions
+
+Profile
+
+membership card
+
+XP progress
+
+badges
+
+settings
+
+8. Product Development Roadmap
+Phase 1 — MVP Launch
+
+Focus:
+
+Membership + Participation Tracking
+
+Includes:
+
+registration
+
+clubs
+
+events
+
+check-ins
+
+XP
+
+club score
+
+SMS support
+
+Outcome:
+
+ZRF gains a digital membership and participation platform.
+
+Phase 2 — Community Expansion
+
+Features added:
+
+selfie activity feed
+
+photo wall
+
+richer club pages
+
+improved leaderboards
+
+rugby map
+
+Outcome:
+
+App becomes daily hub of rugby in Zanzibar.
+
+Phase 3 — Competition Management
+
+Features added:
+
+fixtures
+
+standings
+
+tournaments
+
+team rosters
+
+Outcome:
+
+App manages ZRF competitions.
+
+Phase 4 — Federation Analytics
+
+Features added:
+
+participation analytics
+
+club development dashboards
+
+player pathway tracking
+
+exportable reports
+
+Outcome:
+
+ZRF gains data-driven governance tools.
+
+Phase 5 — Regional Expansion
+
+Federations added:
+
+Tanzania Rugby Union
+
+Kenya Rugby Union
+
+Uganda Rugby Union
+
+Rwanda Rugby Federation
+
+Outcome:
+
+Platform becomes East Africa Rugby Network.
+
+Final Vision
+
+When fully developed, the ZRF platform becomes:
+
+Membership system
+Participation tracker
+Club management tool
+Training resource library
+Competition platform
+Rugby community hub
+
+Very few sports federations globally operate a fully integrated ecosystem like this.
