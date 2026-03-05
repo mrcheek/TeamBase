@@ -103,12 +103,24 @@ export async function seedDatabase() {
     tier: "gold",
   }).returning();
 
+  const [user6] = await db.insert(users).values({
+    federationId: zrf.id,
+    fullName: "Salma Rashid",
+    phone: "+255777100006",
+    password: hashedPw,
+    role: "supporter",
+    preferredLanguage: "sw",
+    xpTotal: 75,
+    tier: "green",
+  }).returning();
+
   await db.insert(memberships).values([
     { userId: user1.id, clubId: sharks.id, status: "active" },
     { userId: user2.id, clubId: sharks.id, status: "active" },
     { userId: user3.id, clubId: stoneTown.id, status: "active" },
     { userId: user4.id, clubId: pemba.id, status: "active" },
     { userId: user5.id, clubId: sharks.id, status: "active" },
+    { userId: user6.id, clubId: stoneTown.id, status: "active" },
   ]);
 
   const today = new Date();

@@ -45,8 +45,13 @@ Accessible only to users with role="admin". Bottom nav shows Admin tab (shield i
 - Event creation restricted to admins only
 - All admin mutations validated with Zod schemas (adminUpdateEventSchema, adminUpdateClubSchema)
 
-### Demo Admin Account:
-- Phone: +255777100005 / Password: rugby123 (Omar Khamis, Gold tier)
+### Demo Accounts:
+- Phone: +255777100001 / Password: rugby123 (Juma Hassan, Player, Blue tier)
+- Phone: +255777100002 / Password: rugby123 (Amina Said, Coach, Silver tier)
+- Phone: +255777100003 / Password: rugby123 (Bakari Mohamed, Player, Blue tier)
+- Phone: +255777100004 / Password: rugby123 (Fatma Ali, Player, Green tier)
+- Phone: +255777100005 / Password: rugby123 (Omar Khamis, Admin, Gold tier)
+- Phone: +255777100006 / Password: rugby123 (Salma Rashid, Supporter, Green tier)
 
 ## Registration Flow (Two-Step)
 1. **Quick Sign-Up**: Name + Phone → auto-generated temp password → instant login
