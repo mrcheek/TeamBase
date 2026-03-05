@@ -226,6 +226,7 @@ function MembersTab() {
                             <SelectItem value="player">Player</SelectItem>
                             <SelectItem value="coach">Coach</SelectItem>
                             <SelectItem value="personnel">Personnel</SelectItem>
+                            <SelectItem value="supporter">Supporter</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>

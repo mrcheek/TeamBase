@@ -138,7 +138,7 @@ export const profileUpdateSchema = z.object({
   residentialCountry: z.string().optional(),
   emergencyContactName: z.string().optional(),
   emergencyContactNumber: z.string().optional(),
-  role: z.enum(["player", "coach", "personnel"]).optional(),
+  role: z.enum(["player", "coach", "personnel", "supporter"]).optional(),
   preferredLanguage: z.enum(["en", "sw"]).optional(),
   registrationType: z.enum(["new", "renewal"]).optional(),
   clubId: z.number().optional(),
