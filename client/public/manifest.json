@@ -1,0 +1,57 @@
+{
+  "name": "ZRF Rugby - Zanzibar Rugby Federation",
+  "short_name": "ZRF Rugby",
+  "description": "Digital rugby platform for Zanzibar Rugby Federation. Track players, clubs, events and grow rugby in Zanzibar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1a0f",
+  "theme_color": "#1a7a42",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["sports", "fitness"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Check In",
+      "url": "/check-in",
+      "description": "Log activity or check in to an event"
+    },
+    {
+      "name": "Events",
+      "url": "/play",
+      "description": "View upcoming events and clubs"
+    }
+  ]
+}

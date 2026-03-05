@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1a7a42"/>
+  <ellipse cx="256" cy="256" rx="140" ry="90" fill="#ffffff" transform="rotate(-30 256 256)" opacity="0.95"/>
+  <line x1="180" y1="180" x2="332" y2="332" stroke="#1a7a42" stroke-width="4" stroke-linecap="round"/>
+  <line x1="190" y1="220" x2="292" y2="322" stroke="#1a7a42" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <line x1="220" y1="190" x2="322" y2="292" stroke="#1a7a42" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <text x="256" y="430" text-anchor="middle" font-family="Arial,sans-serif" font-weight="bold" font-size="60" fill="#ffffff">ZRF</text>
+</svg>

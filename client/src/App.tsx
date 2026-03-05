@@ -17,6 +17,7 @@ import ClubDetailPage from "@/pages/club-detail";
 import EventDetailPage from "@/pages/event-detail";
 import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 
@@ -110,6 +111,7 @@ function AppContent() {
         </Switch>
       </main>
 
+      <PWAInstallPrompt />
       <BottomNav />
     </div>
   );

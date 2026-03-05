@@ -90,5 +90,14 @@ Accessible only to users with role="admin". Bottom nav shows Admin tab (shield i
 - DELETE `/api/admin/events/:id` - Delete event
 - PATCH `/api/admin/clubs/:id` - Edit club
 
+## PWA Support
+The app is installable as a Progressive Web App:
+- `client/public/manifest.json` - Web app manifest with icons, shortcuts, theme
+- `client/public/sw.js` - Service worker with stale-while-revalidate caching for assets, network-first for API
+- `client/public/icon.svg` / `icon-maskable.svg` - SVG app icons
+- `client/src/components/pwa-install-prompt.tsx` - Install banner (auto-shows after 3s, dismissible for 7 days)
+- Service worker registered in `client/src/main.tsx`
+- Apple meta tags in `client/index.html` for iOS home screen support
+
 ## Running
 `npm run dev` starts Express + Vite dev server on port 5000.
