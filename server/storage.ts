@@ -13,6 +13,7 @@ export interface IStorage {
   getUserByPhone(phone: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserXp(userId: number, xpAmount: number): Promise<void>;
+  updateUserProfile(userId: number, data: Partial<User>): Promise<User | undefined>;
 
   getFederations(): Promise<Federation[]>;
   createFederation(federation: InsertFederation): Promise<Federation>;
@@ -63,6 +64,12 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [created] = await db.insert(users).values(user).returning();
     return created;
+  }
+
+  async updateUserProfile(userId: number, data: Partial<User>): Promise<User | undefined> {
+    const { id, password, xpTotal, tier, createdAt, ...safeData } = data as any;
+    const [updated] = await db.update(users).set(safeData).where(eq(users.id, userId)).returning();
+    return updated;
   }
 
   async updateUserXp(userId: number, xpAmount: number): Promise<void> {

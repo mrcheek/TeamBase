@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MembershipCard } from "@/components/membership-card";
-import { LogOut, Settings, TrendingUp, Calendar, Dumbbell, ChevronRight } from "lucide-react";
+import { LogOut, Settings, TrendingUp, Calendar, Dumbbell, ChevronRight, AlertCircle } from "lucide-react";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -17,7 +17,7 @@ const tierThresholds = [
 ];
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout, profileCompletion } = useAuth();
 
   const { data: myActivities } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
@@ -71,6 +71,26 @@ export default function ProfilePage() {
           Sign Out
         </Button>
       </div>
+
+      {user && !user.profileCompleted && profileCompletion < 100 && (
+        <Link href="/complete-profile">
+          <Card className="mb-4 border-primary/30 bg-primary/5 hover-elevate" data-testid="card-complete-registration">
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-4 h-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold">Complete Your Registration</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <Progress value={profileCompletion} className="h-1.5 flex-1" />
+                  <span className="text-xs font-medium text-primary shrink-0">{profileCompletion}%</span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-primary shrink-0" />
+            </CardContent>
+          </Card>
+        </Link>
+      )}
 
       <div className="mb-6">
         <MembershipCard

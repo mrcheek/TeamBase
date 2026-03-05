@@ -6,7 +6,7 @@ import { pool } from "./db";
 import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { registerSchema, loginSchema, insertEventSchema, insertActivitySchema, insertMembershipSchema } from "@shared/schema";
+import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema } from "@shared/schema";
 import { seedDatabase } from "./seed";
 
 const scryptAsync = promisify(scrypt);
@@ -57,27 +57,55 @@ export async function registerRoutes(
 
   app.post("/api/register", async (req: Request, res: Response) => {
     try {
-      const data = registerSchema.parse(req.body);
+      const data = quickRegisterSchema.parse(req.body);
       const existing = await storage.getUserByPhone(data.phone);
       if (existing) {
         return res.status(400).json({ message: "Phone number already registered" });
       }
-      const hashedPassword = await hashPassword(data.password);
+      const tempPassword = randomBytes(16).toString("hex");
+      const hashedPassword = await hashPassword(tempPassword);
       const user = await storage.createUser({
         fullName: data.fullName,
         phone: data.phone,
         password: hashedPassword,
-        role: data.role || "player",
-        preferredLanguage: data.preferredLanguage || "en",
+        role: "player",
+        preferredLanguage: "en",
         federationId: 1,
         photoUrl: null,
       });
-      if (data.clubId) {
-        await storage.createMembership({ userId: user.id, clubId: data.clubId, status: "pending" });
-      }
       req.session.userId = user.id;
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/user/profile", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const data = profileUpdateSchema.parse(req.body);
+      const { clubId, password: rawPassword, ...profileData } = data;
+      const updatePayload: Record<string, any> = { ...profileData };
+      if (rawPassword) {
+        updatePayload.password = await hashPassword(rawPassword);
+      }
+      let updated = await storage.updateUserProfile(req.session.userId!, updatePayload);
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const { password: _, ...safeUser } = updated;
+      const completion = calculateProfileCompletion(safeUser as any);
+      if (completion >= 80 && !updated.profileCompleted) {
+        updated = await storage.updateUserProfile(req.session.userId!, { profileCompleted: true }) || updated;
+      }
+      if (clubId) {
+        const existing = await storage.getMembership(req.session.userId!, clubId);
+        if (!existing) {
+          await storage.createMembership({ userId: req.session.userId!, clubId, status: "pending" });
+        }
+      }
+      const { password: __, ...finalUser } = updated;
+      res.json(finalUser);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

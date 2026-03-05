@@ -2,21 +2,17 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
+import { calculateProfileCompletion } from "@shared/schema";
 
 type AuthUser = Omit<User, "password">;
 
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
+  profileCompletion: number;
   login: (phone: string, password: string) => Promise<void>;
-  register: (data: {
-    fullName: string;
-    phone: string;
-    password: string;
-    role?: string;
-    preferredLanguage?: string;
-    clubId?: number;
-  }) => Promise<void>;
+  register: (data: { fullName: string; phone: string }) => Promise<void>;
+  updateProfile: (data: Record<string, any>) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -50,15 +46,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (data: {
-      fullName: string;
-      phone: string;
-      password: string;
-      role?: string;
-      preferredLanguage?: string;
-      clubId?: number;
-    }) => {
+    mutationFn: async (data: { fullName: string; phone: string }) => {
       const res = await apiRequest("POST", "/api/register", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+  });
+
+  const profileMutation = useMutation({
+    mutationFn: async (data: Record<string, any>) => {
+      const res = await apiRequest("PATCH", "/api/user/profile", data);
       return res.json();
     },
     onSuccess: () => {
@@ -75,16 +74,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const profileCompletion = user ? calculateProfileCompletion(user) : 0;
+
   return (
     <AuthContext.Provider
       value={{
         user: user ?? null,
         isLoading,
+        profileCompletion,
         login: async (phone, password) => {
           await loginMutation.mutateAsync({ phone, password });
         },
         register: async (data) => {
           await registerMutation.mutateAsync(data);
+        },
+        updateProfile: async (data) => {
+          await profileMutation.mutateAsync(data);
         },
         logout: async () => {
           await logoutMutation.mutateAsync();

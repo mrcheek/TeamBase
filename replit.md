@@ -9,13 +9,13 @@ A mobile-first PWA serving as the digital infrastructure for rugby in Zanzibar. 
 - **Auth**: Session-based with express-session + connect-pg-simple, scrypt password hashing
 
 ## Architecture
-- `shared/schema.ts` - All database models (federations, clubs, users, memberships, events, attendance, activities, xp_transactions)
+- `shared/schema.ts` - All database models (federations, clubs, users, memberships, events, attendance, activities, xp_transactions) plus Zod validation schemas
 - `server/db.ts` - Drizzle + pg pool connection
-- `server/storage.ts` - DatabaseStorage class implementing IStorage interface
+- `server/storage.ts` - DatabaseStorage class implementing IStorage interface (includes updateUserProfile)
 - `server/routes.ts` - All API routes with session auth
 - `server/seed.ts` - Seeds ZRF federation, 3 clubs, 5 users, sample events/activities
-- `client/src/App.tsx` - Main app with auth gating and bottom nav routing
-- `client/src/hooks/use-auth.tsx` - AuthProvider context with login/register/logout
+- `client/src/App.tsx` - Main app with auth gating, bottom nav routing, and profile completion toast
+- `client/src/hooks/use-auth.tsx` - AuthProvider context with login/register/updateProfile/logout and profileCompletion calc
 - `client/src/components/bottom-nav.tsx` - Mobile bottom navigation (Home | Play | Check-In | Train | Profile)
 - `client/src/components/membership-card.tsx` - Digital membership card with tier gradients
 
@@ -24,12 +24,27 @@ A mobile-first PWA serving as the digital infrastructure for rugby in Zanzibar. 
 - `/play` - Events & clubs tabs
 - `/check-in` - Event check-in and activity logging
 - `/train` - Training programs library
-- `/profile` - Membership card, XP progress, clubs, activity history
+- `/profile` - Membership card, XP progress, clubs, activity history, registration completion link
+- `/complete-profile` - Full ZRF registration form with accordion sections
 - `/clubs/:id` - Club detail with members, events, score
 - `/events/:id` - Event detail with check-in and attendee list
 
+## Registration Flow (Two-Step)
+1. **Quick Sign-Up** (auth page): Name + Phone only → auto-generated temp password → instant login
+2. **Profile Completion** (in-app): Toast prompt "Complete Your Registration X% Done" → /complete-profile page with sections:
+   - Personal Info (DOB, gender, nationality, email, residential country)
+   - Emergency Contact (name, phone)
+   - Rugby Registration (role, registration type, club)
+   - Player Details (position, level, height, weight, medical conditions, previous clubs)
+   - Coach Details (certification, experience, team, specialization)
+   - Personnel Details (role description, qualifications, experience)
+   - Set Password (for future login)
+   - Consent (photo consent, data consent)
+3. Server computes `profileCompleted` flag when completion >= 80%
+4. Login requires phone + password (set during profile completion)
+
 ## Key Features
-1. User registration/login with phone number
+1. Two-step registration (quick signup → profile completion)
 2. Club directory with membership applications
 3. Events calendar with check-in system
 4. Activity tracking (gym, running, SAQ, etc.)
@@ -47,6 +62,14 @@ Rugby-inspired green palette (HSL 152 primary) with tier colors:
 
 ## Database
 PostgreSQL with Drizzle ORM. Schema pushed via `npm run db:push`. Seed data runs on startup if no federations exist.
+
+## API Endpoints
+- POST `/api/register` - Quick register (fullName, phone)
+- POST `/api/login` - Login (phone, password)
+- POST `/api/logout` - Logout
+- GET `/api/user` - Current user
+- PATCH `/api/user/profile` - Update profile (all ZRF fields + password)
+- GET/POST `/api/clubs`, `/api/events`, `/api/activities`, etc.
 
 ## Running
 `npm run dev` starts Express + Vite dev server on port 5000.
