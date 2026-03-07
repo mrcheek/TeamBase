@@ -4,9 +4,8 @@ import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
-import { ClubThemeProvider, useClubTheme } from "@/hooks/use-club-theme";
+import { ClubThemeProvider } from "@/hooks/use-club-theme";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { BottomNav } from "@/components/bottom-nav";
 import AuthPage from "@/pages/auth-page";
@@ -140,16 +139,8 @@ function ProfileCompletionPrompt() {
   return null;
 }
 
-const tierBadgeColors: Record<string, string> = {
-  green: "bg-emerald-500 text-white",
-  blue: "bg-blue-500 text-white",
-  silver: "bg-gray-400 text-white",
-  gold: "bg-amber-500 text-white",
-};
-
 function AppContent() {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -175,50 +166,15 @@ function AppContent() {
 
 function AppShell() {
   const { user } = useAuth();
-  const { club } = useClubTheme();
-  const [, setLocation] = useLocation();
 
   if (!user) return null;
-
-  const clubInitials = club
-    ? club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)
-    : "ZR";
-  const clubName = club?.name || "ZRF Rugby";
 
   return (
     <div className="min-h-screen bg-background">
       <OfflineBanner />
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b px-4 py-2.5">
-        <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2.5">
-            {club?.logoUrl ? (
-              <img src={club.logoUrl} alt={clubName} className="w-7 h-7 rounded-full object-cover" data-testid="img-club-logo" />
-            ) : (
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-club-primary"
-                data-testid="icon-club-crest"
-              >
-                <span className="text-club-primary-foreground text-[10px] font-bold">{clubInitials}</span>
-              </div>
-            )}
-            <div>
-              <span className="font-bold text-sm tracking-tight block leading-tight" data-testid="text-header-club">{clubName}</span>
-              <span className="text-[10px] text-muted-foreground leading-none">TEAMBASE</span>
-            </div>
-          </div>
-          <Badge
-            onClick={() => setLocation("/profile#xp")}
-            className={`cursor-pointer rounded-full text-[10px] font-bold ${tierBadgeColors[user.tier] || tierBadgeColors.green}`}
-            data-testid="badge-xp"
-          >
-            {user.xpTotal} XP
-          </Badge>
-        </div>
-      </header>
-
       <ProfileCompletionPrompt />
 
-      <main className="pt-2 pb-2">
+      <main className="pb-2">
         <Switch>
           <Route path="/" component={HomePage} />
           <Route path="/play" component={PlayPage} />

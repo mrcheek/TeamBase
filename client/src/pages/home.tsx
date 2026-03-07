@@ -54,18 +54,62 @@ export default function HomePage() {
 
   return (
     <div className="pb-24 pt-4 max-w-lg mx-auto">
-      {/* 1. GREETING — club identity already in header */}
+      {/* 1. CLUB IDENTITY */}
       {user && (
-        <section className="px-4 mb-2" data-testid="section-club-hero">
-          <p className="text-[13px] text-muted-foreground" data-testid="text-greeting">
-            {user.fullName}
-            <span className="mx-1.5 opacity-40">·</span>
-            <span className="capitalize">{user.role}</span>
-          </p>
+        <section className="px-4 pt-4 pb-6" data-testid="section-club-hero">
+          <div className="flex items-center gap-3">
+            {userClub?.logoUrl ? (
+              <img
+                src={userClub.logoUrl}
+                alt={userClub.name}
+                className="w-11 h-11 rounded-full object-cover shrink-0"
+                data-testid="img-hero-club-logo"
+              />
+            ) : (
+              <div
+                className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                style={{
+                  backgroundColor: userClub?.primaryColor || undefined,
+                  color: userClub?.textOnPrimary || "#fff",
+                }}
+                data-testid="icon-hero-club-crest"
+              >
+                <span className="text-xs font-bold">{clubInitials}</span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold leading-tight truncate" data-testid="text-club-name">
+                {userClub ? userClub.name : "Zanzibar Rugby Federation"}
+              </h2>
+              {userClub?.location && (
+                <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                  {userClub.location}
+                </p>
+              )}
+              <p className="text-[13px] text-muted-foreground mt-0.5" data-testid="text-greeting">
+                {user.fullName}
+                <span className="mx-1.5 opacity-40">·</span>
+                <span className="capitalize">{user.role}</span>
+              </p>
+            </div>
+            <Link href="/profile#xp">
+              <span
+                className="text-[11px] font-bold px-2.5 py-1 rounded-full cursor-pointer shrink-0"
+                style={{
+                  backgroundColor: `hsl(var(--club-primary))`,
+                  color: `hsl(var(--club-primary-foreground))`,
+                }}
+                data-testid="badge-xp"
+              >
+                {user.xpTotal} XP
+              </span>
+            </Link>
+          </div>
         </section>
       )}
 
       {/* 2. NEXT SESSION — dominant, no background box */}
+      <div className="border-t border-divider mx-4" />
 
       <section className="py-8 px-4" data-testid="section-next-session">
         {eventsLoading ? (
