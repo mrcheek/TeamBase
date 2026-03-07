@@ -10,7 +10,9 @@ A mobile-first PWA for the Zanzibar Rugby Federation. A premium club-first sport
 ## Design System
 - **Style**: Premium sports platform — section-based layout, NOT card-heavy dashboard
 - **Layout Philosophy**: Hero → space → section → divider → section. Cards used sparingly (Next Session, Membership Card only). Everything else: flat sections with thin dividers.
-- **Radius**: 0.375rem (6px) globally via `--radius` in index.css
+- **Radius**: 3-tier system: `--radius-sm: 6px` (inputs), `--radius-md: 10px` (buttons), `--radius-lg: 16px` (cards/hero)
+- **Border**: `--border: 220 10% 88%` (soft neutral for inputs/rows), `--divider: 220 10% 92%` (even lighter, for list separation)
+- **Text hierarchy**: `--text-primary: 220 15% 15%`, `--text-secondary: 220 10% 40%`, `--text-muted: 220 8% 60%`
 - **Shadows**: Flat (no shadows) except GO button and membership card
 - **Layout**: Full-width rows, divider lines, section headers, hero sections. NOT rounded cards stacked.
 - **Typography**: Section headers use `text-xs font-semibold uppercase tracking-wider text-muted-foreground`
@@ -74,12 +76,19 @@ Each club has its own color palette stored in the `clubs` table:
 
 ## Admin Dashboard
 Accessible only to users with role="admin". Bottom nav shows Admin tab (shield icon) instead of Train for admin users.
+Design philosophy: Lists → rows, Forms → vertical layout, Actions → buttons, Stats → small grids. No card wrappers.
+- Underline tabs (not pills) for navigation
+- Flat row + divider lists (no bordered containers)
+- Forms use vertical rhythm without card wrapper
+- Cancel buttons use ghost variant, primary buttons use club primary
+- Icons use `strokeWidth={1.5}` for lighter visual weight
+- Section headers with helper text in club form
 
 ### Tabs:
-1. **Overview** - 3x2 compact stat grid + quick action buttons
-2. **Members** - Compact rows with drill-down, search + pending membership tabs
-3. **Events** - Create, edit, delete events with inline forms
-4. **Clubs** - View/edit club details + Club Branding Editor:
+1. **Overview** - 3x2 compact stat grid + quick action buttons (flat rows, divider separated)
+2. **Members** - Flat rows with underline sub-tabs (All/Pending), search, drill-down detail
+3. **Events** - Flat rows with inline create/edit forms (no card wrapper)
+4. **Clubs** - Flat rows with inline club branding editor (no card wrapper), section headers with helper text
    - Logo/Banner URL inputs
    - Color pickers: Primary, Secondary, Accent, Text on Primary/Secondary
    - Brand Style selector (Classic/Bold/Minimal)

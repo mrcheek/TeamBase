@@ -1,0 +1,224 @@
+The Rule: The Homepage Has Only 5 Blocks
+
+No matter how many features you add, the homepage should never exceed five sections.
+
+Your final structure should be:
+
+1. Club Hero
+2. Next Session
+3. Today’s Challenge
+4. Club Activity
+5. Quick Log
+
+Everything else lives elsewhere.
+
+For example:
+
+Feature	Where it goes
+Club leaderboard	Play page
+Events list	Play page
+XP details	Profile
+Admin tools	Admin
+Club roster	Club page
+
+This keeps the homepage light and alive.
+
+What We Implement Next (in Order)
+1️⃣ Club Activity Feed (Highest impact)
+
+This becomes the heartbeat of the app.
+
+Instead of stats sections, show a live feed:
+
+CLUB ACTIVITY
+
+👟 Juma Hassan
+5km run
++10 XP
+
+⚡ Amina Said
+SAQ drills
++20 XP
+
+🏉 Sharks RFC training session
+12 players checked in
+
+Why this first?
+
+Because it makes the app feel alive immediately.
+
+This should replace the current Club Activity box with a timeline list.
+
+2️⃣ Daily Club Challenge
+
+This becomes the daily hook.
+
+Example:
+
+TODAY'S CLUB CHALLENGE
+
+Run 3km
++15 XP
+
+5 teammates joined
+[Start Activity]
+
+This block should appear below Next Session.
+
+But keep it compact.
+
+Today's Challenge
+Run 3km · +15 XP
+5 teammates joined
+
+No large panel.
+
+3️⃣ Weekly Club Goal
+
+This builds team motivation.
+
+Example:
+
+THIS WEEK
+
+Sharks RFC
+200 activities target
+
+██████████░░░░
+
+117 / 200
+
+This can appear inside the challenge section, not as a new block.
+
+4️⃣ Activity Reactions (optional but powerful)
+
+Allow teammates to react:
+
+👟 Juma ran 5km
+🔥 3   💪 4
+
+This creates community interaction.
+
+But this can come later.
+
+What We Remove From Homepage
+
+To keep it clean, remove or move these:
+
+Remove
+Club leaderboard
+
+Move to Play page → Clubs tab.
+
+Remove
+Club momentum panel
+
+Replace it with:
+
+Weekly club goal progress
+
+Much simpler.
+
+Remove
+Club activity card container
+
+Turn it into a flat timeline list.
+
+Final Homepage Layout
+
+Your homepage should look like this:
+
+[Club Hero]
+
+Jambiani Jackals RFC
+Omar Khamis · Admin
+                         1125 XP
+
+--------------------------------
+
+NEXT SESSION
+
+Touch Rugby Afternoon
+Sat 7 Mar · 15:00
+[Check In]
+
+--------------------------------
+
+TODAY'S CHALLENGE
+
+Run 3km · +15 XP
+5 teammates joined
+
+--------------------------------
+
+CLUB ACTIVITY
+
+👟 Juma Hassan
+5km run +10
+
+⚡ Amina Said
+SAQ drills +20
+
+🏉 Sharks training
+12 players checked in
+
+--------------------------------
+
+QUICK LOG
+
+Run   Gym   SAQ   Recovery   Social
+
+That's it.
+
+Why This Works
+
+It answers the three things users care about immediately:
+
+1️⃣ What’s happening next?
+→ Next Session
+
+2️⃣ What should I do today?
+→ Daily Challenge
+
+3️⃣ What are my teammates doing?
+→ Activity Feed
+
+Everything else is secondary.
+
+Implementation Order for Replit
+
+Tell Replit to implement in this order:
+
+Phase 1
+
+Replace Club Activity card with timeline list
+
+Phase 2
+
+Add Daily Club Challenge component
+
+Phase 3
+
+Integrate weekly club progress into challenge block
+
+Phase 4
+
+Remove Club leaderboard from homepage
+
+One More Important Rule
+
+Never add a sixth homepage section.
+
+If you ever want to add something new, ask:
+
+Which of the five blocks does this belong to?
+
+If it doesn’t belong to one, it goes on another page.
+
+Final Thought
+
+Your platform is moving toward something interesting:
+
+Strava for teams + grassroots sports federation infrastructure.
+
+The homepage must feel like a club locker room, not a dashboard.
