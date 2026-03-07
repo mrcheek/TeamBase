@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queueOfflineActivity } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -74,12 +75,17 @@ export default function CheckInPage() {
   const activityCheckIn = useMutation({
     mutationFn: async (data: { type: string; notes: string; xpEarned: number }) => {
       const today = new Date().toISOString().split("T")[0];
-      await apiRequest("POST", "/api/activities", {
+      const payload = {
         type: data.type,
         date: today,
         notes: data.notes,
         xpEarned: data.xpEarned,
-      });
+      };
+      if (!navigator.onLine) {
+        queueOfflineActivity(payload);
+        return;
+      }
+      await apiRequest("POST", "/api/activities", payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user"] });

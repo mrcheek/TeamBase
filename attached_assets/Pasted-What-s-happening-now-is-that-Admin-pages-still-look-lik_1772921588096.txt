@@ -1,0 +1,283 @@
+What’s happening now is that Admin pages still look like forms inside cards, which makes them feel heavier and more “dashboard-like” than the rest of the app.
+
+The fix isn’t a redesign — it’s simplifying the layout system for Admin so it matches the rest of the product.
+
+I’ll go page-by-page and give specific changes you can hand to Replit.
+
+1. Members Page (Admin → Members)
+
+This one is actually already good structurally.
+
+What’s making it feel heavy is the container around the list.
+
+Current structure
+search
+[container]
+  member
+  member
+  member
+[/container]
+Better structure
+search
+
+member row
+divider
+member row
+divider
+member row
+Member Row Layout
+[avatar]  Salma Rashid
+          Supporter · Green · 75 XP            >
+
+Remove the card border around the list entirely.
+
+Keep only:
+
+border-bottom: 1px
+
+This will instantly make it feel more native / iOS-style.
+
+2. Events Page (Admin → Events)
+
+This page is the most card-heavy.
+
+Right now each event is inside a rounded panel.
+
+Current
+[event card]
+[event card]
+[event card]
+Change to
+event row
+divider
+event row
+divider
+event row
+Row Layout
+ZRF Season Opening Tournament     [edit] [delete]
+Tournament · Apr 15 · 09:00
+Amaan Stadium
+
+Key improvements:
+
+• remove rounded containers
+• align edit/delete icons right
+• make title larger
+• metadata smaller
+
+Example hierarchy:
+
+title: 16px semibold
+meta: 13px muted
+location: 13px muted
+3. Create Event Form
+
+Forms are where the UI still feels most “boxed”.
+
+The container around the entire form should be removed.
+
+Current
+[large card]
+
+Title
+Type
+Date
+Time
+Location
+Description
+
+[/card]
+Replace with
+Create Event
+
+Title
+[input]
+
+Type         Club
+[input]      [input]
+
+Date         Time
+[input]      [input]
+
+Location
+[input]
+
+Description
+[textarea]
+
+[Create Event]
+
+Forms should rely on vertical rhythm, not a card.
+
+Spacing system:
+
+field → 20px
+section → 32px
+4. Clubs Page
+
+The club cards are visually good, but still a little heavy.
+
+Instead of big cards:
+
+Current
+[club card]
+[club card]
+[club card]
+Better
+[avatar]  Stone Town Sultans RFC      [edit]
+          Shangani, Stone Town
+          ● ● ● brand colors
+
+divider
+
+[avatar]  Jambiani Jackals RFC        [edit]
+          Jambiani, South East Zanzibar
+          ● ● ● brand colors
+
+The brand color swatches are great — keep those.
+
+Just remove the big card background.
+
+5. Club Branding Editor
+
+This page is fine functionally but visually long.
+
+Two improvements:
+
+Group fields visually
+
+Instead of one big stack:
+
+Training Schedule
+
+Club Branding
+
+Brand Colours
+
+Live Preview
+
+Add subtle separators like:
+
+SECTION TITLE
+small helper text
+
+Example:
+
+BRAND COLOURS
+Choose the colours used in the club UI.
+Color pickers
+
+The color swatch + hex field combo is good.
+
+But spacing between them should be slightly larger.
+
+6. Admin Navigation Tabs
+
+This tab system is currently slightly bulky.
+
+Instead of big pill buttons:
+
+Overview | Members | Events | Clubs
+
+Use underline tabs.
+
+Example:
+
+Overview   Members   Events   Clubs
+           ───────
+
+This will immediately reduce visual weight.
+
+7. Page Headers
+
+Right now every page starts with:
+
+Admin Dashboard
+
+But then switches context.
+
+Better pattern:
+
+Overview
+Admin
+Members
+Members
+Events
+Events
+Clubs
+Clubs
+
+Shorter headers feel more modern.
+
+8. Icons
+
+You are using icons well already.
+
+But reduce icon weight slightly:
+
+stroke-width: 1.5
+
+instead of heavier icons.
+
+9. Buttons
+
+One improvement:
+
+Primary button
+Create Event
+Save Changes
+
+should use club primary color.
+
+Secondary buttons
+Cancel
+
+should be:
+
+text button
+
+not outlined.
+
+10. Admin Page Philosophy
+
+Admin pages should feel like:
+
+lists
+forms
+tools
+
+Not like:
+
+dashboard cards
+
+So the rule should be:
+
+Lists → rows
+Forms → vertical layout
+Actions → buttons
+Stats → small grids
+After These Fixes
+
+Your UI will feel much closer to:
+
+• Strava club tools
+• Notion admin panels
+• Linear settings pages
+
+instead of:
+
+• Material dashboard templates
+
+Final Feedback
+
+You’ve gone from:
+
+prototype UI
+
+to
+
+real product UI
+
+in about three iterations, which is very good.
+
+The remaining work is mostly removing surfaces, not adding design.

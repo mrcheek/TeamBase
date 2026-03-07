@@ -1,0 +1,225 @@
+The 6 Design System Variables That Will Upgrade Everything
+
+These control 90% of the visual feel of the app.
+
+radius
+border color
+divider color
+background color
+text hierarchy
+spacing scale
+
+Fix these once → the entire UI becomes cleaner.
+
+1. Border Radius
+
+Right now the radius feels slightly inconsistent across cards, buttons and fields.
+
+Set three levels only.
+
+radius-sm   = 6px
+radius-md   = 10px
+radius-lg   = 16px
+
+Usage:
+
+Element	Radius
+Inputs	6px
+Buttons	10px
+Cards / hero	16px
+
+Avoid anything like:
+
+20px
+24px
+28px
+
+Those are what create the soft prototype look.
+
+2. Border Color
+
+Most UI libraries use borders that are too dark.
+
+Use a very soft neutral border.
+
+--border: hsl(220 10% 88%)
+
+This should be used for:
+
+• inputs
+• event rows
+• table rows
+• cards
+
+This makes the UI feel lighter and more premium.
+
+3. Divider Color
+
+Dividers should be even lighter than borders.
+
+--divider: hsl(220 10% 92%)
+
+Use for:
+
+• list separation
+• section boundaries
+• activity feeds
+
+Example:
+
+member
+---------
+member
+---------
+member
+
+Instead of containers.
+
+4. Background Color
+
+Right now your app background is probably pure white.
+
+Pure white feels cheap and harsh.
+
+Use a very soft warm grey.
+
+--background: hsl(40 10% 98%)
+
+This is subtle but dramatically improves polish.
+
+Used by apps like:
+
+• Notion
+• Linear
+• Stripe dashboard
+
+5. Text Hierarchy
+
+Right now your headers and metadata are too similar.
+
+Define three text levels.
+
+text-primary = hsl(220 15% 15%)
+text-secondary = hsl(220 10% 40%)
+text-muted = hsl(220 8% 60%)
+
+Usage:
+
+Text	Example
+Primary	"Touch Rugby Afternoon"
+Secondary	"Sat 7 Mar • 15:00"
+Muted	"Forodhani Gardens"
+
+This hierarchy instantly improves readability.
+
+6. Spacing Scale
+
+Right now spacing probably varies randomly between components.
+
+Define 4 spacing tokens.
+
+space-1 = 8px
+space-2 = 16px
+space-3 = 24px
+space-4 = 32px
+
+Usage:
+
+Situation	Spacing
+Icon ↔ text	8px
+List rows	16px
+Section content	24px
+Section separation	32px
+
+This makes the UI feel intentional.
+
+Example of These Tokens in Action
+
+Before:
+
+[card]
+[card]
+[card]
+
+After:
+
+Section title
+
+item
+---------
+item
+---------
+item
+
+With:
+
+• 24px section spacing
+• 16px row spacing
+• 1px divider
+
+Result → much cleaner UI.
+
+Bonus Variable (Optional but Powerful)
+
+Define a club accent variable.
+
+--club-accent
+
+Use it for:
+
+• Check In button
+• active nav tab
+• progress bars
+• event tags
+
+Example:
+
+Sharks RFC → navy
+Stone Town → red
+Paje Pirates → gold
+
+This will make each club feel visually unique.
+
+Final Token Set
+
+Your design system would look like this:
+
+--radius-sm
+--radius-md
+--radius-lg
+
+--border
+--divider
+
+--background
+
+--text-primary
+--text-secondary
+--text-muted
+
+--space-1
+--space-2
+--space-3
+--space-4
+
+--club-accent
+
+That's it.
+
+No complicated design system needed.
+
+Why This Matters
+
+When these tokens are consistent, your app will start to feel like:
+
+• Linear
+• Notion
+• Stripe Dashboard
+
+instead of:
+
+• generic component library UI.
+
+And the best part:
+
+You can apply these without redesigning any screens.

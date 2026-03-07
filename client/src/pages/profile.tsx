@@ -1,12 +1,12 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MembershipCard } from "@/components/membership-card";
-import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star, Sun, Moon, Settings } from "lucide-react";
+import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star, Sun, Moon, Settings, Bell } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
 import { Link } from "wouter";
@@ -31,6 +31,62 @@ export default function ProfilePage() {
   const { club: themeClub, primaryColor, accentColor } = useClubTheme();
   const { theme, toggleTheme } = useTheme();
   const xpSectionRef = useRef<HTMLElement>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/push/status", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setPushEnabled(d.subscribed))
+      .catch(() => {});
+  }, []);
+
+  const togglePush = useCallback(async () => {
+    if (pushLoading || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    setPushLoading(true);
+    try {
+      if (pushEnabled) {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch("/api/push/unsubscribe", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+          await sub.unsubscribe();
+        }
+        setPushEnabled(false);
+      } else {
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") { setPushLoading(false); return; }
+        const vapidRes = await fetch("/api/push/vapid-key");
+        const { publicKey } = await vapidRes.json();
+        const urlBase64 = publicKey.replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(urlBase64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: outputArray,
+        });
+        const subJson = sub.toJSON();
+        await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ endpoint: sub.endpoint, keys: subJson.keys }),
+        });
+        setPushEnabled(true);
+      }
+    } catch {
+      //
+    } finally {
+      setPushLoading(false);
+    }
+  }, [pushEnabled, pushLoading]);
 
   const { data: myActivities } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
@@ -271,6 +327,27 @@ export default function ProfilePage() {
               />
             </button>
           </div>
+          {"Notification" in window && (
+            <div className="flex items-center justify-between py-3" data-testid="setting-notifications">
+              <div className="flex items-center gap-2.5">
+                <Bell className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Notifications</p>
+                  <p className="text-[11px] text-muted-foreground">{pushEnabled ? "On" : "Off"}</p>
+                </div>
+              </div>
+              <button
+                onClick={togglePush}
+                disabled={pushLoading}
+                className={`relative w-11 h-6 rounded-full transition-colors ${pushEnabled ? "bg-club-primary" : "bg-muted"} ${pushLoading ? "opacity-50" : ""}`}
+                data-testid="button-push-toggle"
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${pushEnabled ? "translate-x-5" : "translate-x-0"}`}
+                />
+              </button>
+            </div>
+          )}
           <div className="py-3">
             <button
               onClick={() => logout()}

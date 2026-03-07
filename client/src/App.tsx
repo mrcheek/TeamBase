@@ -1,6 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Switch, Route, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient, apiRequest } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +23,90 @@ import NotFound from "@/pages/not-found";
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { WifiOff } from "lucide-react";
+
+const OFFLINE_QUEUE_KEY = "zrf-offline-activity-queue";
+
+function getOfflineQueue(): Array<Record<string, unknown>> {
+  try {
+    const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveOfflineQueue(queue: Array<Record<string, unknown>>) {
+  localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+}
+
+export function queueOfflineActivity(data: Record<string, unknown>) {
+  const queue = getOfflineQueue();
+  queue.push({ ...data, _queuedAt: Date.now() });
+  saveOfflineQueue(queue);
+}
+
+async function replayOfflineQueue() {
+  const queue = getOfflineQueue();
+  if (queue.length === 0) return;
+
+  const remaining: Array<Record<string, unknown>> = [];
+  for (const item of queue) {
+    try {
+      const { _queuedAt, ...payload } = item;
+      await apiRequest("POST", "/api/activities", payload);
+    } catch {
+      remaining.push(item);
+    }
+  }
+  saveOfflineQueue(remaining);
+
+  if (remaining.length < queue.length) {
+    queryClient.invalidateQueries({ queryKey: ["/api/activities"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/activities/heatmap"] });
+  }
+}
+
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    if (navigator.onLine) replayOfflineQueue();
+
+    const goOnline = () => {
+      setIsOnline(true);
+      replayOfflineQueue();
+    };
+    const goOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
+function OfflineBanner() {
+  const isOnline = useOnlineStatus();
+
+  if (isOnline) return null;
+
+  return (
+    <div
+      className="sticky top-0 z-50 flex items-center justify-center gap-2 bg-destructive/90 text-destructive-foreground py-1.5 text-xs font-medium"
+      data-testid="banner-offline"
+    >
+      <WifiOff className="w-3.5 h-3.5" />
+      <span>You're offline</span>
+    </div>
+  );
+}
 
 function ProfileCompletionPrompt() {
   const { user, profileCompletion } = useAuth();
@@ -103,6 +187,7 @@ function AppShell() {
 
   return (
     <div className="min-h-screen bg-background">
+      <OfflineBanner />
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b px-4 py-2.5">
         <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">

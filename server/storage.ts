@@ -1,11 +1,12 @@
 import { eq, desc, and, inArray, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
-  users, clubs, federations, memberships, events, attendance, activities, xpTransactions,
+  users, clubs, federations, memberships, events, attendance, activities, xpTransactions, pushSubscriptions,
   type User, type InsertUser, type Club, type InsertClub, type Federation, type InsertFederation,
   type Membership, type InsertMembership, type Event, type InsertEvent,
   type Attendance, type InsertAttendance, type Activity, type InsertActivity,
   type XpTransaction, type InsertXpTransaction,
+  type PushSubscription, type InsertPushSubscription,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -56,6 +57,12 @@ export interface IStorage {
   updateClub(clubId: number, data: Partial<Club>): Promise<Club | undefined>;
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
   getAdminStats(federationId?: number): Promise<{ totalUsers: number; totalPlayers: number; totalSupporters: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }>;
+
+  savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
+  removePushSubscription(userId: number, endpoint: string): Promise<void>;
+  getUserPushSubscriptions(userId: number): Promise<PushSubscription[]>;
+  getClubPushSubscriptions(clubId: number): Promise<PushSubscription[]>;
+  getActivityHeatmap(clubId?: number): Promise<{ day: number; count: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -318,6 +325,66 @@ export class DatabaseStorage implements IStorage {
       upcomingEvents: upcoming.length,
       totalClubs: allClubs.length,
     };
+  }
+  async savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription> {
+    const existing = await db.select().from(pushSubscriptions)
+      .where(and(eq(pushSubscriptions.userId, sub.userId), eq(pushSubscriptions.endpoint, sub.endpoint)));
+    if (existing.length > 0) return existing[0];
+    const [created] = await db.insert(pushSubscriptions).values(sub).returning();
+    return created;
+  }
+
+  async removePushSubscription(userId: number, endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(
+      and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpoint, endpoint))
+    );
+  }
+
+  async getUserPushSubscriptions(userId: number): Promise<PushSubscription[]> {
+    return db.select().from(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+  }
+
+  async getClubPushSubscriptions(clubId: number): Promise<PushSubscription[]> {
+    const members = await this.getClubMembers(clubId);
+    if (members.length === 0) return [];
+    const memberIds = members.map(m => m.id);
+    return db.select().from(pushSubscriptions).where(inArray(pushSubscriptions.userId, memberIds));
+  }
+
+  async getActivityHeatmap(clubId?: number): Promise<{ day: number; count: number }[]> {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + mondayOffset);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    let userIds: number[] | undefined;
+    if (clubId) {
+      const members = await this.getClubMembers(clubId);
+      userIds = members.map(m => m.id);
+      if (userIds.length === 0) return Array.from({ length: 7 }, (_, i) => ({ day: i, count: 0 }));
+    }
+
+    const allActivities = await db.select().from(activities).orderBy(desc(activities.createdAt));
+    const weekActivities = allActivities.filter(a => {
+      const created = a.createdAt ? new Date(a.createdAt) : null;
+      if (!created || created < monday || created > sunday) return false;
+      if (userIds && !userIds.includes(a.userId)) return false;
+      return true;
+    });
+
+    const counts = Array.from({ length: 7 }, (_, i) => ({ day: i, count: 0 }));
+    for (const a of weekActivities) {
+      const created = new Date(a.createdAt!);
+      let dayIdx = created.getDay() - 1;
+      if (dayIdx < 0) dayIdx = 6;
+      counts[dayIdx].count++;
+    }
+    return counts;
   }
 }
 

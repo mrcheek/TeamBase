@@ -1,4 +1,4 @@
-import type { Express, Request, Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
@@ -8,6 +8,10 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema } from "@shared/schema";
 import { seedDatabase } from "./seed";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import webpush from "web-push";
 
 const scryptAsync = promisify(scrypt);
 
@@ -428,6 +432,135 @@ export async function registerRoutes(
       const updated = await storage.updateClub(parseInt(req.params.id), data as any);
       if (!updated) return res.status(404).json({ message: "Club not found" });
       res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  const uploadsDir = path.join(process.cwd(), "uploads");
+  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (_req, _file, cb) => cb(null, uploadsDir),
+      filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${Date.now()}-${randomBytes(6).toString("hex")}${ext}`);
+      },
+    }),
+    limits: { fileSize: 2 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      const allowed = [".jpg", ".jpeg", ".png", ".webp", ".svg"];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) cb(null, true);
+      else cb(new Error("Only image files (jpg, png, webp, svg) are allowed"));
+    },
+  });
+
+  app.use("/uploads", express.static(uploadsDir));
+
+  app.post("/api/upload", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
+  const vapidPublic = process.env.VAPID_PUBLIC_KEY;
+  const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+  const vapidSubject = process.env.VAPID_SUBJECT || "mailto:admin@zrf.rugby";
+  if (vapidPublic && vapidPrivate) {
+    webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
+  }
+
+  app.get("/api/push/vapid-key", (_req: Request, res: Response) => {
+    if (!vapidPublic) return res.status(500).json({ message: "Push not configured" });
+    res.json({ publicKey: vapidPublic });
+  });
+
+  app.post("/api/push/subscribe", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { endpoint, keys } = req.body;
+      if (!endpoint || !keys?.p256dh || !keys?.auth) {
+        return res.status(400).json({ message: "Invalid subscription" });
+      }
+      const sub = await storage.savePushSubscription({
+        userId: req.session.userId!,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      });
+      res.json(sub);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/push/unsubscribe", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { endpoint } = req.body;
+      if (!endpoint) return res.status(400).json({ message: "Endpoint required" });
+      await storage.removePushSubscription(req.session.userId!, endpoint);
+      res.json({ message: "Unsubscribed" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/push/status", requireAuth, async (req: Request, res: Response) => {
+    const subs = await storage.getUserPushSubscriptions(req.session.userId!);
+    res.json({ subscribed: subs.length > 0 });
+  });
+
+  app.post("/api/admin/events/:id/notify", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const event = await storage.getEvent(parseInt(req.params.id));
+      if (!event) return res.status(404).json({ message: "Event not found" });
+      if (!vapidPublic || !vapidPrivate) return res.status(500).json({ message: "Push not configured" });
+
+      let subscriptions: any[] = [];
+      if (event.clubId) {
+        subscriptions = await storage.getClubPushSubscriptions(event.clubId);
+      }
+
+      const club = event.clubId ? await storage.getClub(event.clubId) : null;
+      const payload = JSON.stringify({
+        title: event.title,
+        body: `${new Date(event.date + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} • ${event.time || "TBC"}${event.location ? ` • ${event.location}` : ""}`,
+        icon: "/icon-192.png",
+        data: { url: `/events/${event.id}` },
+        tag: `event-${event.id}`,
+        club: club?.name || "ZRF",
+      });
+
+      let sent = 0;
+      let failed = 0;
+      for (const sub of subscriptions) {
+        try {
+          await webpush.sendNotification({
+            endpoint: sub.endpoint,
+            keys: { p256dh: sub.p256dh, auth: sub.auth },
+          }, payload);
+          sent++;
+        } catch (err: any) {
+          if (err.statusCode === 410 || err.statusCode === 404) {
+            await storage.removePushSubscription(sub.userId, sub.endpoint);
+          }
+          failed++;
+        }
+      }
+      res.json({ sent, failed, total: subscriptions.length });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.get("/api/activities/heatmap", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userMemberships = await storage.getUserMemberships(req.session.userId!);
+      const activeMembership = userMemberships.find(m => m.status === "active" || m.status === "approved");
+      const clubId = activeMembership?.clubId;
+      const heatmap = await storage.getActivityHeatmap(clubId);
+      res.json(heatmap);
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }

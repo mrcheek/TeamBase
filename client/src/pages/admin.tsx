@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,7 +13,8 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, Calendar, Building2, BarChart3,
   Check, X, Edit2, Trash2, Plus, ChevronRight, Search,
-  Shield, ArrowLeft, Phone, Mail, MapPin, Heart, Dumbbell, TrendingUp
+  Shield, ArrowLeft, Phone, Mail, MapPin, Heart, Dumbbell, TrendingUp,
+  Upload, Bell
 } from "lucide-react";
 import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
 
@@ -652,6 +653,22 @@ function EventsTab() {
                         <Button
                           size="sm"
                           variant="ghost"
+                          className="h-7 w-7 p-0"
+                          onClick={async () => {
+                            try {
+                              const res = await apiRequest("POST", `/api/admin/events/${event.id}/notify`);
+                              const data = await res.json();
+                              alert(`Sent ${data.sent} notification${data.sent !== 1 ? "s" : ""}${data.failed ? `, ${data.failed} failed` : ""}`);
+                            } catch { alert("Failed to send notifications"); }
+                          }}
+                          data-testid={`button-notify-event-${event.id}`}
+                          title="Send push reminder"
+                        >
+                          <Bell className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
                           className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
                           onClick={() => {
                             if (confirm("Delete this event?")) deleteMutation.mutate(event.id);
@@ -853,6 +870,66 @@ function ClubsTab() {
   );
 }
 
+function ImageUpload({ currentUrl, onUpload, testId, label }: { currentUrl: string; onUpload: (url: string) => void; testId: string; label: string }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+      onUpload(data.url);
+    } catch {
+      //
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5"
+          disabled={uploading}
+          onClick={() => fileRef.current?.click()}
+          data-testid={`${testId}-upload`}
+        >
+          <Upload className="w-3 h-3" />
+          {uploading ? "Uploading..." : label}
+        </Button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
+        {currentUrl && (
+          <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => onUpload("")} data-testid={`${testId}-clear`}>
+            <X className="w-3 h-3" />
+          </Button>
+        )}
+      </div>
+      {currentUrl && (
+        <div className="relative w-full h-16 rounded overflow-hidden bg-muted">
+          <img src={currentUrl} alt="Preview" className="w-full h-full object-cover" data-testid={`${testId}-preview`} />
+        </div>
+      )}
+      <Input
+        value={currentUrl}
+        onChange={(e) => onUpload(e.target.value)}
+        placeholder="Or paste URL..."
+        className="text-[10px] h-7"
+        data-testid={`${testId}-url`}
+      />
+    </div>
+  );
+}
+
 function ClubForm({
   club,
   onSubmit,
@@ -912,12 +989,22 @@ function ClubForm({
 
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2 border-t">Club Branding</h4>
           <div className="space-y-1.5">
-            <Label className="text-xs">Logo URL</Label>
-            <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." data-testid="input-club-logo-url" />
+            <Label className="text-xs">Club Logo</Label>
+            <ImageUpload
+              currentUrl={logoUrl}
+              onUpload={(url) => setLogoUrl(url)}
+              testId="input-club-logo"
+              label="Upload Logo"
+            />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs">Banner URL</Label>
-            <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="https://..." data-testid="input-club-banner-url" />
+            <Label className="text-xs">Club Banner</Label>
+            <ImageUpload
+              currentUrl={bannerUrl}
+              onUpload={(url) => setBannerUrl(url)}
+              testId="input-club-banner"
+              label="Upload Banner"
+            />
           </div>
 
           <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2 border-t">Brand Colours</h4>

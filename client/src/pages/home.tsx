@@ -1,9 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
@@ -21,6 +19,7 @@ import {
   Zap,
   Heart,
   Activity,
+  BarChart3,
 } from "lucide-react";
 import type { Event, Activity as ActivityType, User, Club, Membership } from "@shared/schema";
 
@@ -62,6 +61,11 @@ export default function HomePage() {
     enabled: !!user,
   });
 
+  const { data: heatmap } = useQuery<{ day: number; count: number }[]>({
+    queryKey: ["/api/activities/heatmap"],
+    enabled: !!user,
+  });
+
   const upcomingEvents = events
     ?.filter((e) => new Date(e.date) >= new Date(new Date().toISOString().split("T")[0]))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -85,13 +89,13 @@ export default function HomePage() {
   return (
     <div className="pb-24 pt-3 max-w-lg mx-auto">
       {user && (
-        <section className="mb-5 px-4" data-testid="section-club-hero">
+        <section className="mb-8 px-4" data-testid="section-club-hero">
           <div
             className="rounded-xl p-5 text-white relative overflow-hidden"
             style={{
               background: userClub?.primaryColor
-                ? `linear-gradient(135deg, ${userClub.primaryColor} 0%, ${userClub.primaryColor}cc 100%)`
-                : `linear-gradient(135deg, hsl(var(--club-primary)) 0%, hsl(var(--club-primary) / 0.8) 100%)`,
+                ? `linear-gradient(135deg, ${userClub.primaryColor} 0%, ${userClub.primaryColor}99 60%, #111 100%)`
+                : `linear-gradient(135deg, hsl(var(--club-primary)) 0%, hsl(var(--club-primary) / 0.6) 60%, #111 100%)`,
             }}
           >
             <div className="flex items-center gap-3 relative z-10">
@@ -106,7 +110,7 @@ export default function HomePage() {
                 {clubInitials}
               </div>
               <div className="flex-1 min-w-0">
-                <h2 className="text-lg font-bold leading-tight truncate" data-testid="text-club-name">
+                <h2 className="text-2xl font-bold leading-tight truncate" data-testid="text-club-name">
                   {userClub ? userClub.name : "Zanzibar Rugby Federation"}
                 </h2>
                 {userClub?.location && (
@@ -128,11 +132,16 @@ export default function HomePage() {
         </section>
       )}
 
-      <section className="mb-5 px-4" data-testid="section-next-session">
+      <section className="mb-7 px-4" data-testid="section-next-session">
         {eventsLoading ? (
           <Skeleton className="h-32 rounded-md" />
         ) : nextEvent ? (
-          <Card className="p-4">
+          <div
+            className="p-4 rounded-md"
+            style={{
+              backgroundColor: `hsl(var(--club-primary) / 0.06)`,
+            }}
+          >
             <div className="flex items-center gap-2 mb-2">
               <Zap className="w-4 h-4" style={{ color: `hsl(var(--club-primary))` }} />
               <span
@@ -185,7 +194,7 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
-          </Card>
+          </div>
         ) : (
           <div className="py-6 text-center">
             <Calendar className="w-6 h-6 mx-auto text-muted-foreground/40 mb-1.5" />
@@ -198,12 +207,12 @@ export default function HomePage() {
         <>
           <div className="border-t mx-4" />
 
-          <section className="py-4 px-4" data-testid="section-split-grid">
+          <section className="py-6 px-4" data-testid="section-split-grid">
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Trophy className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Rank + Momentum
                   </span>
                 </div>
@@ -233,7 +242,7 @@ export default function HomePage() {
               <div>
                 <div className="flex items-center gap-1.5 mb-2">
                   <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Club Activity
                   </span>
                 </div>
@@ -271,24 +280,65 @@ export default function HomePage() {
 
           <div className="border-t mx-4" />
 
-          <section className="py-4 px-4" data-testid="section-quick-log">
-            <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+          <section className="py-6 px-4" data-testid="section-quick-log">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
               Quick Log
             </h3>
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex gap-4 overflow-x-auto pb-1 justify-around">
               {quickActivities.map((act) => (
                 <Link key={act.type} href={`/check-in?activity=${act.type}`}>
                   <div
-                    className="flex flex-col items-center gap-1 py-2.5 px-4 min-w-[4.5rem] rounded-md border hover:bg-muted/50 transition-colors cursor-pointer"
+                    className="flex flex-col items-center gap-1.5 cursor-pointer"
                     data-testid={`button-quick-${act.type}`}
                   >
-                    <act.icon className="w-4 h-4 text-muted-foreground" />
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <act.icon className="w-4.5 h-4.5 text-muted-foreground" />
+                    </div>
                     <span className="text-[10px] font-medium text-muted-foreground">{act.label}</span>
                   </div>
                 </Link>
               ))}
             </div>
           </section>
+          {heatmap && heatmap.some(h => h.count > 0) && (
+            <>
+              <div className="border-t mx-4" />
+
+              <section className="py-6 px-4" data-testid="section-heatmap">
+                <div className="flex items-center gap-1.5 mb-3">
+                  <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
+                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Club Activity This Week
+                  </h3>
+                </div>
+                <div className="space-y-1.5">
+                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
+                    const count = heatmap[i]?.count || 0;
+                    const max = Math.max(...heatmap.map(h => h.count), 1);
+                    const pct = (count / max) * 100;
+                    return (
+                      <div key={day} className="flex items-center gap-2" data-testid={`heatmap-bar-${day.toLowerCase()}`}>
+                        <span className="text-[10px] font-medium text-muted-foreground w-7 shrink-0">{day}</span>
+                        <div className="flex-1 h-4 bg-muted/50 rounded-sm overflow-hidden">
+                          {count > 0 && (
+                            <div
+                              className="h-full rounded-sm transition-all"
+                              style={{
+                                width: `${Math.max(pct, 8)}%`,
+                                backgroundColor: `hsl(var(--club-primary))`,
+                                opacity: 0.7 + (pct / 100) * 0.3,
+                              }}
+                            />
+                          )}
+                        </div>
+                        <span className="text-[10px] font-semibold tabular-nums w-4 text-right">{count || ""}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            </>
+          )}
         </>
       )}
 
@@ -296,9 +346,9 @@ export default function HomePage() {
         <>
           <div className="border-t mx-4" />
 
-          <section className="py-4 px-4" data-testid="section-club-table">
+          <section className="py-6 px-4" data-testid="section-club-table">
             <div className="flex items-center justify-between gap-2 mb-3">
-              <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 ZRF Club Table
               </h3>
               <Link href="/play" data-testid="link-view-full-table">
@@ -327,7 +377,7 @@ export default function HomePage() {
                       {idx + 1}
                     </span>
                     <span className="flex-1 font-medium text-sm truncate">{entry.club.name}</span>
-                    <span className="text-xs text-muted-foreground">{entry.score} pts</span>
+                    <span className="text-xs font-semibold tabular-nums">{entry.score}</span>
                     <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
                   </div>
                 </Link>

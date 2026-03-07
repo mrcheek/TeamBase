@@ -58,7 +58,7 @@ Each club has its own color palette stored in the `clubs` table:
 - `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + club branding editor
 
 ## Pages
-- `/` - Home: Club Hero (gradient banner), Next Session (only card), Rank+Momentum | Activity (flat split grid), Quick Log strip, Club Table (divider rows)
+- `/` - Home: Club Hero (muted gradient), Next Session (subtle tint, no card), Rank+Momentum | Activity (flat split grid), Quick Log (circular icons), Club Activity Heatmap (weekly bars), Club Table (league-style divider rows)
 - `/play` - Events & Clubs: underline tab switcher, underline filter indicators, event/club rows with dividers (not cards)
 - `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
 - `/train` - Training library: accordion sections with category-colored accent bars, grouped drills
@@ -114,13 +114,18 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 5. Events calendar with check-in system (+25 XP)
 6. Activity tracking (gym, running, SAQ, etc.) with server-controlled XP
 7. XP system with 4 tiers: Green (0-199), Blue (200-499), Silver (500-999), Gold (1000+)
-8. Digital membership card with club/tier-based gradient
+8. Digital membership card with club/tier-based gradient + QR flip
 9. Club score system (50% of member XP)
 10. Activity feed and leaderboards
 11. Admin dashboard with full member/event/club management + branding editor
 12. Collapsible training programs (accordion sections)
 13. Event filtering by type
-14. Branded bottom navigation
+14. Branded bottom navigation with 56px GO button
+15. Club logo/banner file uploads (multer, max 2MB, stored in /uploads/)
+16. Push notifications (Web Push API + VAPID, per-club delivery, admin "Send Reminder" per event)
+17. PWA offline support (cache-first for bundles/images, network-first for API, offline activity queue, offline banner)
+18. Club Activity Heatmap (weekly Mon-Sun bar chart on homepage)
+19. Dark mode toggle (class-based, localStorage persisted)
 
 ## API Endpoints
 ### Public
@@ -148,13 +153,25 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 - PATCH `/api/admin/events/:id` - Edit event
 - DELETE `/api/admin/events/:id` - Delete event
 - PATCH `/api/admin/clubs/:id` - Edit club (including branding fields)
+- POST `/api/admin/events/:id/notify` - Send push reminder to club members
+- POST `/api/upload` - Upload image file (returns URL)
+
+### Push Notifications
+- GET `/api/push/vapid-key` - Public VAPID key
+- POST `/api/push/subscribe` - Save push subscription
+- DELETE `/api/push/unsubscribe` - Remove push subscription
+- GET `/api/push/status` - Check if user has active subscription
+
+### Activity
+- GET `/api/activities/heatmap` - Weekly activity counts (Mon-Sun) for user's club
 
 ## PWA Support
 - `client/public/manifest.json` - Web app manifest with icons, shortcuts, theme
-- `client/public/sw.js` - Service worker with stale-while-revalidate caching
+- `client/public/sw.js` - Service worker with multi-cache strategy (static v2, API v2, images v2), push handlers, notification click
 - `client/public/icon.svg` / `icon-maskable.svg` - SVG app icons
 - `client/src/components/pwa-install-prompt.tsx` - Install banner
 - Service worker registered in `client/src/main.tsx`
+- Offline: activity queue in localStorage, offline banner component, stale API cache fallback
 
 ## Running
 `npm run dev` starts Express + Vite dev server on port 5000.

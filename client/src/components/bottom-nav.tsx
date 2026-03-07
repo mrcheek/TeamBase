@@ -45,7 +45,7 @@ export function BottomNav() {
               >
                 <div className="flex flex-col items-center gap-0.5 -mt-3">
                   <div
-                    className="w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-md"
+                    className="w-14 h-14 rounded-full flex items-center justify-center transition-colors shadow-md"
                     style={{
                       backgroundColor: isActive
                         ? "hsl(var(--club-accent))"
@@ -53,7 +53,7 @@ export function BottomNav() {
                       color: "hsl(var(--club-primary-foreground))",
                     }}
                   >
-                    <span className="font-bold text-sm">GO</span>
+                    <span className="font-bold text-base">GO</span>
                   </div>
                   <span
                     className={`text-[10px] font-medium ${isActive ? "" : "text-muted-foreground"}`}

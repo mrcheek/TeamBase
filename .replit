@@ -38,3 +38,10 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BNLwibTpIB1gFseGZWS7YVJz17jIT895dgAgLbXE4fp9hM7M8OG6-a47CM9XpfW9wEzN7Vh158yfg6LZqPGpz1o"
+VAPID_PRIVATE_KEY = "ey5V5P14TSfXSIpCZSEiMaGLgdDB3Z-mZQ5x0OL_WfY"
+VAPID_SUBJECT = "mailto:admin@zrf.rugby"
