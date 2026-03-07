@@ -163,6 +163,7 @@ export const loginSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
+  photoUrl: z.string().optional().nullable(),
   dateOfBirth: z.string().optional(),
   gender: z.enum(["male", "female", "other"]).optional(),
   nationality: z.string().optional(),
@@ -242,6 +243,7 @@ export function calculateProfileCompletion(user: Omit<User, "password">): number
   const requiredFields = [
     user.fullName,
     user.phone,
+    user.photoUrl,
     user.dateOfBirth,
     user.gender,
     user.nationality,

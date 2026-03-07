@@ -4,11 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, ChevronUp, CheckCircle2, AlertCircle } from "lucide-react";
 import type { Club } from "@shared/schema";
@@ -22,6 +23,7 @@ export default function CompleteProfilePage() {
   const { data: clubs } = useQuery<Club[]>({ queryKey: ["/api/clubs"] });
 
   const [form, setForm] = useState({
+    photoUrl: user?.photoUrl || "",
     dateOfBirth: user?.dateOfBirth || "",
     gender: user?.gender || "",
     nationality: user?.nationality || "",
@@ -56,7 +58,15 @@ export default function CompleteProfilePage() {
     setExpandedSection((prev) => (prev === section ? null : section));
   };
 
+  const [photoError, setPhotoError] = useState(false);
+
   const handleSave = async () => {
+    if (!form.photoUrl) {
+      setPhotoError(true);
+      setExpandedSection(null);
+      toast({ variant: "destructive", title: "Photo required", description: "Please upload a profile photo to complete your registration." });
+      return;
+    }
     setLoading(true);
     try {
       const payload: Record<string, any> = { ...form };
@@ -66,6 +76,7 @@ export default function CompleteProfilePage() {
       Object.keys(payload).forEach((k) => {
         if (payload[k] === "" || payload[k] === undefined) delete payload[k];
       });
+      payload.photoUrl = form.photoUrl || null;
       payload.photoConsent = form.photoConsent;
       payload.dataConsent = form.dataConsent;
       await updateProfile(payload);
@@ -126,6 +137,29 @@ export default function CompleteProfilePage() {
             <p className="text-xs text-primary mt-2 flex items-center gap-1">
               <CheckCircle2 className="w-3 h-3" />
               Registration complete!
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className={`mb-4 ${photoError && !form.photoUrl ? "ring-2 ring-destructive" : ""}`}>
+        <CardContent className="p-5">
+          <div className="text-center mb-3">
+            <h3 className="text-sm font-semibold" data-testid="text-photo-section-title">Profile Photo</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Upload a clear photo of yourself. This is required for registration.
+            </p>
+          </div>
+          <ImageUpload
+            currentUrl={form.photoUrl}
+            onUpload={(url) => { update("photoUrl", url); if (url) setPhotoError(false); }}
+            testId="avatar-photo"
+            variant="avatar"
+          />
+          {photoError && !form.photoUrl && (
+            <p className="text-xs text-destructive text-center mt-2 flex items-center justify-center gap-1" data-testid="text-photo-error">
+              <AlertCircle className="w-3 h-3" />
+              Profile photo is required
             </p>
           )}
         </CardContent>

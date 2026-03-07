@@ -106,13 +106,17 @@ export function MembershipCard({ user, clubName, clubPrimaryColor, clubAccentCol
 
           <div className="flex items-center gap-4 mb-6">
             <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold overflow-hidden"
               style={clubAccentColor ? {
                 backgroundColor: `${clubAccentColor}30`,
                 border: `2px solid ${clubAccentColor}50`,
               } : { backgroundColor: "rgba(255,255,255,0.2)" }}
             >
-              {initials}
+              {user.photoUrl ? (
+                <img src={user.photoUrl} alt={user.fullName} className="w-full h-full object-cover" data-testid="img-membership-photo" />
+              ) : (
+                initials
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-lg truncate">{user.fullName}</h3>

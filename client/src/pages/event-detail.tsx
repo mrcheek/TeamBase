@@ -7,7 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
   Calendar,
@@ -331,6 +332,7 @@ export default function EventDetailPage() {
                       className="w-9 h-9 -ml-1 first:ml-0 border-2 border-background"
                       data-testid={`avatar-attendee-${att.id}`}
                     >
+                      {att.user.photoUrl && <AvatarImage src={att.user.photoUrl} alt={att.user.fullName} />}
                       <AvatarFallback
                         className="text-xs font-bold"
                         style={{
@@ -355,12 +357,6 @@ export default function EventDetailPage() {
                 <Card>
                   <CardContent className="p-0">
                     {attendanceList.slice(0, 5).map((att, idx) => {
-                      const initials = att.user.fullName
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2);
                       return (
                         <div
                           key={att.id}
@@ -369,17 +365,7 @@ export default function EventDetailPage() {
                           }`}
                           data-testid={`row-attendee-${att.id}`}
                         >
-                          <Avatar className="w-7 h-7">
-                            <AvatarFallback
-                              className="text-[10px] font-bold"
-                              style={{
-                                backgroundColor: "hsl(var(--club-primary) / 0.15)",
-                                color: "hsl(var(--club-primary))",
-                              }}
-                            >
-                              {initials}
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatar fullName={att.user.fullName} photoUrl={att.user.photoUrl} size="xs" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{att.user.fullName}</p>
                           </div>

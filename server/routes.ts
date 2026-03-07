@@ -541,6 +541,12 @@ export async function registerRoutes(
     res.json({ url });
   });
 
+  app.post("/api/upload/avatar", requireAuth, upload.single("file"), (req: Request, res: Response) => {
+    if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
   const vapidPublic = process.env.VAPID_PUBLIC_KEY;
   const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
   const vapidSubject = process.env.VAPID_SUBJECT || "mailto:admin@zrf.rugby";

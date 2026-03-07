@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MembershipCard } from "@/components/membership-card";
+import { UserAvatar } from "@/components/user-avatar";
+import { ImageUpload } from "@/components/image-upload";
 import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star, Sun, Moon, Settings, Bell } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
@@ -28,7 +30,7 @@ const activityIcons: Record<string, typeof Dumbbell> = {
 };
 
 export default function ProfilePage() {
-  const { user, logout, profileCompletion } = useAuth();
+  const { user, logout, updateProfile, profileCompletion } = useAuth();
   const { club: themeClub, primaryColor, accentColor } = useClubTheme();
   const { theme, toggleTheme } = useTheme();
   const xpSectionRef = useRef<HTMLElement>(null);
@@ -134,10 +136,27 @@ export default function ProfilePage() {
 
   const activeClub = myMemberships?.find((m) => m.status === "active");
 
+  const handleAvatarChange = useCallback(async (url: string) => {
+    try {
+      await updateProfile({ photoUrl: url || null });
+    } catch {
+      // silently fail
+    }
+  }, [updateProfile]);
+
   return (
     <div className="pb-24 pt-2 max-w-lg mx-auto">
-      <div className="px-4 mb-5">
-        <h2 className="text-lg font-bold" data-testid="text-profile-title">Profile</h2>
+      <div className="px-4 mb-5 flex flex-col items-center gap-3" data-testid="section-profile-header">
+        <ImageUpload
+          currentUrl={user.photoUrl || ""}
+          onUpload={handleAvatarChange}
+          testId="profile-avatar"
+          variant="avatar"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-bold" data-testid="text-profile-title">{user.fullName}</h2>
+          <p className="text-sm text-muted-foreground capitalize">{user.role.replace("_", " ")}</p>
+        </div>
       </div>
 
       {user && !user.profileCompleted && profileCompletion < 100 && (

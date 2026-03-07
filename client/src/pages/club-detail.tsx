@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { useToast } from "@/hooks/use-toast";
 import {
   MapPin,
@@ -423,12 +423,6 @@ export default function ClubDetailPage() {
             </div>
             <div className="border rounded-md overflow-hidden">
               {members.slice(0, 8).map((member, idx, arr) => {
-                const memberInitials = member.fullName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2);
                 return (
                   <div
                     key={member.id}
@@ -437,17 +431,7 @@ export default function ClubDetailPage() {
                     }`}
                     data-testid={`row-member-${member.id}`}
                   >
-                    <Avatar className="w-8 h-8">
-                      <AvatarFallback
-                        className="text-xs font-bold"
-                        style={{
-                          backgroundColor: `hsl(${primaryHSL} / 0.12)`,
-                          color: `hsl(${primaryHSL})`,
-                        }}
-                      >
-                        {memberInitials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar fullName={member.fullName} photoUrl={member.photoUrl} size="xs" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{member.fullName}</p>
                     </div>

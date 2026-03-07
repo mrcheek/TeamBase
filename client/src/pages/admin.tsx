@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
+import { ImageUpload as SharedImageUpload } from "@/components/image-upload";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,7 +14,7 @@ import {
   Users, Calendar, Building2, BarChart3,
   Check, X, Edit2, Trash2, Plus, ChevronRight, Search,
   Shield, ArrowLeft, Phone, Mail, MapPin, Heart, Dumbbell, TrendingUp,
-  Upload, Bell
+  Bell
 } from "lucide-react";
 import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
 import { isAnyAdmin, isFederationAdminOrAbove, isTeambaseAdmin, canAssignRole, ALL_ROLES, ADMIN_ROLES } from "@shared/schema";
@@ -960,64 +961,8 @@ function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds
   );
 }
 
-function ImageUpload({ currentUrl, onUpload, testId, label }: { currentUrl: string; onUpload: (url: string) => void; testId: string; label: string }) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: formData, credentials: "include" });
-      if (!res.ok) throw new Error("Upload failed");
-      const data = await res.json();
-      onUpload(data.url);
-    } catch {
-      //
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="text-xs gap-1.5"
-          disabled={uploading}
-          onClick={() => fileRef.current?.click()}
-          data-testid={`${testId}-upload`}
-        >
-          <Upload className="w-3 h-3" strokeWidth={ICON_STROKE} />
-          {uploading ? "Uploading..." : label}
-        </Button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-        {currentUrl && (
-          <Button type="button" variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => onUpload("")} data-testid={`${testId}-clear`}>
-            <X className="w-3 h-3" strokeWidth={ICON_STROKE} />
-          </Button>
-        )}
-      </div>
-      {currentUrl && (
-        <div className="relative w-full h-16 rounded overflow-hidden bg-muted">
-          <img src={currentUrl} alt="Preview" className="w-full h-full object-cover" data-testid={`${testId}-preview`} />
-        </div>
-      )}
-      <Input
-        value={currentUrl}
-        onChange={(e) => onUpload(e.target.value)}
-        placeholder="Or paste URL..."
-        className="text-[10px] h-7"
-        data-testid={`${testId}-url`}
-      />
-    </div>
-  );
+function ImageUpload({ currentUrl, onUpload, testId }: { currentUrl: string; onUpload: (url: string) => void; testId: string }) {
+  return <SharedImageUpload currentUrl={currentUrl} onUpload={onUpload} uploadEndpoint="/api/upload" testId={testId} variant="banner" />;
 }
 
 function ClubForm({
@@ -1091,7 +1036,6 @@ function ClubForm({
                 currentUrl={logoUrl}
                 onUpload={(url) => setLogoUrl(url)}
                 testId="input-club-logo"
-                label="Upload Logo"
               />
             </div>
             <div className="space-y-1.5">
@@ -1100,7 +1044,6 @@ function ClubForm({
                 currentUrl={bannerUrl}
                 onUpload={(url) => setBannerUrl(url)}
                 testId="input-club-banner"
-                label="Upload Banner"
               />
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import {
@@ -289,21 +290,13 @@ function FeedTab() {
                 </h4>
                 <div className="divide-y divide-divider">
                   {items.map((activity) => {
-                    const initials = activity.user.fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
                     return (
                       <div
                         key={activity.id}
                         className="flex items-center gap-3 py-3.5"
                         data-testid={`row-club-feed-${activity.id}`}
                       >
-                        <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                          <span className="text-[10px] font-bold text-muted-foreground">{initials}</span>
-                        </div>
+                        <UserAvatar fullName={activity.user.fullName} photoUrl={activity.user.photoUrl} size="sm" />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium">{activity.user.fullName}</p>
                           <p className="text-[13px] text-muted-foreground">
@@ -399,17 +392,9 @@ function RosterTab() {
       ) : sortedRoster && sortedRoster.length > 0 ? (
         <div className="divide-y divide-divider">
           {sortedRoster.map((member) => {
-            const initials = member.fullName
-              .split(" ")
-              .map((n) => n[0])
-              .join("")
-              .slice(0, 2)
-              .toUpperCase();
             return (
               <div key={member.id} className="flex items-center gap-3 py-3.5" data-testid={`row-roster-${member.id}`}>
-                <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <span className="text-[10px] font-bold text-muted-foreground">{initials}</span>
-                </div>
+                <UserAvatar fullName={member.fullName} photoUrl={member.photoUrl} size="sm" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{member.fullName}</p>
                   <div className="flex items-center gap-2 mt-0.5">

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
+import { UserAvatar } from "@/components/user-avatar";
 import { Link } from "wouter";
 import {
   Calendar,
@@ -242,16 +243,13 @@ export default function HomePage() {
             ) : feed && feed.length > 0 ? (
               <div className="divide-y divide-divider">
                 {feed.slice(0, 3).map((activity) => {
-                  const initial = activity.user.fullName.charAt(0).toUpperCase();
                   return (
                     <div
                       key={activity.id}
                       className="flex items-center gap-3 py-3"
                       data-testid={`row-feed-activity-${activity.id}`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                        <span className="text-xs font-semibold text-muted-foreground">{initial}</span>
-                      </div>
+                      <UserAvatar fullName={activity.user.fullName} photoUrl={activity.user.photoUrl} size="xs" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{activity.user.fullName}</p>
                         <p className="text-[13px] text-muted-foreground capitalize">

@@ -56,7 +56,9 @@ Each club has its own color palette stored in the `clubs` table:
 - `client/src/hooks/use-auth.tsx` - AuthProvider context with login/register/updateProfile/logout
 - `client/src/hooks/use-club-theme.tsx` - Club theme context provider (CSS vars, club data)
 - `client/src/components/bottom-nav.tsx` - Mobile bottom navigation with club-branded active states
-- `client/src/components/membership-card.tsx` - Digital membership card with club/tier gradients
+- `client/src/components/membership-card.tsx` - Digital membership card with club/tier gradients + photo
+- `client/src/components/image-upload.tsx` - Shared image upload component (avatar & banner variants)
+- `client/src/components/user-avatar.tsx` - Shared user avatar component (photo with initials fallback, 5 sizes)
 - `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + club branding editor
 
 ## Information Architecture (Bottom Nav)
@@ -151,6 +153,7 @@ Design philosophy: Lists → rows, Forms → vertical layout, Actions → button
 18. Daily Club Challenge (rotating challenges with XP reward, weekly club goal progress bar)
 19. Club Activity Feed (timeline-style on homepage, replaces heatmap + leaderboard)
 20. Dark mode toggle (class-based, localStorage persisted)
+21. Profile photo upload (mandatory in registration, editable from profile, shown across all avatar locations)
 
 ## API Endpoints
 ### Public
