@@ -1,0 +1,205 @@
+What’s Working Well Now
+1. Hero section
+
+The club banner card is good to keep. It gives identity.
+
+Club name
+
+location
+
+user role
+
+This can remain the only strong container at the top.
+
+2. Section separation
+
+The dividers between:
+
+Rank + Momentum
+
+Quick Log
+
+Club Table
+
+are much cleaner than boxes. Good direction.
+
+3. Grid layout
+
+Putting Rank + Momentum next to Club Activity works well. It shortens scrolling.
+
+What Still Feels Slightly Heavy
+
+There are three remaining surfaces that still feel too “panel-like”.
+
+1. Next Session card
+
+Right now it's still a full card. It doesn't need the border.
+
+Better structure:
+
+NEXT SESSION
+
+Touch Rugby Afternoon
+Sat 7 Mar • 15:00
+Forodhani Gardens
+
+Check In     Details
+
+Use background tint only (very subtle club colour), not a border.
+
+2. Quick Log buttons
+
+The square buttons are fine functionally but visually a bit chunky.
+
+Better version:
+
+Run   Gym   SAQ   Recovery   Social
+
+Use circular icons + labels underneath instead of square containers.
+
+Example:
+
+[👟]
+Run
+
+[🏋]
+Gym
+
+This instantly feels more “sports”.
+
+3. Club Table
+
+Right now the list is good but slightly boxed.
+
+Make it feel more like a league table.
+
+Example:
+
+ZRF CLUB TABLE
+
+1  Jambiani Jackals RFC      1197
+2  Stone Town Sultans RFC     177
+3  Paje Pirates RFC            75
+
+With thin dividers only.
+
+The rank circle icons are good — keep those.
+
+The One Element That Still Feels Off
+The Hero Color
+
+The bright blue gradient feels generic tech app, not club identity.
+
+Eventually this should become club colour driven.
+
+Example:
+
+Sharks RFC → navy / gold
+Stone Town → red
+Paje Pirates → orange
+
+For now, even reducing saturation slightly will make it feel more premium.
+
+Spacing Improvements
+
+You can improve visual calm by slightly increasing vertical rhythm.
+
+Current spacing feels around:
+
+16px
+
+Better spacing system:
+
+Hero → 32px
+Section → 28px
+Subsections → 20px
+
+More breathing room = more premium.
+
+Small Typography Tweaks
+
+Two tiny adjustments will sharpen the UI.
+
+Section headers
+
+Currently:
+
+NEXT SESSION
+QUICK LOG
+ZRF CLUB TABLE
+
+Make them slightly lighter:
+
+font-weight: 600
+letter-spacing: 0.04em
+color: muted
+
+They should guide the eye without shouting.
+
+Club name in hero
+
+Increase size slightly.
+
+Right now it looks around 20px.
+
+Better around 24–26px.
+
+Navigation Bar
+
+This is actually good.
+
+But one improvement:
+
+Make the GO button slightly larger so it becomes the visual center of the nav.
+
+Example:
+
+48px → 56px
+
+This reinforces the Check-In behavior.
+
+Overall UI Score Now
+
+Before redesign:
+
+5 / 10
+
+Earlier version:
+
+7 / 10
+
+Current version:
+
+8.5 / 10
+
+Which is very good for an early product.
+
+You’re now mostly polishing rather than redesigning.
+
+The Next Big UX Upgrade (Beyond Visuals)
+
+The app will feel dramatically more “alive” if you add one more element to the homepage.
+
+A Club Activity Heatmap.
+
+Example:
+
+CLUB ACTIVITY THIS WEEK
+
+Mon ███
+Tue █████
+Wed ██
+Thu ██████
+Fri █
+Sat ███████
+Sun ███
+
+Players instantly see:
+
+when the club is active
+
+when they should show up
+
+participation patterns
+
+This creates team psychology, not just tracking.
