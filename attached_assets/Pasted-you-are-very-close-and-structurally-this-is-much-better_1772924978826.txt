@@ -1,0 +1,312 @@
+you are very close, and structurally this is much better than what you had before. But if I were holding this to Apple-level sports product standards, there are still several things I would change.
+
+Right now it looks like a clean admin list, not yet a living club space.
+
+Let me walk through it like a real design review.
+
+First: What You Got Right
+
+These are good decisions.
+
+1. Tabs are correct
+Feed | Noticeboard | Roster
+
+Perfect. Exactly the right separation.
+
+Activity should never mix with announcements.
+
+2. The feed is flat (not boxed)
+
+Good.
+The previous UI had too many cards.
+
+Flat lists feel:
+
+• faster
+• more modern
+• more mobile-native
+
+Keep this.
+
+3. The XP indicator on the right
++10
++20
++15
+
+Good pattern.
+
+But it should not dominate visually.
+
+More on that below.
+
+Now: What Needs Fixing
+1. The Club Header Is Too Weak
+
+Right now the header is just:
+
+JJ
+Jambiani Jackals RFC
+location
+
+This is not enough identity.
+
+A club page should feel like entering the clubhouse.
+
+Fix
+
+Add a small identity block.
+
+Example:
+
+[Logo]
+
+Jambiani Jackals RFC
+Jambiani, South East Zanzibar
+
+34 Members
+
+That’s it.
+
+No banner needed.
+
+Just slightly stronger presence.
+
+2. The Activity Icons Should Go
+
+Right now each activity has:
+
+running icon
+saq icon
+gym icon
+
+These icons are visual noise.
+
+Real sports apps rarely do this.
+
+Instead use avatar circles.
+
+Example:
+
+[JH]
+
+Juma Hassan
+5km run
+
++10
+
+This makes it feel like real teammates.
+
+3. The Activity Language Needs Tightening
+
+Right now entries read like system logs.
+
+Example:
+
+Running · Morning 5k Run
+
+Too technical.
+
+Rewrite like this:
+
+5km run
+
+Or
+
+SAQ session
+
+Human language is important.
+
+4. XP Should Be Visually Softer
+
+Right now:
+
++10
+
+is bright blue.
+
+This pulls attention away from the activity.
+
+Instead:
+
++10 XP
+
+should be:
+
+• smaller
+• neutral grey
+• slightly secondary
+
+XP is metadata, not the headline.
+
+5. Dates Are Unnecessary Noise
+
+Right now every row shows:
+
+2026-03-04
+
+You don’t need exact dates in a feed.
+
+Instead group by Today / Yesterday / Earlier.
+
+Example:
+
+TODAY
+
+Juma Hassan
+5km run
+
+Amina Said
+SAQ drills
+
+YESTERDAY
+
+Fatma Ali
+Beach run
+
+This is a huge readability improvement.
+
+6. Feed Items Need Slightly More Breathing Room
+
+The spacing is a little tight.
+
+Increase vertical padding.
+
+Each row should feel like:
+
+touchable
+scannable
+calm
+
+Right now it's a bit cramped.
+
+7. The Feed Needs One Social Layer
+
+Right now the feed is purely:
+
+activity logs
+
+That’s good for MVP.
+
+But eventually you want small social cues.
+
+Example:
+
+Juma Hassan
+5km run
+
+🔥 3   💪 2
+
+Not comments yet. Just reactions.
+
+This massively increases engagement.
+
+8. The Header Tabs Need Better Weight
+
+Right now:
+
+Feed | Noticeboard | Roster
+
+look like plain text.
+
+Instead use a segmented control style.
+
+Example:
+
+[ Feed ]  Noticeboard  Roster
+
+The selected tab should feel obviously active.
+
+9. The Club Page Should Show the Next Session
+
+Right now the club page only shows activity.
+
+But the club page should also answer:
+
+When do we train next?
+
+So at the top add:
+
+NEXT SESSION
+
+Touch Rugby
+Thu 17:00
+Mnazi Mmoja Grounds
+
+Very small.
+
+Just context.
+
+10. This Page Is Missing the Noticeboard Preview
+
+Even though there is a tab, it's good to show one preview item.
+
+Example:
+
+NOTICEBOARD
+
+📢 Photographer needed for Saturday match
+
+View →
+
+This encourages discovery.
+
+What the Ideal Version Looks Like
+
+The structure should be:
+
+Club Identity
+
+NEXT SESSION
+
+Feed | Noticeboard | Roster
+
+ACTIVITY FEED
+
+Juma Hassan
+5km run
++10 XP
+
+Amina Said
+SAQ drills
++20 XP
+
+Fatma Ali
+Beach run
++10 XP
+
+Simple.
+
+Clean.
+
+Human.
+
+One Very Important Suggestion
+
+Add a floating action button in the Club tab:
+
++ Post
+
+Only visible to:
+
+• admins
+• coaches
+
+Used for:
+
+• announcements
+• requests
+• sponsor offers
+
+Without this the noticeboard will feel disconnected.
+
+Overall Score
+
+Right now this screen is about:
+
+7 / 10
+
+It is clean and functional, but it still feels like a management tool, not a living sports platform.
+
+The changes above would push it to:
+
+9 / 10
