@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MembershipCard } from "@/components/membership-card";
-import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star } from "lucide-react";
+import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star, Sun, Moon, Settings } from "lucide-react";
+import { useTheme } from "@/hooks/use-theme";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -28,6 +29,7 @@ const activityIcons: Record<string, typeof Dumbbell> = {
 export default function ProfilePage() {
   const { user, logout, profileCompletion } = useAuth();
   const { club: themeClub, primaryColor, accentColor } = useClubTheme();
+  const { theme, toggleTheme } = useTheme();
   const xpSectionRef = useRef<HTMLElement>(null);
 
   const { data: myActivities } = useQuery<Activity[]>({
@@ -77,18 +79,8 @@ export default function ProfilePage() {
 
   return (
     <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
-      <div className="flex items-center justify-between gap-2 mb-5">
+      <div className="mb-5">
         <h2 className="text-lg font-bold" data-testid="text-profile-title">Profile</h2>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={logout}
-          className="text-muted-foreground"
-          data-testid="button-logout"
-        >
-          <LogOut className="w-4 h-4 mr-1" />
-          Sign Out
-        </Button>
       </div>
 
       {user && !user.profileCompleted && profileCompletion < 100 && (
@@ -273,6 +265,45 @@ export default function ProfilePage() {
           </div>
         </section>
       )}
+
+      <section className="mb-6">
+        <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+          <Settings className="w-3.5 h-3.5" />
+          Settings
+        </h3>
+        <div className="border rounded-md divide-y">
+          <div className="flex items-center justify-between px-3 py-3" data-testid="setting-dark-mode">
+            <div className="flex items-center gap-2.5">
+              {theme === "dark" ? <Moon className="w-4 h-4 text-muted-foreground" /> : <Sun className="w-4 h-4 text-muted-foreground" />}
+              <div>
+                <p className="text-sm font-medium">Dark Mode</p>
+                <p className="text-[11px] text-muted-foreground">{theme === "dark" ? "On" : "Off"}</p>
+              </div>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative w-11 h-6 rounded-full transition-colors ${theme === "dark" ? "bg-club-primary" : "bg-muted"}`}
+              data-testid="button-theme-toggle"
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${theme === "dark" ? "translate-x-5" : "translate-x-0"}`}
+              />
+            </button>
+          </div>
+          <div className="px-3 py-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => logout()}
+              className="w-full justify-start text-destructive hover:text-destructive gap-2"
+              data-testid="button-logout"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

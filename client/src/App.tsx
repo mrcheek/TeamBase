@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { ClubThemeProvider, useClubTheme } from "@/hooks/use-club-theme";
+import { ThemeProvider } from "@/hooks/use-theme";
 import { BottomNav } from "@/components/bottom-nav";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home";
@@ -155,14 +156,16 @@ function AppShell() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
