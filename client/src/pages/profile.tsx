@@ -348,6 +348,20 @@ export default function ProfilePage() {
               </button>
             </div>
           )}
+          {user.role === "admin" && (
+            <Link href="/admin">
+              <div className="flex items-center justify-between py-3 cursor-pointer" data-testid="link-admin-dashboard">
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Admin Dashboard</p>
+                    <p className="text-[11px] text-muted-foreground">Manage federation</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+              </div>
+            </Link>
+          )}
           <div className="py-3">
             <button
               onClick={() => logout()}

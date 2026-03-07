@@ -1,0 +1,353 @@
+Alright — I’m going to critique this like a senior Apple product designer reviewing a first internal prototype. The goal isn’t “good enough”; the goal is clarity, hierarchy, and calm power.
+
+Your app already has excellent concepts, but the interface still looks like a dashboard UI kit, not a premium sports product.
+
+The problems fall into five categories:
+
+Visual hierarchy
+
+Spacing & density
+
+Component repetition
+
+Information grouping
+
+Brand expression
+
+Let’s go through them.
+
+1. The Biggest Problem: Everything Has the Same Weight
+
+Right now the screen reads like this:
+
+Hero
+Box
+Box
+Box
+Box
+Box
+List
+
+Everything has:
+
+rounded corners
+
+background fill
+
+icon
+
+border shadow
+
+So nothing feels important.
+
+In good sports apps the hierarchy is:
+
+Hero
+Primary Action
+Momentum
+Timeline
+Utility
+
+You need clear vertical rhythm.
+
+2. The Hero Should Be Simpler
+
+Your hero card currently feels like a marketing banner, not a club identity.
+
+Problems:
+
+• too glossy
+• heavy gradient
+• too large
+• logo and name competing
+
+Correct version
+[Club Logo]
+
+Jambiani Jackals RFC
+Jambiani, South East Zanzibar
+
+Omar Khamis · Admin
+
+Then on the far right:
+
+1125 XP
+
+No banner card needed.
+
+Just clean identity.
+
+Think Apple Fitness / Strava club header.
+
+3. Remove 50% of the Boxes
+
+This is the single biggest improvement you can make.
+
+You currently have boxes around:
+
+• hero
+• next session
+• challenge
+• activity feed
+
+Instead:
+
+Only two elements should be boxed
+
+1️⃣ Next Session
+2️⃣ Challenge CTA
+
+Everything else should be flat lists.
+
+4. Next Session Needs to Feel Like the Primary Action
+
+Right now it looks like just another card.
+
+Instead:
+
+NEXT SESSION
+
+Touch Rugby Afternoon
+
+Sat 7 Mar · 15:00
+Forodhani Gardens
+
+[ Check In ]
+
+Make this visually dominant.
+
+Increase spacing.
+
+This is the most important thing on the screen.
+
+5. Challenge Section Should Be Smaller
+
+Your challenge area currently consumes too much height.
+
+Instead:
+
+TODAY'S CHALLENGE
+
+Run 5km · +25 XP
+
+[ Start Activity ]
+
+Then below it:
+
+Weekly Goal
+4 / 200
+
+Very subtle.
+
+6. The Activity Feed Is Actually Good
+
+This section is the strongest part.
+
+But improvements:
+
+Remove icons
+
+They are unnecessary noise.
+
+Use simple avatars instead.
+
+Example:
+
+Juma Hassan
+5km run
++10 XP
+Use dividers instead of boxes
+────────────
+Juma Hassan
+Running · 5km
++10
+────────────
+7. The XP Badge in the Top Right Is Correct
+
+This is a good pattern.
+
+But:
+
+• it should be smaller
+• it should be tappable
+• it should open the Profile XP section
+
+Also change the color.
+
+Right now it looks like a warning pill.
+
+Make it tier-colored.
+
+8. Your Typography Hierarchy Needs Fixing
+
+Right now everything is the same size.
+
+You need a three-tier system.
+
+Level 1
+
+Club / session titles
+
+Touch Rugby Afternoon
+Level 2
+
+Section headers
+
+Next Session
+Today's Challenge
+Club Activity
+Level 3
+
+Metadata
+
+Sat 7 Mar · 15:00
+Forodhani Gardens
+
+Right now level 2 and level 3 are too similar.
+
+9. The Bottom Nav Is Actually Good
+
+The GO button works.
+
+But:
+
+• the icons are too thin
+• the spacing is slightly cramped
+
+Make them feel more like iOS tab bar icons.
+
+Also:
+
+Admin
+
+should not live here for normal users.
+
+Admin should appear only for admins.
+
+10. The Screen Needs Breathing Room
+
+Your vertical spacing is too tight.
+
+Increase padding between sections.
+
+Example rhythm:
+
+Hero
+32px
+Next Session
+32px
+Challenge
+32px
+Activity
+
+Spacing is what makes apps feel premium.
+
+11. The Color System Is Too Flat
+
+Everything is blue.
+
+But you already have club branding.
+
+Instead:
+
+Primary UI = neutral
+Accent UI = club color
+
+Example:
+
+Check-in button uses club color.
+
+Not the entire screen.
+
+12. The Screen Should Follow This Structure
+
+The correct layout:
+
+Club Header
+
+NEXT SESSION
+
+TODAY'S CHALLENGE
+
+CLUB ACTIVITY
+
+Quick Log (optional)
+
+Nothing else.
+
+You’re close to this already.
+
+13. The Quick Log Should Probably Move
+
+Instead of a row of buttons on Home, move it into GO.
+
+Home should not become a tool panel.
+
+14. What a Polished Version Would Look Like
+
+Imagine the screen like this:
+
+[Logo]
+
+Jambiani Jackals RFC
+Jambiani, Zanzibar
+
+                      1125 XP
+
+
+NEXT SESSION
+
+Touch Rugby Afternoon
+Sat 7 Mar · 15:00
+Forodhani Gardens
+
+[ Check In ]
+
+
+TODAY'S CHALLENGE
+
+Run 5km · +25 XP
+
+[ Start ]
+
+
+CLUB ACTIVITY
+
+Juma Hassan
+5km run
++10
+
+Amina Said
+SAQ drills
++20
+
+Clean.
+
+No noise.
+
+15. Your App Is Actually Close
+
+What you have now is about 70% correct.
+
+The improvements required are mostly:
+
+remove
+simplify
+space
+hierarchy
+
+Not adding features.
+
+If I Were Rewriting This Screen
+
+The first instructions I would give the team:
+
+Remove hero banner card
+Remove activity icons
+Remove unnecessary background panels
+Increase vertical spacing
+Make Next Session the primary element
+Flatten activity feed into timeline rows
+Move Quick Log into GO tab
+Reduce XP badge size
+Use club color only for primary CTA

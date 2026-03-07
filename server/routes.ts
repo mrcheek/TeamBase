@@ -554,6 +554,19 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/club/roster", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userMemberships = await storage.getUserMemberships(req.session.userId!);
+      const activeMembership = userMemberships.find(m => m.status === "active" || m.status === "approved");
+      if (!activeMembership) return res.json([]);
+      const members = await storage.getClubMembers(activeMembership.clubId);
+      const safeMembers = members.map(({ password: _, ...u }) => u);
+      res.json(safeMembers);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/daily-challenge", async (_req: Request, res: Response) => {
     const challenges = [
       { type: "running", title: "Run 3km", xp: 15, icon: "running" },

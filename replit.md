@@ -59,14 +59,17 @@ Each club has its own color palette stored in the `clubs` table:
 - `client/src/components/membership-card.tsx` - Digital membership card with club/tier gradients
 - `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + club branding editor
 
+## Information Architecture (Bottom Nav)
+**Home | Play | GO | Club | Profile** — 5 tabs for all users. Admin accessed from Profile settings.
+
 ## Pages
-- `/` - Home: 5 blocks only — (1) Club Hero, (2) Next Session, (3) Today's Challenge + weekly club goal, (4) Club Activity timeline feed, (5) Quick Log
-- `/play` - Events & Clubs: underline tab switcher, underline filter indicators, event/club rows with dividers (not cards)
+- `/` - Home: 5 blocks only — (1) Club Hero, (2) Next Session, (3) Today's Challenge + weekly club goal, (4) Club Activity (max 3 items + "View Club →"), (5) Quick Log
+- `/play` - Events | Training | Battle tabs: events with type filters, training library (accordions), weekly club battle standings
 - `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
-- `/train` - Training library: accordion sections with category-colored accent bars, grouped drills
-- `/profile` - Membership card (club-branded), XP section with `id="xp"` anchor, tier progress, clubs, activity timeline, XP history
+- `/club` - Club page: Feed | Noticeboard | Roster tabs. Full club activity feed, announcements, member list with roles/tiers
+- `/profile` - Membership card (club-branded), XP section with `id="xp"` anchor, tier progress, clubs, activity timeline, XP history, settings (dark mode, notifications, admin link for admins)
 - `/complete-profile` - Full ZRF registration form with accordion sections
-- `/admin` - Admin dashboard (admin role only) with 4 tabs + member detail + club branding editor
+- `/admin` - Admin dashboard (admin role only, accessed from Profile settings) with 4 tabs + member detail + club branding editor
 - `/clubs/:id` - Club community hub: banner hero, club identity, next session, split rank/momentum, members, activity feed
 - `/events/:id` - Live event hub: hero header, check-in CTA, split type/status, attending, related activity
 
@@ -75,7 +78,7 @@ Each club has its own color palette stored in the `clubs` table:
 - Right: XP pill badge (tier-colored: emerald/blue/gray/amber) → taps to `/profile#xp`
 
 ## Admin Dashboard
-Accessible only to users with role="admin". Bottom nav shows Admin tab (shield icon) instead of Train for admin users.
+Accessible only to users with role="admin". Accessed via "Admin Dashboard" link in Profile settings (not in bottom nav).
 Design philosophy: Lists → rows, Forms → vertical layout, Actions → buttons, Stats → small grids. No card wrappers.
 - Underline tabs (not pills) for navigation
 - Flat row + divider lists (no bordered containers)
@@ -150,7 +153,7 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 - POST `/api/activities` - Log activity
 - POST `/api/check-in/event` - Event check-in
 - POST `/api/memberships` - Join club
-- GET `/api/memberships`, `/api/activities`, `/api/xp-history`, `/api/club/weekly-stats`
+- GET `/api/memberships`, `/api/activities`, `/api/xp-history`, `/api/club/weekly-stats`, `/api/club/roster`
 
 ### Admin Only (requireAdmin)
 - GET `/api/admin/stats` - Dashboard statistics

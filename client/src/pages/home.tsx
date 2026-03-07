@@ -282,7 +282,7 @@ export default function HomePage() {
               </div>
             ) : feed && feed.length > 0 ? (
               <div className="divide-y divide-divider">
-                {feed.slice(0, 8).map((activity) => {
+                {feed.slice(0, 3).map((activity) => {
                   const Icon = activityIcons[activity.type] || Dumbbell;
                   return (
                     <div
@@ -312,6 +312,13 @@ export default function HomePage() {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground py-4 text-center">No recent activity</p>
+            )}
+            {feed && feed.length > 3 && (
+              <Link href="/club">
+                <Button variant="ghost" size="sm" className="w-full mt-2 text-xs font-medium text-muted-foreground" data-testid="button-view-club">
+                  View Club →
+                </Button>
+              </Link>
             )}
           </section>
 

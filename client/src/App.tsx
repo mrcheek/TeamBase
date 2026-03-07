@@ -13,9 +13,9 @@ import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home";
 import PlayPage from "@/pages/play";
 import CheckInPage from "@/pages/check-in";
-import TrainPage from "@/pages/train";
 import ProfilePage from "@/pages/profile";
 import CompleteProfilePage from "@/pages/complete-profile";
+import ClubPage from "@/pages/club";
 import ClubDetailPage from "@/pages/club-detail";
 import EventDetailPage from "@/pages/event-detail";
 import AdminPage from "@/pages/admin";
@@ -223,7 +223,7 @@ function AppShell() {
           <Route path="/" component={HomePage} />
           <Route path="/play" component={PlayPage} />
           <Route path="/check-in" component={CheckInPage} />
-          <Route path="/train" component={TrainPage} />
+          <Route path="/club" component={ClubPage} />
           <Route path="/profile" component={ProfilePage} />
           <Route path="/complete-profile" component={CompleteProfilePage} />
           <Route path="/admin" component={AdminPage} />

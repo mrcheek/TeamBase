@@ -1,28 +1,18 @@
 import { useLocation, Link } from "wouter";
-import { Home, Trophy, Dumbbell, User, Circle, Shield } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { Home, Trophy, User, Circle, Building2 } from "lucide-react";
+
+const ICON_STROKE = 1.5;
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
   { path: "/play", label: "Play", icon: Trophy },
-  { path: "/check-in", label: "Check-In", icon: Circle, isCenter: true },
-  { path: "/train", label: "Train", icon: Dumbbell },
+  { path: "/check-in", label: "GO", icon: Circle, isCenter: true },
+  { path: "/club", label: "Club", icon: Building2 },
   { path: "/profile", label: "Profile", icon: User },
 ];
 
 export function BottomNav() {
   const [location] = useLocation();
-  const { user } = useAuth();
-
-  const items = user?.role === "admin"
-    ? [
-        navItems[0],
-        navItems[1],
-        navItems[2],
-        { path: "/admin", label: "Admin", icon: Shield },
-        navItems[4],
-      ]
-    : navItems;
 
   return (
     <nav
@@ -30,7 +20,7 @@ export function BottomNav() {
       data-testid="nav-bottom"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto h-14">
-        {items.map((item) => {
+        {navItems.map((item) => {
           const isActive =
             item.path === "/"
               ? location === "/"
@@ -41,7 +31,7 @@ export function BottomNav() {
               <Link
                 key={item.path}
                 href={item.path}
-                data-testid="nav-check-in"
+                data-testid="nav-go"
               >
                 <div className="flex flex-col items-center gap-0.5 -mt-3">
                   <div
@@ -75,6 +65,7 @@ export function BottomNav() {
               <div className="flex flex-col items-center gap-0.5 py-1.5 px-3">
                 <item.icon
                   className={`w-5 h-5 transition-colors ${isActive ? "" : "text-muted-foreground"}`}
+                  strokeWidth={ICON_STROKE}
                   style={isActive ? { color: "hsl(var(--club-accent))" } : undefined}
                 />
                 <span
