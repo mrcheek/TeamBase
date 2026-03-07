@@ -9,7 +9,7 @@ A mobile-first PWA for the Zanzibar Rugby Federation. A premium club-first sport
 
 ## Design System
 - **Style**: Premium sports platform — section-based layout, NOT card-heavy dashboard
-- **Layout Philosophy**: Hero → space → section → divider → section. Cards used sparingly (Next Session, Membership Card only). Everything else: flat sections with thin dividers.
+- **Layout Philosophy**: Identity → space → section → divider → section. No background boxes on homepage — only flat sections with dividers. Cards used only for Membership Card on Profile. 32px (`py-8`) vertical rhythm between sections.
 - **Radius**: 3-tier system: `--radius-sm: 6px` (inputs), `--radius-md: 10px` (buttons), `--radius-lg: 16px` (cards/hero)
 - **Border**: `--border: 220 10% 88%` (soft neutral for inputs/rows), `--divider: 220 10% 92%` (even lighter, for list separation)
 - **Text hierarchy**: `--text-primary: 220 15% 15%`, `--text-secondary: 220 10% 40%`, `--text-muted: 220 8% 60%`
@@ -63,7 +63,7 @@ Each club has its own color palette stored in the `clubs` table:
 **Home | Play | GO | Club | Profile** — 5 tabs for all users. Admin accessed from Profile settings.
 
 ## Pages
-- `/` - Home: 5 blocks only — (1) Club Hero, (2) Next Session, (3) Today's Challenge + weekly club goal, (4) Club Activity (max 3 items + "View Club →"), (5) Quick Log
+- `/` - Home: 4 blocks only — (1) Club Identity (flat row, no banner), (2) Next Session (dominant, no background box), (3) Today's Challenge (compact row + subtle weekly progress), (4) Club Activity (max 3 items with initials avatars + "View Club →"). No Quick Log (lives in GO). 32px vertical rhythm between sections.
 - `/play` - Events | Training | Battle tabs: events with type filters, training library (accordions), weekly club battle standings
 - `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
 - `/club` - Club page: Feed | Noticeboard | Roster tabs. Full club activity feed, announcements, member list with roles/tiers

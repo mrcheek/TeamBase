@@ -1,7 +1,7 @@
 import { useLocation, Link } from "wouter";
 import { Home, Trophy, User, Circle, Building2 } from "lucide-react";
 
-const ICON_STROKE = 1.5;
+const ICON_STROKE = 1.75;
 
 const navItems = [
   { path: "/", label: "Home", icon: Home },
@@ -19,7 +19,7 @@ export function BottomNav() {
       className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-t border-border"
       data-testid="nav-bottom"
     >
-      <div className="flex items-center justify-around max-w-lg mx-auto h-14">
+      <div className="flex items-center justify-around max-w-lg mx-auto h-16">
         {navItems.map((item) => {
           const isActive =
             item.path === "/"
@@ -64,7 +64,7 @@ export function BottomNav() {
             >
               <div className="flex flex-col items-center gap-0.5 py-1.5 px-3">
                 <item.icon
-                  className={`w-5 h-5 transition-colors ${isActive ? "" : "text-muted-foreground"}`}
+                  className={`w-[22px] h-[22px] transition-colors ${isActive ? "" : "text-muted-foreground"}`}
                   strokeWidth={ICON_STROKE}
                   style={isActive ? { color: "hsl(var(--club-accent))" } : undefined}
                 />

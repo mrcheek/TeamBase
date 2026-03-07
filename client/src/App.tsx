@@ -208,10 +208,10 @@ function AppShell() {
           </div>
           <Badge
             onClick={() => setLocation("/profile#xp")}
-            className={`cursor-pointer rounded-full text-xs font-bold ${tierBadgeColors[user.tier] || tierBadgeColors.green}`}
+            className={`cursor-pointer rounded-full text-[10px] font-bold ${tierBadgeColors[user.tier] || tierBadgeColors.green}`}
             data-testid="badge-xp"
           >
-            {user.xpTotal}
+            {user.xpTotal} XP
           </Badge>
         </div>
       </header>
