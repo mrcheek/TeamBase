@@ -1,0 +1,414 @@
+Below is a full redesign blueprint for all main screens of the ZRF app. The goal is to move away from “stacked card UI” and toward a clean sports dashboard style that uses:
+
+grids
+
+split panels
+
+horizontal scrollers
+
+fewer rounded containers
+
+clearer hierarchy
+
+Think Strava + Apple Fitness + Notion dashboards.
+
+I’ll redesign these screens:
+
+Home
+
+Play (Events / Clubs)
+
+Check-In
+
+Train
+
+Profile
+
+Admin Dashboard
+
+Admin Members
+
+Admin Events
+
+Club Page
+
+1. HOME PAGE (Dashboard)
+
+Purpose:
+Show identity, progress, next rugby activity, and community energy.
+
+Layout
+------------------------------------------------
+ZRF Rugby                          1125 XP
+------------------------------------------------
+
+Omar Khamis
+Sharks RFC • Gold Tier
+
+------------------------------------------------
+| XP PROGRESS          | CLUB RANK             |
+|                      |                       |
+| 1125 XP              | #1 Sharks RFC         |
+| ███████████████      | 1197 pts              |
+------------------------------------------------
+
+NEXT RUGBY EVENT
+------------------------------------------------
+Sharks Weekly Training
+Thu 17:00 • Mnazi Mmoja Grounds
+
+[ CHECK-IN ]     [ DETAILS ]
+
+------------------------------------------------
+| CLUB TABLE              | ACTIVITY           |
+|                         |                    |
+| 1 Sharks RFC 1197       | 👟 Juma run +10    |
+| 2 Stone Town 177        | ⚡ Amina SAQ +20   |
+| 3 Pemba RFC 75          | 🏋 Juma gym +15    |
+|                         |                    |
+| View full table →       | View feed →        |
+------------------------------------------------
+
+QUICK CHECK-IN
+------------------------------------------------
+Run     Gym     SAQ     Recovery
+Why it works
+
+Grid layout reduces scrolling
+
+Event is the hero
+
+Activity feed adds life
+
+Quick actions drive engagement
+
+2. PLAY PAGE (Events + Clubs)
+
+Purpose:
+Everything related to rugby activity.
+
+Layout
+------------------------------------------------
+PLAY
+------------------------------------------------
+
+Events | Clubs
+
+FILTER
+All | Training | Matches | Tournaments
+
+------------------------------------------------
+TODAY
+------------------------------------------------
+Sharks Weekly Training
+17:00 • Mnazi Mmoja
+
+Touch Rugby Session
+18:30 • Forodhani
+
+------------------------------------------------
+UPCOMING
+------------------------------------------------
+Sharks vs Stone Town
+12 Mar • Amaan Stadium
+
+ZRF Opening Tournament
+15 Apr • Amaan Stadium
+Clubs tab
+------------------------------------------------
+CLUBS
+------------------------------------------------
+
+Sharks RFC
+Stone Town
+Training: Tue Thu
+
+Stone Town RFC
+Shangani
+Training: Mon Wed
+
+Pemba RFC
+Chake Chake
+Training: Fri Sun
+
+Minimal layout. No cards.
+
+3. CHECK-IN PAGE
+
+This is the core engagement screen.
+
+Layout
+------------------------------------------------
+CHECK-IN
+------------------------------------------------
+
+SCAN EVENT QR
+[ CAMERA ]
+
+------------------------------------------------
+QUICK ACTIVITY
+------------------------------------------------
+
+Run        Gym
+SAQ        Recovery
+Social     Watching Rugby
+
+------------------------------------------------
+SELFIE BONUS
+------------------------------------------------
++5 XP for selfie check-in
+Key change
+
+Make QR scan the dominant action.
+
+4. TRAIN PAGE (Training Library)
+
+Purpose:
+Give instant session ideas.
+
+Instead of long lists use expandable sections.
+
+------------------------------------------------
+TRAIN
+------------------------------------------------
+
+SAQ DRILLS ▶
+
+GYM SESSIONS ▶
+
+RUNNING PROGRAMS ▶
+
+SKILLS TRAINING ▶
+
+RECOVERY ▶
+
+Example expanded:
+
+SAQ DRILLS
+
+• Ladder quick feet
+• Cone agility
+• 20m sprint intervals
+• Lateral shuffle
+
+Clean and simple.
+
+5. PROFILE PAGE
+
+Purpose:
+Identity + progression + clubs
+
+Layout
+------------------------------------------------
+PROFILE
+------------------------------------------------
+
+ZRF MEMBERSHIP CARD
+
+Omar Khamis
+Sharks RFC • Admin
+
+1125 XP
+
+[ QR CODE ]
+
+------------------------------------------------
+PROGRESSION
+------------------------------------------------
+
+Gold Tier
+██████████████████
+
+Next: Ambassador
+
+------------------------------------------------
+MY CLUBS
+------------------------------------------------
+
+Sharks RFC (Active)
+
+------------------------------------------------
+RECENT ACTIVITY
+------------------------------------------------
+
+Club Social +10
+Event Check-in +25
+SAQ Session +20
+6. ADMIN DASHBOARD
+
+Purpose:
+Federation or club overview.
+
+Layout
+------------------------------------------------
+ADMIN DASHBOARD
+------------------------------------------------
+
+MEMBERS     PLAYERS     EVENTS     CLUBS
+8           5           6          3
+
+------------------------------------------------
+RECENT ACTIVITY
+------------------------------------------------
+
+New member registered
+Event created
+Club updated
+
+------------------------------------------------
+QUICK ACTIONS
+------------------------------------------------
+
+Create Event
+Add Member
+Send Announcement
+
+Use grid stats instead of tall cards.
+
+7. ADMIN MEMBERS PAGE
+
+Purpose:
+Roster management.
+
+Layout
+------------------------------------------------
+MEMBERS
+------------------------------------------------
+
+Search name or phone
+
+------------------------------------------------
+Salma Rashid
+Supporter • Green
+75 XP
+
+Bakari Mohamed
+Player • Blue
+280 XP
+
+Amina Said
+Coach • Silver
+820 XP
+
+Omar Khamis
+Admin • Gold
+1125 XP
+
+Admin actions appear when row tapped.
+
+8. ADMIN EVENTS PAGE
+
+Purpose:
+Manage events.
+
+Layout
+------------------------------------------------
+EVENTS
+------------------------------------------------
+
+[ + CREATE EVENT ]
+
+------------------------------------------------
+Sharks Weekly Training
+Thu 17:00 • Mnazi Mmoja
+
+Edit   Delete
+
+------------------------------------------------
+Sharks vs Stone Town
+12 Mar • Amaan Stadium
+
+Edit   Delete
+9. CLUB PAGE
+
+Purpose:
+Mini hub for club.
+
+Layout
+------------------------------------------------
+SHARKS RFC
+------------------------------------------------
+
+Stone Town, Zanzibar
+
+Training
+Tue Thu 17:00
+
+------------------------------------------------
+MEMBERS
+------------------------------------------------
+
+34 Players
+4 Coaches
+
+------------------------------------------------
+UPCOMING EVENTS
+------------------------------------------------
+
+Sharks Weekly Training
+Thu 17:00
+
+Sharks vs Stone Town
+12 Mar
+
+------------------------------------------------
+CLUB ACTIVITY
+------------------------------------------------
+
+Juma run +10
+Amina SAQ +20
+Global Design Improvements
+Reduce rounded corners
+
+Current: ~16px
+Better:
+
+6px
+Remove shadows
+
+Use:
+
+1px border
+
+instead.
+
+Typography hierarchy
+
+3 sizes only:
+
+Section titles
+Item titles
+Metadata
+Event tag colors
+
+Training → green
+Match → red
+Tournament → gold
+Touch → blue
+
+Bottom Navigation
+
+Keep it consistent everywhere.
+
+Home | Play | GO | Train | Profile
+
+Admins see:
+
+Home | Play | GO | Admin | Profile
+Biggest UX Win
+
+This redesign reduces:
+
+card clutter
+
+vertical scrolling
+
+visual noise
+
+while improving:
+
+hierarchy
+
+dashboard feel
+
+engagement.
