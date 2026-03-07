@@ -28,6 +28,12 @@ export async function seedDatabase() {
     location: "Stone Town, Zanzibar",
     description: "Founded in 2015, Sharks RFC is the premier rugby club in Zanzibar. Known for their fierce competitiveness and strong youth development programs.",
     trainingSchedule: "Tuesday & Thursday 5:00 PM, Saturday 9:00 AM",
+    primaryColor: "#0A2342",
+    secondaryColor: "#C8A951",
+    accentColor: "#FFD700",
+    textOnPrimary: "#FFFFFF",
+    textOnSecondary: "#111111",
+    brandStyle: "classic",
   }).returning();
 
   const [stoneTown] = await db.insert(clubs).values({
@@ -36,6 +42,12 @@ export async function seedDatabase() {
     location: "Shangani, Stone Town",
     description: "A community-driven rugby club rooted in the heart of Stone Town. Focused on inclusivity and bringing rugby to everyone.",
     trainingSchedule: "Monday & Wednesday 5:30 PM, Saturday 10:00 AM",
+    primaryColor: "#8B0000",
+    secondaryColor: "#FFFFFF",
+    accentColor: "#DC143C",
+    textOnPrimary: "#FFFFFF",
+    textOnSecondary: "#111111",
+    brandStyle: "bold",
   }).returning();
 
   const [pemba] = await db.insert(clubs).values({
@@ -44,6 +56,12 @@ export async function seedDatabase() {
     location: "Chake Chake, Pemba",
     description: "Representing Pemba Island in Zanzibar rugby. Growing the sport across the island with passion and dedication.",
     trainingSchedule: "Wednesday & Friday 4:30 PM, Sunday 8:00 AM",
+    primaryColor: "#006400",
+    secondaryColor: "#000000",
+    accentColor: "#32CD32",
+    textOnPrimary: "#FFFFFF",
+    textOnSecondary: "#FFFFFF",
+    brandStyle: "classic",
   }).returning();
 
   const hashedPw = await hashPassword("rugby123");

@@ -45,18 +45,19 @@ export function BottomNav() {
               >
                 <div className="flex flex-col items-center gap-0.5">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
+                    className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                    style={{
+                      backgroundColor: isActive
+                        ? "hsl(var(--club-accent))"
+                        : "hsl(var(--club-primary))",
+                      color: "hsl(var(--club-primary-foreground))",
+                    }}
                   >
                     <span className="font-bold text-xs">GO</span>
                   </div>
                   <span
-                    className={`text-[10px] font-medium ${
-                      isActive ? "text-foreground" : "text-muted-foreground"
-                    }`}
+                    className={`text-[10px] font-medium ${isActive ? "" : "text-muted-foreground"}`}
+                    style={isActive ? { color: "hsl(var(--club-accent))" } : undefined}
                   >
                     {item.label}
                   </span>
@@ -73,14 +74,12 @@ export function BottomNav() {
             >
               <div className="flex flex-col items-center gap-0.5 py-1.5 px-3">
                 <item.icon
-                  className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
+                  className={`w-5 h-5 transition-colors ${isActive ? "" : "text-muted-foreground"}`}
+                  style={isActive ? { color: "hsl(var(--club-accent))" } : undefined}
                 />
                 <span
-                  className={`text-[10px] font-medium ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
-                  }`}
+                  className={`text-[10px] font-medium ${isActive ? "" : "text-muted-foreground"}`}
+                  style={isActive ? { color: "hsl(var(--club-accent))" } : undefined}
                 >
                   {item.label}
                 </span>

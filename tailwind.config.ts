@@ -75,6 +75,17 @@ export default {
           foreground: "hsl(var(--sidebar-accent-foreground) / <alpha-value>)",
           border: "var(--sidebar-accent-border)"
         },
+        club: {
+          primary: "hsl(var(--club-primary) / <alpha-value>)",
+          secondary: "hsl(var(--club-secondary) / <alpha-value>)",
+          accent: "hsl(var(--club-accent) / <alpha-value>)",
+          surface: "hsl(var(--club-surface) / <alpha-value>)",
+          "surface-strong": "hsl(var(--club-surface-strong) / <alpha-value>)",
+          border: "hsl(var(--club-border) / <alpha-value>)",
+          "primary-foreground": "hsl(var(--club-primary-foreground) / <alpha-value>)",
+          "secondary-foreground": "hsl(var(--club-secondary-foreground) / <alpha-value>)",
+        },
+        gold: "hsl(var(--accent-gold) / <alpha-value>)",
         status: {
           online: "rgb(34 197 94)",
           away: "rgb(245 158 11)",

@@ -1,10 +1,12 @@
 import { useAuth } from "@/hooks/use-auth";
+import { useClubTheme } from "@/hooks/use-club-theme";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { MembershipCard } from "@/components/membership-card";
-import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock } from "lucide-react";
+import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star } from "lucide-react";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
 import { Link } from "wouter";
 
@@ -25,6 +27,8 @@ const activityIcons: Record<string, typeof Dumbbell> = {
 
 export default function ProfilePage() {
   const { user, logout, profileCompletion } = useAuth();
+  const { club: themeClub, primaryColor, accentColor } = useClubTheme();
+  const xpSectionRef = useRef<HTMLElement>(null);
 
   const { data: myActivities } = useQuery<Activity[]>({
     queryKey: ["/api/activities"],
@@ -61,6 +65,14 @@ export default function ProfilePage() {
     ? Math.min(((user.xpTotal - currentTierInfo.min) / (nextTierInfo.min - currentTierInfo.min)) * 100, 100)
     : 100;
 
+  useEffect(() => {
+    if (window.location.hash === "#xp" && xpSectionRef.current) {
+      setTimeout(() => {
+        xpSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, [user]);
+
   const activeClub = myMemberships?.find((m) => m.status === "active");
 
   return (
@@ -81,18 +93,28 @@ export default function ProfilePage() {
 
       {user && !user.profileCompleted && profileCompletion < 100 && (
         <Link href="/complete-profile">
-          <div className="mb-4 border border-primary/30 bg-primary/5 rounded-md p-3 flex items-center gap-3 hover-elevate" data-testid="card-complete-registration">
-            <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-              <AlertCircle className="w-4 h-4 text-primary" />
+          <div
+            className="mb-4 border rounded-md p-3 flex items-center gap-3 hover-elevate"
+            style={{
+              borderColor: `hsl(var(--club-primary) / 0.3)`,
+              backgroundColor: `hsl(var(--club-primary) / 0.05)`,
+            }}
+            data-testid="card-complete-registration"
+          >
+            <div
+              className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+              style={{ backgroundColor: `hsl(var(--club-primary) / 0.15)` }}
+            >
+              <AlertCircle className="w-4 h-4" style={{ color: `hsl(var(--club-primary))` }} />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">Complete Your Registration</p>
               <div className="flex items-center gap-2 mt-1">
                 <Progress value={profileCompletion} className="h-1.5 flex-1" />
-                <span className="text-xs font-medium text-primary shrink-0">{profileCompletion}%</span>
+                <span className="text-xs font-medium shrink-0" style={{ color: `hsl(var(--club-primary))` }}>{profileCompletion}%</span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-primary shrink-0" />
+            <ChevronRight className="w-4 h-4 shrink-0" style={{ color: `hsl(var(--club-primary))` }} />
           </div>
         </Link>
       )}
@@ -101,33 +123,45 @@ export default function ProfilePage() {
         <MembershipCard
           user={user}
           clubName={activeClub?.club.name}
+          clubPrimaryColor={primaryColor}
+          clubAccentColor={accentColor}
         />
       </div>
 
-      <section className="mb-6">
+      <section id="xp" ref={xpSectionRef} className="mb-6 scroll-mt-4" data-testid="section-xp-progress">
         <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-3">
           XP Progress
         </h3>
-        <div className="bg-card border rounded-md p-4">
-          <div className="flex items-center justify-between gap-2 mb-1">
+        <div className="bg-card border rounded-md p-4" style={{ borderColor: `hsl(var(--club-border))` }}>
+          <div className="flex items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2">
-              <span className={`text-base font-bold capitalize ${currentTierInfo.color}`}>
-                {currentTierInfo.label}
-              </span>
-              <span className="text-lg font-bold">{user.xpTotal} XP</span>
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `hsl(var(--club-primary) / 0.15)` }}
+              >
+                <Star className="w-4 h-4" style={{ color: `hsl(var(--club-primary))` }} />
+              </div>
+              <div>
+                <span className={`text-sm font-bold capitalize ${currentTierInfo.color}`}>
+                  {currentTierInfo.label}
+                </span>
+                <span className="text-lg font-bold ml-2">{user.xpTotal} XP</span>
+              </div>
             </div>
             {nextTierInfo && (
-              <span className="text-xs text-muted-foreground">
+              <Badge variant="secondary" className="text-[10px]" data-testid="badge-next-tier">
                 Next: {nextTierInfo.label}
-              </span>
+              </Badge>
             )}
           </div>
-          <Progress value={progressPercent} className="h-2.5 mb-1.5" />
+          <div className="relative mb-1.5">
+            <Progress value={progressPercent} className="h-2.5" />
+          </div>
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs text-muted-foreground">{currentTierInfo.min} XP</span>
             {nextTierInfo ? (
-              <span className="text-xs text-muted-foreground">
-                {nextTierInfo.min - user.xpTotal} XP to go
+              <span className="text-xs font-medium" style={{ color: `hsl(var(--club-primary))` }}>
+                {nextTierInfo.min - user.xpTotal} XP to {nextTierInfo.label}
               </span>
             ) : (
               <span className="text-xs text-muted-foreground">Max tier reached</span>
@@ -145,8 +179,16 @@ export default function ProfilePage() {
             {myMemberships.map((m) => (
               <Link key={m.id} href={`/clubs/${m.clubId}`}>
                 <div className="flex items-center gap-3 px-3 py-3 hover-elevate" data-testid={`row-my-club-${m.clubId}`}>
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                    <span className="text-primary font-bold text-xs">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: m.club.primaryColor ? `${m.club.primaryColor}20` : `hsl(var(--club-primary) / 0.12)`,
+                    }}
+                  >
+                    <span
+                      className="font-bold text-xs"
+                      style={{ color: m.club.primaryColor || `hsl(var(--club-primary))` }}
+                    >
                       {m.club.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
                     </span>
                   </div>
@@ -178,13 +220,16 @@ export default function ProfilePage() {
               const IconComponent = activityIcons[activity.type] || Dumbbell;
               return (
                 <div key={activity.id} className="relative flex items-start gap-3 pb-4 last:pb-0" data-testid={`row-activity-${activity.id}`}>
-                  <div className="absolute -left-6 top-0.5 w-[23px] h-[23px] rounded-full bg-background border-2 border-primary/30 flex items-center justify-center z-10">
-                    <IconComponent className="w-3 h-3 text-primary" />
+                  <div
+                    className="absolute -left-6 top-0.5 w-[23px] h-[23px] rounded-full bg-background border-2 flex items-center justify-center z-10"
+                    style={{ borderColor: `hsl(var(--club-primary) / 0.35)` }}
+                  >
+                    <IconComponent className="w-3 h-3" style={{ color: `hsl(var(--club-primary))` }} />
                   </div>
                   <div className="flex-1 min-w-0 pt-0.5">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-sm font-medium capitalize">{activity.type.replace("_", " ")}</p>
-                      <span className="text-xs font-semibold text-primary shrink-0">
+                      <span className="text-xs font-semibold shrink-0" style={{ color: `hsl(var(--club-accent))` }}>
                         +{activity.xpEarned} XP
                       </span>
                     </div>
@@ -219,10 +264,10 @@ export default function ProfilePage() {
                 data-testid={`row-xp-${tx.id}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <TrendingUp className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <TrendingUp className="w-3.5 h-3.5 shrink-0" style={{ color: `hsl(var(--club-primary))` }} />
                   <span className="text-sm truncate">{tx.description}</span>
                 </div>
-                <span className="text-sm font-semibold text-primary shrink-0">+{tx.amount}</span>
+                <span className="text-sm font-semibold shrink-0" style={{ color: `hsl(var(--club-accent))` }}>+{tx.amount}</span>
               </div>
             ))}
           </div>

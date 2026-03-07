@@ -4,7 +4,9 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ClubThemeProvider, useClubTheme } from "@/hooks/use-club-theme";
 import { BottomNav } from "@/components/bottom-nav";
 import AuthPage from "@/pages/auth-page";
 import HomePage from "@/pages/home";
@@ -53,15 +55,23 @@ function ProfileCompletionPrompt() {
   return null;
 }
 
+const tierBadgeColors: Record<string, string> = {
+  green: "bg-emerald-500 text-white",
+  blue: "bg-blue-500 text-white",
+  silver: "bg-gray-400 text-white",
+  gold: "bg-amber-500 text-white",
+};
+
 function AppContent() {
   const { user, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="w-12 h-12 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm text-muted-foreground">Loading ZRF Rugby...</p>
+          <p className="text-sm text-muted-foreground">Loading TeamBase...</p>
         </div>
       </div>
     );
@@ -72,25 +82,51 @@ function AppContent() {
   }
 
   return (
+    <ClubThemeProvider>
+      <AppShell />
+    </ClubThemeProvider>
+  );
+}
+
+function AppShell() {
+  const { user } = useAuth();
+  const { club } = useClubTheme();
+  const [, setLocation] = useLocation();
+
+  if (!user) return null;
+
+  const clubInitials = club
+    ? club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)
+    : "ZR";
+  const clubName = club?.name || "ZRF Rugby";
+
+  return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b px-4 py-3">
+      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b px-4 py-2.5">
         <div className="max-w-lg mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground text-xs font-bold">Z</span>
+          <div className="flex items-center gap-2.5">
+            {club?.logoUrl ? (
+              <img src={club.logoUrl} alt={clubName} className="w-7 h-7 rounded-full object-cover" data-testid="img-club-logo" />
+            ) : (
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center bg-club-primary"
+                data-testid="icon-club-crest"
+              >
+                <span className="text-club-primary-foreground text-[10px] font-bold">{clubInitials}</span>
+              </div>
+            )}
+            <div>
+              <span className="font-bold text-sm tracking-tight block leading-tight" data-testid="text-header-club">{clubName}</span>
+              <span className="text-[10px] text-muted-foreground leading-none">TEAMBASE</span>
             </div>
-            <span className="font-bold text-sm tracking-tight">ZRF Rugby</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground font-medium">
-              {user.xpTotal} XP
-            </span>
-            <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-primary text-[10px] font-bold">
-                {user.fullName.split(" ").map(n => n[0]).join("").slice(0, 2)}
-              </span>
-            </div>
-          </div>
+          <Badge
+            onClick={() => setLocation("/profile#xp")}
+            className={`cursor-pointer rounded-full text-xs font-bold ${tierBadgeColors[user.tier] || tierBadgeColors.green}`}
+            data-testid="badge-xp"
+          >
+            {user.xpTotal}
+          </Badge>
         </div>
       </header>
 

@@ -17,6 +17,14 @@ export const clubs = pgTable("clubs", {
   location: text("location"),
   description: text("description"),
   trainingSchedule: text("training_schedule"),
+  logoUrl: text("logo_url"),
+  bannerUrl: text("banner_url"),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
+  accentColor: text("accent_color"),
+  textOnPrimary: text("text_on_primary").default("#FFFFFF"),
+  textOnSecondary: text("text_on_secondary").default("#111111"),
+  brandStyle: text("brand_style").default("classic"),
 });
 
 export const users = pgTable("users", {
@@ -179,6 +187,14 @@ export const adminUpdateClubSchema = z.object({
   location: z.string().optional(),
   description: z.string().optional(),
   trainingSchedule: z.string().optional(),
+  logoUrl: z.string().optional().nullable(),
+  bannerUrl: z.string().optional().nullable(),
+  primaryColor: z.string().optional().nullable(),
+  secondaryColor: z.string().optional().nullable(),
+  accentColor: z.string().optional().nullable(),
+  textOnPrimary: z.string().optional().nullable(),
+  textOnSecondary: z.string().optional().nullable(),
+  brandStyle: z.string().optional().nullable(),
 });
 
 export type Federation = typeof federations.$inferSelect;

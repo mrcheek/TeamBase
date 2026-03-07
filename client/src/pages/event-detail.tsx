@@ -2,20 +2,66 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
+import { useClubTheme } from "@/hooks/use-club-theme";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, MapPin, Clock, Users, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  ArrowLeft,
+  CheckCircle2,
+  Share2,
+  Tag,
+  Activity,
+  Zap,
+} from "lucide-react";
 import type { Event, Attendance, User, Club } from "@shared/schema";
 
-const eventTypeColors: Record<string, string> = {
-  training: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  touch_rugby: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  match: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  tournament: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  social: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+const eventTypeConfig: Record<string, { label: string; color: string; accent: string; icon: typeof Activity }> = {
+  training: {
+    label: "Training",
+    color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
+    accent: "from-emerald-600 to-emerald-800",
+    icon: Activity,
+  },
+  match: {
+    label: "Match",
+    color: "bg-red-500/10 text-red-700 dark:text-red-400",
+    accent: "from-red-600 to-red-800",
+    icon: Zap,
+  },
+  tournament: {
+    label: "Tournament",
+    color: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    accent: "from-amber-600 to-amber-800",
+    icon: Zap,
+  },
+  touch_rugby: {
+    label: "Touch Rugby",
+    color: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
+    accent: "from-blue-600 to-blue-800",
+    icon: Activity,
+  },
+  social: {
+    label: "Social",
+    color: "bg-amber-400/10 text-amber-600 dark:text-amber-400",
+    accent: "from-amber-500 to-amber-700",
+    icon: Users,
+  },
+};
+
+type FeedItem = {
+  id: number;
+  type: string;
+  xpEarned: number;
+  createdAt: string;
+  user: Omit<User, "password">;
 };
 
 export default function EventDetailPage() {
@@ -23,6 +69,7 @@ export default function EventDetailPage() {
   const eventId = params?.id ? parseInt(params.id) : 0;
   const { user } = useAuth();
   const { toast } = useToast();
+  const { primaryColor } = useClubTheme();
 
   const { data: event, isLoading } = useQuery<Event>({
     queryKey: ["/api/events", eventId],
@@ -37,6 +84,10 @@ export default function EventDetailPage() {
   const { data: club } = useQuery<Club>({
     queryKey: ["/api/clubs", event?.clubId],
     enabled: !!event?.clubId,
+  });
+
+  const { data: feedItems } = useQuery<FeedItem[]>({
+    queryKey: ["/api/feed"],
   });
 
   const isCheckedIn = attendanceList?.some((a) => a.userId === user?.id);
@@ -56,11 +107,50 @@ export default function EventDetailPage() {
     },
   });
 
+  const clubFeedItems = feedItems
+    ?.filter((f) => {
+      if (!club) return false;
+      return true;
+    })
+    .slice(0, 4);
+
+  const typeConfig = event ? eventTypeConfig[event.type] || eventTypeConfig.training : eventTypeConfig.training;
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr + "T00:00:00");
+    return d.toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  };
+
+  const handleShare = async () => {
+    if (navigator.share && event) {
+      try {
+        await navigator.share({
+          title: event.title,
+          text: `${event.title} - ${formatDate(event.date)} at ${event.time}`,
+          url: window.location.href,
+        });
+      } catch {
+        toast({ title: "Link copied", description: "Event link copied to clipboard" });
+      }
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+      toast({ title: "Link copied", description: "Event link copied to clipboard" });
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
-        <Skeleton className="h-8 w-32 mb-4" />
-        <Skeleton className="h-48 rounded-md" />
+      <div className="pb-24 max-w-lg mx-auto">
+        <Skeleton className="h-56 w-full" />
+        <div className="px-4 pt-4 space-y-3">
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-32 rounded-md" />
+        </div>
       </div>
     );
   }
@@ -68,138 +158,292 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <div className="pb-24 px-4 pt-2 max-w-lg mx-auto text-center">
-        <p className="text-muted-foreground">Event not found</p>
+        <p className="text-muted-foreground" data-testid="text-event-not-found">Event not found</p>
       </div>
     );
   }
 
-  return (
-    <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
-      <Link href="/play">
-        <Button variant="ghost" size="sm" className="mb-3 -ml-2" data-testid="button-back">
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back
-        </Button>
-      </Link>
+  const displayedAttendees = attendanceList?.slice(0, 6) || [];
+  const remainingCount = (attendanceList?.length || 0) - displayedAttendees.length;
 
-      <div className="mb-5">
-        <div className="flex items-start justify-between gap-2 mb-2">
-          <h2 className="text-xl font-bold" data-testid="text-event-title">{event.title}</h2>
-          <Badge variant="secondary" className={eventTypeColors[event.type] || ""}>
-            {event.type.replace("_", " ")}
+  return (
+    <div className="pb-24 max-w-lg mx-auto">
+      <div
+        className="relative px-4 pt-3 pb-6"
+        style={{
+          background: `linear-gradient(135deg, hsl(var(--club-primary)) 0%, hsl(var(--club-primary) / 0.85) 100%)`,
+        }}
+        data-testid="section-event-hero"
+      >
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <Link href="/play">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-white/80 hover:text-white no-default-hover-elevate"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+          </Link>
+          <Badge className={typeConfig.color} data-testid="badge-event-type">
+            {typeConfig.label}
           </Badge>
         </div>
+
+        <h1
+          className="text-2xl font-bold mb-1"
+          style={{ color: "hsl(var(--club-primary-foreground))" }}
+          data-testid="text-event-title"
+        >
+          {event.title}
+        </h1>
+
         {club && (
           <Link href={`/clubs/${club.id}`}>
-            <span className="text-sm text-primary font-medium" data-testid="link-event-club">
+            <span
+              className="text-sm font-medium opacity-90 hover:opacity-100"
+              style={{ color: "hsl(var(--club-primary-foreground))" }}
+              data-testid="link-event-club"
+            >
               {club.name}
             </span>
           </Link>
         )}
-      </div>
 
-      <Card className="mb-5">
-        <CardContent className="p-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
-            <span className="text-sm">
-              {new Date(event.date + "T00:00:00").toLocaleDateString("en-GB", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
+        <div className="flex items-center gap-4 mt-3 flex-wrap" style={{ color: "hsl(var(--club-primary-foreground) / 0.85)" }}>
+          <div className="flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />
+            <span className="text-sm">{formatDate(event.date)}</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5" />
             <span className="text-sm">{event.time}</span>
           </div>
           {event.location && (
-            <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5" />
               <span className="text-sm">{event.location}</span>
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {event.description && (
-        <section className="mb-5">
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-2">
-            Details
-          </h3>
-          <p className="text-sm leading-relaxed">{event.description}</p>
+        <div className="flex items-center gap-2 mt-5">
+          {user && (
+            <>
+              {isCheckedIn ? (
+                <div
+                  className="flex items-center gap-2 px-4 py-2 rounded-md bg-white/20 backdrop-blur-sm"
+                  data-testid="text-already-checked-in"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-white" />
+                  <span className="text-sm font-semibold text-white">CHECKED IN</span>
+                </div>
+              ) : (
+                <Button
+                  className="bg-white text-foreground font-semibold"
+                  style={{ color: primaryColor }}
+                  onClick={() => checkInMutation.mutate()}
+                  disabled={checkInMutation.isPending}
+                  data-testid="button-event-checkin"
+                >
+                  {checkInMutation.isPending ? "Checking in..." : "CHECK IN"}
+                </Button>
+              )}
+            </>
+          )}
+          <Button
+            variant="outline"
+            className="border-white/30 text-white bg-white/10 backdrop-blur-sm no-default-hover-elevate"
+            onClick={handleShare}
+            data-testid="button-share-event"
+          >
+            <Share2 className="w-4 h-4 mr-1.5" />
+            SHARE
+          </Button>
+        </div>
+      </div>
+
+      <div className="px-4 pt-4 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Tag className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Event Type</span>
+              </div>
+              <p className="text-sm font-semibold capitalize" data-testid="text-event-type-detail">
+                {event.type.replace("_", " ")}
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Activity className="w-3.5 h-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Status</span>
+              </div>
+              <p className="text-sm font-semibold" data-testid="text-event-status">
+                {isCheckedIn ? (
+                  <span className="text-emerald-600 dark:text-emerald-400">Checked In</span>
+                ) : (
+                  <span style={{ color: "hsl(var(--club-primary))" }}>Open for check-in</span>
+                )}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <section data-testid="section-about">
+          <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">About</h3>
+          {event.description ? (
+            <p className="text-sm leading-relaxed" data-testid="text-event-description">{event.description}</p>
+          ) : (
+            <p className="text-sm text-muted-foreground italic" data-testid="text-event-no-description">
+              No additional details for this event.
+            </p>
+          )}
         </section>
-      )}
 
-      {user && (
-        <div className="mb-6">
-          {isCheckedIn ? (
-            <div className="flex items-center gap-2 justify-center py-3 bg-primary/10 rounded-md">
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-              <span className="text-sm font-semibold text-primary" data-testid="text-already-checked-in">
-                You're checked in!
-              </span>
+        <section data-testid="section-attending">
+          <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-muted-foreground" />
+              <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
+                Attending ({attendanceList?.length || 0})
+              </h3>
+            </div>
+          </div>
+
+          {displayedAttendees.length > 0 ? (
+            <div className="space-y-3">
+              <div className="flex items-center gap-1">
+                {displayedAttendees.map((att) => {
+                  const initials = att.user.fullName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2);
+                  return (
+                    <Avatar
+                      key={att.id}
+                      className="w-9 h-9 -ml-1 first:ml-0 border-2 border-background"
+                      data-testid={`avatar-attendee-${att.id}`}
+                    >
+                      <AvatarFallback
+                        className="text-xs font-bold"
+                        style={{
+                          backgroundColor: "hsl(var(--club-primary) / 0.15)",
+                          color: "hsl(var(--club-primary))",
+                        }}
+                      >
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  );
+                })}
+                {remainingCount > 0 && (
+                  <Avatar className="w-9 h-9 -ml-1 border-2 border-background" data-testid="avatar-remaining-count">
+                    <AvatarFallback className="text-xs font-medium bg-muted text-muted-foreground">
+                      +{remainingCount}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+              </div>
+              {attendanceList && attendanceList.length > 0 && (
+                <Card>
+                  <CardContent className="p-0">
+                    {attendanceList.slice(0, 5).map((att, idx) => {
+                      const initials = att.user.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2);
+                      return (
+                        <div
+                          key={att.id}
+                          className={`flex items-center gap-3 px-4 py-2.5 ${
+                            idx < Math.min(attendanceList.length, 5) - 1 ? "border-b" : ""
+                          }`}
+                          data-testid={`row-attendee-${att.id}`}
+                        >
+                          <Avatar className="w-7 h-7">
+                            <AvatarFallback
+                              className="text-[10px] font-bold"
+                              style={{
+                                backgroundColor: "hsl(var(--club-primary) / 0.15)",
+                                color: "hsl(var(--club-primary))",
+                              }}
+                            >
+                              {initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{att.user.fullName}</p>
+                          </div>
+                          <span className="text-xs text-muted-foreground capitalize">{att.method}</span>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
+              {attendanceList && attendanceList.length > 5 && (
+                <p className="text-xs text-muted-foreground text-center" data-testid="link-view-full-list">
+                  View full list of {attendanceList.length} attendees
+                </p>
+              )}
             </div>
           ) : (
-            <Button
-              className="w-full"
-              onClick={() => checkInMutation.mutate()}
-              disabled={checkInMutation.isPending}
-              data-testid="button-event-checkin"
-            >
-              {checkInMutation.isPending ? "Checking in..." : "Check In (+25 XP)"}
-            </Button>
+            <Card>
+              <CardContent className="p-5 text-center">
+                <p className="text-sm text-muted-foreground" data-testid="text-no-attendees">
+                  No one has checked in yet. Be the first!
+                </p>
+              </CardContent>
+            </Card>
           )}
-        </div>
-      )}
+        </section>
 
-      <section>
-        <div className="flex items-center gap-2 mb-3">
-          <Users className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-            Attendees ({attendanceList?.length || 0})
-          </h3>
-        </div>
-        {attendanceList && attendanceList.length > 0 ? (
-          <Card>
-            <CardContent className="p-0">
-              {attendanceList.map((att, idx) => {
-                const initials = att.user.fullName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2);
-                return (
+        {clubFeedItems && clubFeedItems.length > 0 && (
+          <section data-testid="section-club-activity">
+            <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground mb-2">
+              Related Club Activity
+            </h3>
+            <Card>
+              <CardContent className="p-0">
+                {clubFeedItems.map((item, idx) => (
                   <div
-                    key={att.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${
-                      idx < attendanceList.length - 1 ? "border-b" : ""
+                    key={item.id}
+                    className={`flex items-center gap-3 px-4 py-2.5 ${
+                      idx < clubFeedItems.length - 1 ? "border-b" : ""
                     }`}
-                    data-testid={`row-attendee-${att.id}`}
+                    data-testid={`row-feed-${item.id}`}
                   >
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <span className="text-primary text-xs font-bold">{initials}</span>
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: "hsl(var(--club-primary) / 0.1)" }}
+                    >
+                      <Zap className="w-3.5 h-3.5" style={{ color: "hsl(var(--club-primary))" }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{att.user.fullName}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{att.method} check-in</p>
+                      <p className="text-sm truncate">
+                        <span className="font-medium">{item.user.fullName}</span>{" "}
+                        <span className="text-muted-foreground">{item.type.replace("_", " ")}</span>
+                      </p>
                     </div>
+                    <Badge variant="secondary" className="text-[10px] shrink-0">
+                      +{item.xpEarned} XP
+                    </Badge>
                   </div>
-                );
-              })}
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-6 text-center text-sm text-muted-foreground">
-              No one has checked in yet. Be the first!
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+          </section>
         )}
-      </section>
+      </div>
     </div>
   );
 }

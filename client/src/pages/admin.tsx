@@ -798,16 +798,23 @@ function ClubsTab() {
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-primary font-bold text-xs">
+                      <div
+                        className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: club.primaryColor || undefined, color: club.textOnPrimary || "#fff" }}
+                      >
+                        <span className="font-bold text-xs">
                           {club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
                         </span>
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold">{club.name}</p>
                         {club.location && <p className="text-xs text-muted-foreground">{club.location}</p>}
-                        {club.trainingSchedule && (
-                          <p className="text-[10px] text-muted-foreground mt-1">{club.trainingSchedule}</p>
+                        {club.primaryColor && (
+                          <div className="flex items-center gap-1 mt-1">
+                            <div className="w-3 h-3 rounded-sm border" style={{ backgroundColor: club.primaryColor }} />
+                            <div className="w-3 h-3 rounded-sm border" style={{ backgroundColor: club.secondaryColor || undefined }} />
+                            <div className="w-3 h-3 rounded-sm border" style={{ backgroundColor: club.accentColor || undefined }} />
+                          </div>
                         )}
                       </div>
                     </div>
@@ -849,16 +856,31 @@ function ClubForm({
   const [location, setLocation] = useState(club.location || "");
   const [description, setDescription] = useState(club.description || "");
   const [trainingSchedule, setTrainingSchedule] = useState(club.trainingSchedule || "");
+  const [logoUrl, setLogoUrl] = useState(club.logoUrl || "");
+  const [bannerUrl, setBannerUrl] = useState(club.bannerUrl || "");
+  const [primaryColor, setPrimaryColor] = useState(club.primaryColor || "#1a7a4e");
+  const [secondaryColor, setSecondaryColor] = useState(club.secondaryColor || "#e0e0e0");
+  const [accentColor, setAccentColor] = useState(club.accentColor || "#d4a017");
+  const [textOnPrimary, setTextOnPrimary] = useState(club.textOnPrimary || "#FFFFFF");
+  const [textOnSecondary, setTextOnSecondary] = useState(club.textOnSecondary || "#111111");
+  const [brandStyle, setBrandStyle] = useState(club.brandStyle || "classic");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, location, description, trainingSchedule });
+    onSubmit({
+      name, location, description, trainingSchedule,
+      logoUrl: logoUrl || null,
+      bannerUrl: bannerUrl || null,
+      primaryColor, secondaryColor, accentColor,
+      textOnPrimary, textOnSecondary, brandStyle,
+    });
   };
 
   return (
     <Card>
       <CardContent className="p-4">
-        <form onSubmit={handleSubmit} className="space-y-3">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Club Info</h4>
           <div className="space-y-1.5">
             <Label className="text-xs">Club Name</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} required data-testid="input-club-name" />
@@ -875,9 +897,105 @@ function ClubForm({
             <Label className="text-xs">Training Schedule</Label>
             <Input value={trainingSchedule} onChange={(e) => setTrainingSchedule(e.target.value)} data-testid="input-club-schedule" />
           </div>
-          <div className="flex gap-2">
+
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2 border-t">Club Branding</h4>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Logo URL</Label>
+            <Input value={logoUrl} onChange={(e) => setLogoUrl(e.target.value)} placeholder="https://..." data-testid="input-club-logo-url" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Banner URL</Label>
+            <Input value={bannerUrl} onChange={(e) => setBannerUrl(e.target.value)} placeholder="https://..." data-testid="input-club-banner-url" />
+          </div>
+
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2 border-t">Brand Colours</h4>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-[10px]">Primary</Label>
+              <div className="flex items-center gap-1.5">
+                <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" data-testid="input-club-primary-color" />
+                <Input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="text-[10px] h-8 font-mono" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px]">Secondary</Label>
+              <div className="flex items-center gap-1.5">
+                <input type="color" value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" data-testid="input-club-secondary-color" />
+                <Input value={secondaryColor} onChange={(e) => setSecondaryColor(e.target.value)} className="text-[10px] h-8 font-mono" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px]">Accent</Label>
+              <div className="flex items-center gap-1.5">
+                <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" data-testid="input-club-accent-color" />
+                <Input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="text-[10px] h-8 font-mono" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-[10px]">Text on Primary</Label>
+              <div className="flex items-center gap-1.5">
+                <input type="color" value={textOnPrimary} onChange={(e) => setTextOnPrimary(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" data-testid="input-club-text-primary" />
+                <Input value={textOnPrimary} onChange={(e) => setTextOnPrimary(e.target.value)} className="text-[10px] h-8 font-mono" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-[10px]">Text on Secondary</Label>
+              <div className="flex items-center gap-1.5">
+                <input type="color" value={textOnSecondary} onChange={(e) => setTextOnSecondary(e.target.value)} className="w-8 h-8 rounded border cursor-pointer" data-testid="input-club-text-secondary" />
+                <Input value={textOnSecondary} onChange={(e) => setTextOnSecondary(e.target.value)} className="text-[10px] h-8 font-mono" />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[10px]">Brand Style</Label>
+            <div className="flex gap-1.5">
+              {["classic", "bold", "minimal"].map((style) => (
+                <Button
+                  key={style}
+                  type="button"
+                  size="sm"
+                  variant={brandStyle === style ? "default" : "outline"}
+                  onClick={() => setBrandStyle(style)}
+                  className="capitalize text-[10px]"
+                  data-testid={`button-brand-style-${style}`}
+                >
+                  {style}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-2 border-t">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Live Preview</h4>
+            <div className="space-y-3">
+              <div className="rounded-md p-3 border" style={{ backgroundColor: primaryColor, color: textOnPrimary }}>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center" style={{ backgroundColor: secondaryColor, color: textOnSecondary }}>
+                    <span className="text-[9px] font-bold">{name.split(" ").map(w => w[0]).join("").slice(0, 2)}</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold">{name}</p>
+                    <p className="text-[10px] opacity-80">{location || "Location"}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" className="flex-1 py-2 rounded-md text-xs font-bold" style={{ backgroundColor: primaryColor, color: textOnPrimary }} data-testid="preview-checkin-btn">
+                  CHECK IN
+                </button>
+                <button type="button" className="flex-1 py-2 rounded-md text-xs font-bold border" style={{ borderColor: primaryColor, color: primaryColor }} data-testid="preview-details-btn">
+                  DETAILS
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
             <Button type="submit" size="sm" disabled={isPending} className="flex-1" data-testid="button-save-club">
-              {isPending ? "Saving..." : "Update"}
+              {isPending ? "Saving..." : "Save Changes"}
             </Button>
             <Button type="button" size="sm" variant="outline" onClick={onCancel} data-testid="button-cancel-club">
               Cancel

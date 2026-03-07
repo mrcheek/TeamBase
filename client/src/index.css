@@ -9,8 +9,8 @@
   --opaque-button-border-intensity: -8;
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
-  --background: 0 0% 100%;
-  --foreground: 150 10% 10%;
+  --background: 40 10% 98%;
+  --foreground: 220 10% 12%;
   --border: 150 5% 89%;
   --card: 150 8% 98%;
   --card-foreground: 150 10% 10%;
@@ -57,6 +57,15 @@
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  --accent-gold: 43 90% 50%;
+  --club-primary: 152 62% 30%;
+  --club-secondary: 150 6% 88%;
+  --club-accent: 43 90% 50%;
+  --club-primary-foreground: 0 0% 100%;
+  --club-secondary-foreground: 220 10% 12%;
+  --club-surface: 152 20% 96%;
+  --club-surface-strong: 152 20% 92%;
+  --club-border: 152 15% 85%;
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
@@ -135,6 +144,15 @@
   --shadow-lg: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 4px 6px -1px hsl(0 0% 0% / 0.00);
   --shadow-xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00), 0px 8px 10px -1px hsl(0 0% 0% / 0.00);
   --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.00);
+  --accent-gold: 43 85% 58%;
+  --club-primary: 152 55% 38%;
+  --club-secondary: 150 6% 20%;
+  --club-accent: 43 85% 58%;
+  --club-primary-foreground: 0 0% 100%;
+  --club-secondary-foreground: 150 5% 98%;
+  --club-surface: 152 10% 14%;
+  --club-surface-strong: 152 10% 18%;
+  --club-border: 152 10% 22%;
 
 /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));
