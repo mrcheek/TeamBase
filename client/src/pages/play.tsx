@@ -1,25 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link } from "wouter";
 import {
-  Calendar, MapPin, ChevronRight, Clock, Users, Trophy, Zap,
-  Dumbbell, Footprints, Target, Heart, TrendingUp,
+  Calendar, MapPin, ChevronRight, Clock, Trophy,
+  Dumbbell, Footprints, Target, Heart, Users, Zap,
 } from "lucide-react";
 import type { Event, Club } from "@shared/schema";
 
 const ICON_STROKE = 1.5;
-
-const eventTypeIcons: Record<string, typeof Trophy> = {
-  training: Users,
-  touch_rugby: Users,
-  match: Trophy,
-  tournament: Trophy,
-  social: Users,
-};
 
 const filterOptions = [
   { label: "All", value: "all" },
@@ -29,6 +20,14 @@ const filterOptions = [
   { label: "Touch", value: "touch_rugby" },
   { label: "Social", value: "social" },
 ];
+
+const eventTypeColors: Record<string, { bg: string; text: string }> = {
+  match: { bg: "bg-red-50 dark:bg-red-900/20", text: "text-red-600 dark:text-red-400" },
+  training: { bg: "bg-emerald-50 dark:bg-emerald-900/20", text: "text-emerald-600 dark:text-emerald-400" },
+  tournament: { bg: "bg-amber-50 dark:bg-amber-900/20", text: "text-amber-600 dark:text-amber-400" },
+  touch_rugby: { bg: "bg-blue-50 dark:bg-blue-900/20", text: "text-blue-600 dark:text-blue-400" },
+  social: { bg: "bg-purple-50 dark:bg-purple-900/20", text: "text-purple-600 dark:text-purple-400" },
+};
 
 function isToday(dateStr: string): boolean {
   return dateStr === new Date().toISOString().split("T")[0];
@@ -53,54 +52,58 @@ function getClubInitials(name: string): string {
 function EventRow({ event, clubs }: { event: Event; clubs?: Club[] }) {
   const club = clubs?.find(c => c.id === event.clubId);
   const clubColor = club?.primaryColor || "#1a7a4e";
-  const TypeIcon = eventTypeIcons[event.type] || Users;
+  const typeStyle = eventTypeColors[event.type] || eventTypeColors.training;
 
   return (
     <Link href={`/events/${event.id}`}>
       <div
-        className="flex items-center gap-3 py-3 cursor-pointer"
+        className="flex items-center gap-3 py-4 cursor-pointer"
         data-testid={`row-event-${event.id}`}
       >
-        <div
-          className="w-9 h-9 rounded-md flex items-center justify-center shrink-0"
-          style={{ backgroundColor: clubColor + "15" }}
-        >
-          <TypeIcon className="w-4 h-4" strokeWidth={ICON_STROKE} style={{ color: clubColor }} />
-        </div>
+        {club ? (
+          club.logoUrl ? (
+            <img
+              src={club.logoUrl}
+              alt={club.name}
+              className="w-10 h-10 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+              style={{
+                backgroundColor: clubColor,
+                color: club.textOnPrimary || "#fff",
+              }}
+            >
+              <span className="text-[10px] font-bold">{getClubInitials(club.name)}</span>
+            </div>
+          )
+        ) : (
+          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm leading-tight truncate" data-testid={`text-event-title-${event.id}`}>
               {event.title}
             </span>
-            <Badge
-              variant="secondary"
-              className="text-[9px] px-1.5 py-0 shrink-0"
+            <span
+              className={`text-[9px] font-semibold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${typeStyle.bg} ${typeStyle.text}`}
               data-testid={`badge-event-type-${event.id}`}
             >
               {event.type.replace("_", " ")}
-            </Badge>
+            </span>
           </div>
           {club && (
-            <p className="text-xs text-muted-foreground mt-0.5" data-testid={`text-event-club-${event.id}`}>
+            <p className="text-xs text-muted-foreground mt-1" data-testid={`text-event-club-${event.id}`}>
               {club.name}
             </p>
           )}
-          <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" strokeWidth={ICON_STROKE} />
-              {formatEventDate(event.date)}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" strokeWidth={ICON_STROKE} />
-              {event.time}
-            </span>
-            {event.location && (
-              <span className="flex items-center gap-1 truncate">
-                <MapPin className="w-3 h-3 shrink-0" strokeWidth={ICON_STROKE} />
-                <span className="truncate">{event.location}</span>
-              </span>
-            )}
-          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            {formatEventDate(event.date)} · {event.time}
+            {event.location ? ` · ${event.location}` : ""}
+          </p>
         </div>
         <ChevronRight className="w-4 h-4 text-muted-foreground/40 shrink-0" strokeWidth={ICON_STROKE} />
       </div>
@@ -111,86 +114,68 @@ function EventRow({ event, clubs }: { event: Event; clubs?: Club[] }) {
 const trainingCategories = [
   {
     title: "SAQ Drills",
-    description: "Speed, Agility & Quickness",
     icon: Zap,
     color: "text-amber-600 dark:text-amber-400",
-    iconBg: "bg-amber-500/10",
-    accentBar: "bg-amber-500",
     items: [
-      { name: "Ladder Drills", detail: "Quick feet patterns" },
-      { name: "Cone Agility", detail: "Change of direction" },
-      { name: "Sprint Intervals", detail: "20m / 40m / 60m" },
-      { name: "Lateral Shuffle", detail: "Side-to-side movement" },
+      "Ladder footwork",
+      "Cone reaction drill",
+      "Zig-zag sprint",
+      "Lateral shuffle",
     ],
   },
   {
     title: "Gym Sessions",
-    description: "Strength & Conditioning",
     icon: Dumbbell,
     color: "text-blue-600 dark:text-blue-400",
-    iconBg: "bg-blue-500/10",
-    accentBar: "bg-blue-500",
     items: [
-      { name: "Upper Body Power", detail: "Bench, rows, press" },
-      { name: "Lower Body Strength", detail: "Squats, lunges" },
-      { name: "Core Stability", detail: "Planks, rotations" },
-      { name: "Full Body Circuit", detail: "Compound movements" },
+      "Upper body power",
+      "Lower body strength",
+      "Core stability",
+      "Full body circuit",
     ],
   },
   {
     title: "Running Programs",
-    description: "Endurance & Match Fitness",
     icon: Footprints,
     color: "text-emerald-600 dark:text-emerald-400",
-    iconBg: "bg-emerald-500/10",
-    accentBar: "bg-emerald-500",
     items: [
-      { name: "Easy Run", detail: "3-5km steady pace" },
-      { name: "Interval Training", detail: "400m repeats" },
-      { name: "Tempo Run", detail: "Match pace simulation" },
-      { name: "Beach Run", detail: "Sand resistance training" },
+      "Easy run (3-5km)",
+      "Interval training",
+      "Tempo run",
+      "Beach run",
     ],
   },
   {
     title: "Skills Training",
-    description: "Rugby-Specific Development",
     icon: Target,
     color: "text-purple-600 dark:text-purple-400",
-    iconBg: "bg-purple-500/10",
-    accentBar: "bg-purple-500",
     items: [
-      { name: "Passing Accuracy", detail: "Spiral & pop passes" },
-      { name: "Tackle Technique", detail: "Safe tackling practice" },
-      { name: "Ruck & Maul", detail: "Contact drills" },
-      { name: "Kicking Practice", detail: "Goal & touch kicks" },
+      "Passing accuracy",
+      "Tackle technique",
+      "Ruck & maul drills",
+      "Kicking practice",
     ],
   },
   {
     title: "Recovery",
-    description: "Mobility & Injury Prevention",
     icon: Heart,
     color: "text-red-600 dark:text-red-400",
-    iconBg: "bg-red-500/10",
-    accentBar: "bg-red-500",
     items: [
-      { name: "Yoga Flow", detail: "Flexibility routine" },
-      { name: "Foam Rolling", detail: "Muscle recovery" },
-      { name: "Stretching", detail: "Post-training routine" },
-      { name: "Ice Bath Protocol", detail: "Recovery method" },
+      "Yoga flow",
+      "Foam rolling",
+      "Post-training stretch",
+      "Ice bath protocol",
     ],
   },
   {
     title: "Team Drills",
-    description: "Group Training & Cohesion",
     icon: Users,
     color: "text-cyan-600 dark:text-cyan-400",
-    iconBg: "bg-cyan-500/10",
-    accentBar: "bg-cyan-500",
     items: [
-      { name: "Touch Rugby", detail: "Small-sided games" },
-      { name: "Defence Patterns", detail: "Line speed drills" },
-      { name: "Attack Shapes", detail: "Phase play patterns" },
-      { name: "Set Piece Practice", detail: "Scrums & lineouts" },
+      "Touch rugby",
+      "Defence patterns",
+      "Attack shapes",
+      "Set piece practice",
     ],
   },
 ];
@@ -211,8 +196,14 @@ export default function PlayPage() {
     (e) => filter === "all" || e.type === filter
   );
 
-  const todayEvents = filteredEvents?.filter((e) => isToday(e.date)) || [];
-  const upcomingEvents = filteredEvents?.filter((e) => isFuture(e.date)) || [];
+  const todayStr = new Date().toISOString().split("T")[0];
+
+  const pinnedEvent = filteredEvents
+    ?.filter((e) => e.type === "tournament" && e.date >= todayStr)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+  const todayEvents = filteredEvents?.filter((e) => isToday(e.date) && e.id !== pinnedEvent?.id) || [];
+  const upcomingEvents = filteredEvents?.filter((e) => isFuture(e.date) && e.id !== pinnedEvent?.id) || [];
   const pastEvents = filteredEvents?.filter((e) => !isToday(e.date) && !isFuture(e.date)) || [];
 
   const tabs = [
@@ -222,50 +213,78 @@ export default function PlayPage() {
   ];
 
   return (
-    <div className="pb-24 pt-4 max-w-lg mx-auto">
-      <div className="px-4 mb-1">
-        <h2 className="text-base font-semibold" data-testid="text-play-title">Play</h2>
+    <div className="pb-24 pt-5 max-w-lg mx-auto">
+      <div className="px-4 mb-3">
+        <h2 className="text-lg font-bold" data-testid="text-play-title">Play</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Events & Rugby Activities</p>
       </div>
 
-      <div className="flex border-b border-divider px-4 mt-3">
+      <div className="border-t border-divider" />
+      <div className="flex px-4 pt-1">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            className={`pb-2.5 px-3 text-sm font-medium relative transition-colors ${
+            className={`py-2.5 px-3 text-sm font-medium relative transition-colors ${
               tab === t.id ? "text-foreground" : "text-muted-foreground"
             }`}
             data-testid={`tab-play-${t.id}`}
           >
             {t.label}
             {tab === t.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
+              <span
+                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full"
+                style={{ backgroundColor: `hsl(var(--club-primary))` }}
+              />
             )}
           </button>
         ))}
       </div>
+      <div className="border-b border-divider" />
 
       {tab === "events" && (
         <div className="px-4">
-          <div className="flex gap-3 overflow-x-auto py-3 no-scrollbar" data-testid="filter-row">
+          {/* Scrollable filter chips */}
+          <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar" data-testid="filter-row">
             {filterOptions.map((opt) => (
               <button
                 key={opt.value}
-                className={`text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`text-xs font-medium whitespace-nowrap px-3 py-1.5 rounded-full border transition-colors ${
                   filter === opt.value
-                    ? "text-foreground"
-                    : "text-muted-foreground"
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-transparent text-muted-foreground border-border"
                 }`}
                 onClick={() => setFilter(opt.value)}
                 data-testid={`button-filter-${opt.value}`}
               >
                 {opt.label}
-                {filter === opt.value && (
-                  <div className="h-0.5 mt-1 rounded-full bg-foreground" />
-                )}
               </button>
             ))}
           </div>
+
+          {/* Pinned weekly highlight */}
+          {pinnedEvent && filter === "all" && (
+            <div className="mb-2">
+              <h3
+                className="text-[10px] font-bold uppercase tracking-wider mb-2"
+                style={{ color: `hsl(var(--club-primary))` }}
+              >
+                This Week
+              </h3>
+              <Link href={`/events/${pinnedEvent.id}`}>
+                <div
+                  className="rounded-lg p-3 cursor-pointer border border-border"
+                  data-testid="card-weekly-highlight"
+                >
+                  <p className="text-sm font-semibold">{pinnedEvent.title}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {formatEventDate(pinnedEvent.date)} · {pinnedEvent.time}
+                    {pinnedEvent.location ? ` · ${pinnedEvent.location}` : ""}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          )}
 
           {eventsLoading ? (
             <div className="space-y-3 mt-2">
@@ -323,73 +342,62 @@ export default function PlayPage() {
         </div>
       )}
 
-      {tab === "training" && (
-        <div className="px-4 pt-4">
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <Badge variant="secondary" data-testid="badge-category-count">
-              {trainingCategories.length} Categories
-            </Badge>
-            <Badge variant="secondary" data-testid="badge-drill-count">
-              {trainingCategories.reduce((sum, c) => sum + c.items.length, 0)} Drills
-            </Badge>
-          </div>
-
-          <Accordion type="multiple" className="space-y-2">
-            {trainingCategories.map((category) => (
-              <AccordionItem
-                key={category.title}
-                value={category.title}
-                data-testid={`accordion-training-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
-                className="border border-border rounded-md overflow-hidden"
-              >
-                <AccordionTrigger
-                  className="px-3 py-3 hover:no-underline hover-elevate"
-                  data-testid={`button-expand-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${category.iconBg}`}>
-                      <category.icon className={`w-4 h-4 ${category.color}`} strokeWidth={ICON_STROKE} />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="font-semibold text-sm leading-tight">{category.title}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {category.description}
-                      </p>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-3 pb-3 pt-0">
-                  <div className="border-t border-border pt-2">
-                    {category.items.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between py-2 group"
-                        data-testid={`text-drill-${category.title.toLowerCase().replace(/\s+/g, '-')}-${idx}`}
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={`w-1 h-6 rounded-full ${category.accentBar} shrink-0 opacity-60`} />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium leading-tight">{item.name}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{item.detail}</p>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" strokeWidth={ICON_STROKE} />
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      )}
-
+      {tab === "training" && <TrainingTab />}
       {tab === "battle" && <BattleTab />}
     </div>
   );
 }
 
+function TrainingTab() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  return (
+    <div className="px-4 pt-4">
+      <div className="space-y-1">
+        {trainingCategories.map((category) => {
+          const isOpen = expanded === category.title;
+          const Icon = category.icon;
+          return (
+            <div key={category.title} data-testid={`section-training-${category.title.toLowerCase().replace(/\s+/g, '-')}`}>
+              <button
+                className="w-full flex items-center gap-3 py-3 text-left"
+                onClick={() => setExpanded(isOpen ? null : category.title)}
+                data-testid={`button-expand-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${category.color}`} strokeWidth={ICON_STROKE} />
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium">{category.title}</span>
+                </div>
+                <span className="text-[11px] text-muted-foreground">{category.items.length} drills</span>
+                <ChevronRight
+                  className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`}
+                  strokeWidth={ICON_STROKE}
+                />
+              </button>
+              {isOpen && (
+                <div className="pl-7 pb-3 space-y-2.5">
+                  {category.items.map((item, idx) => (
+                    <p
+                      key={idx}
+                      className="text-[13px] text-muted-foreground"
+                      data-testid={`text-drill-${category.title.toLowerCase().replace(/\s+/g, '-')}-${idx}`}
+                    >
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              )}
+              <div className="border-b border-divider" />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function BattleTab() {
+  const { user } = useAuth();
   const { data: clubLeaderboard, isLoading } = useQuery<{ club: Club; score: number }[]>({
     queryKey: ["/api/leaderboard/clubs"],
   });
@@ -399,12 +407,16 @@ function BattleTab() {
   const dayOfWeek = now.getDay();
   const daysRemaining = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
 
+  const medals = ["🥇", "🥈", "🥉"];
+
+  const userContribution = user?.xpTotal ? Math.round(user.xpTotal * 0.5) : 0;
+
   return (
     <div className="px-4 pt-4">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Trophy className="w-4 h-4" strokeWidth={ICON_STROKE} style={{ color: `hsl(var(--club-primary))` }} />
-          <h3 className="text-sm font-semibold">Weekly Club Battle</h3>
+          <h3 className="text-sm font-bold">Weekly Club Battle</h3>
         </div>
         <p className="text-xs text-muted-foreground">
           {daysRemaining > 0 ? `${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining` : "Resets tomorrow"}
@@ -418,39 +430,51 @@ function BattleTab() {
           ))}
         </div>
       ) : clubLeaderboard && clubLeaderboard.length > 0 ? (
-        <div className="space-y-4">
-          {clubLeaderboard.map((entry, idx) => (
-            <div key={entry.club.id} data-testid={`row-battle-club-${entry.club.id}`}>
-              <div className="flex items-center gap-3 mb-1.5">
-                <span
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                    idx === 0
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                      : idx === 1
-                      ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {idx + 1}
-                </span>
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                  style={{
-                    backgroundColor: entry.club.primaryColor || undefined,
-                    color: entry.club.textOnPrimary || "#fff",
-                  }}
-                >
-                  <span className="text-[8px] font-bold">{getClubInitials(entry.club.name)}</span>
+        <div className="space-y-5">
+          {clubLeaderboard.map((entry, idx) => {
+            const isUserClub = user?.memberships?.some?.((m: any) => m.clubId === entry.club.id);
+            return (
+              <div key={entry.club.id} data-testid={`row-battle-club-${entry.club.id}`}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-lg w-7 text-center shrink-0">
+                    {idx < 3 ? medals[idx] : (
+                      <span className="text-xs font-bold text-muted-foreground">{idx + 1}</span>
+                    )}
+                  </span>
+                  {entry.club.logoUrl ? (
+                    <img
+                      src={entry.club.logoUrl}
+                      alt={entry.club.name}
+                      className="w-8 h-8 rounded-full object-cover shrink-0"
+                    />
+                  ) : (
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: entry.club.primaryColor || undefined,
+                        color: entry.club.textOnPrimary || "#fff",
+                      }}
+                    >
+                      <span className="text-[9px] font-bold">{getClubInitials(entry.club.name)}</span>
+                    </div>
+                  )}
+                  <span className="flex-1 text-sm font-semibold truncate">{entry.club.name}</span>
+                  <span className="text-sm font-bold tabular-nums">{entry.score} pts</span>
                 </div>
-                <span className="flex-1 text-sm font-medium truncate">{entry.club.name}</span>
-                <span className="text-xs font-semibold tabular-nums">{entry.score} pts</span>
+                <div className="ml-10">
+                  <Progress
+                    value={Math.min((entry.score / maxScore) * 100, 100)}
+                    className="h-3 rounded-full"
+                  />
+                  {isUserClub && userContribution > 0 && (
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      Your contribution: {userContribution} pts
+                    </p>
+                  )}
+                </div>
               </div>
-              <Progress
-                value={Math.min((entry.score / maxScore) * 100, 100)}
-                className="h-1.5"
-              />
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="py-16 text-center">
@@ -460,7 +484,7 @@ function BattleTab() {
       )}
 
       <div className="mt-6 pt-4 border-t border-divider">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
           How Points Are Earned
         </h4>
         <div className="space-y-1.5 text-[13px] text-muted-foreground">

@@ -1,0 +1,296 @@
+there are specific refinements I would still require before calling it “premium”.
+
+I'll go through each sub-tab separately and then give you the global Play tab fixes.
+
+1️⃣ Overall Play Tab Structure (Good)
+
+Your structure is correct:
+
+Play
+Events | Training | Battle
+
+This is exactly the right model:
+
+Tab	Purpose
+Events	discover rugby happening
+Training	learn drills / session ideas
+Battle	club competition
+
+That separation is clean and scalable.
+
+Now we refine how they feel.
+
+2️⃣ Events Screen (Best of the Three)
+
+This screen is actually the strongest one.
+
+What works:
+
+✔ good grouping
+✔ clear event titles
+✔ metadata readable
+✔ category tags useful
+✔ event rows feel tappable
+
+However, a few improvements will push it from good → excellent.
+
+Remove Event Icons
+
+The left icons are unnecessary:
+
+👥
+🏆
+
+They add noise.
+
+Instead use:
+
+club avatar / initials
+
+Example:
+
+[ST]
+
+Touch Rugby Afternoon
+Stone Town Sultans RFC
+
+This reinforces club identity.
+
+Simplify Metadata Row
+
+Currently:
+
+📅 Sat 7 Mar   🕐 15:00   📍 Forodhani Gardens
+
+You don’t need icons.
+
+Cleaner:
+
+Sat 7 Mar · 15:00 · Forodhani Gardens
+
+Much calmer.
+
+Event Tags Should Use Brand Color
+
+Currently they are grey:
+
+touch rugby
+training
+match
+
+Instead use club accent or event type color.
+
+Example:
+
+match → red
+training → green
+tournament → gold
+touch → blue
+
+Subtle but adds life.
+
+3️⃣ Training Screen (Needs Biggest Improvement)
+
+This is currently the weakest Play tab screen.
+
+Right now it feels like a settings menu.
+
+Example:
+
+SAQ Drills
+Gym Sessions
+Running Programs
+
+These feel like file folders, not training content.
+
+Change From Accordion → Drill Browser
+
+Instead of:
+
+SAQ Drills
+▶
+
+Use:
+
+SAQ Drills
+12 drills
+
+Speed ladders
+Reaction drills
+Cone patterns
+
+This makes the section feel alive.
+
+Add Visual Structure
+
+Example:
+
+SAQ DRILLS
+
+Ladder footwork
+Cone reaction drill
+Zig-zag sprint
+
+Right now the screen is too abstract.
+
+Users should immediately see actual drill names.
+
+Replace Pastel Blocks
+
+The colored icon backgrounds look like a UI kit.
+
+Instead:
+
+small icon
+text
+subtext
+
+Cleaner.
+
+4️⃣ Battle Screen (Needs More Energy)
+
+This screen is conceptually excellent but visually too quiet.
+
+A competition screen should feel competitive.
+
+Right now:
+
+Jambiani Jackals RFC
+1197 pts
+
+It looks like a spreadsheet.
+
+Add Strong Rank Hierarchy
+
+Example:
+
+🥇 Jackals RFC
+1197 pts
+
+🥈 Stone Town RFC
+177 pts
+
+🥉 Paje Pirates RFC
+75 pts
+
+Use medal icons or rank badges.
+
+Make Progress Bars Larger
+
+Current bars are too thin.
+
+They should feel like:
+
+████████████████
+
+More like a scoreboard.
+
+Add “Your Contribution”
+
+Example:
+
+Jackals RFC
+
+1197 pts
+Your contribution: 85 pts
+
+This increases motivation.
+
+5️⃣ The Tab Selector Needs Improvement
+
+Right now:
+
+Events  Training  Battle
+
+looks like plain text.
+
+Use segmented control styling:
+
+[ Events ]  Training  Battle
+
+Active tab should feel:
+
+• darker
+• bolder
+• slightly underlined
+
+6️⃣ Spacing Needs Slight Increase
+
+Events list is a little dense.
+
+Each row should have slightly more vertical padding.
+
+Target rhythm:
+
+title
+8px
+club
+8px
+metadata
+
+Not compressed.
+
+7️⃣ Filters Should Scroll Horizontally
+
+Current filter row:
+
+All Training Matches Tournaments Touch Social
+
+Good idea.
+
+But should behave like:
+
+[ All ] [ Training ] [ Matches ] [ Tournaments ] →
+
+Scrollable chip row.
+
+8️⃣ Play Header Is Missing Context
+
+Right now it just says:
+
+Play
+
+Add a subtitle.
+
+Example:
+
+Play
+Events & Rugby Activities
+
+Small but helpful.
+
+9️⃣ One Feature Missing
+
+The Play tab should also contain:
+
+Weekly Highlight
+
+Example:
+
+THIS WEEK
+
+ZRF Season Opening Tournament
+
+Pinned above the event list.
+
+10️⃣ Bottom Navigation Is Now Correct
+
+Your nav is now solid:
+
+Home | Play | GO | Club | Profile
+
+No change needed.
+
+GO button works.
+
+Final Score
+
+Current Play tab quality:
+
+8 / 10
+
+With the fixes above it becomes:
+
+9.5 / 10
+
+Which is premium sports product level.
