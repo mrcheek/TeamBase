@@ -18,7 +18,7 @@ import {
 import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
 
 type AdminUser = Omit<User, "password">;
-type AdminMembership = Omit<Membership, ""> & { user: AdminUser; club: Club };
+type AdminMembership = Membership & { user: AdminUser; club: Club };
 
 export default function AdminPage() {
   const { user } = useAuth();
