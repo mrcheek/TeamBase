@@ -9,6 +9,7 @@ import { MembershipCard } from "@/components/membership-card";
 import { LogOut, TrendingUp, Dumbbell, ChevronRight, AlertCircle, Users, Trophy, Zap, Clock, Star, Sun, Moon, Settings, Bell } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import type { Activity, XpTransaction, Membership, Club } from "@shared/schema";
+import { isAnyAdmin } from "@shared/schema";
 import { Link } from "wouter";
 
 const tierThresholds = [
@@ -348,7 +349,7 @@ export default function ProfilePage() {
               </button>
             </div>
           )}
-          {user.role === "admin" && (
+          {isAnyAdmin(user.role) && (
             <Link href="/admin">
               <div className="flex items-center justify-between py-3 cursor-pointer" data-testid="link-admin-dashboard">
                 <div className="flex items-center gap-2.5">

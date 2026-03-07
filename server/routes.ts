@@ -6,7 +6,7 @@ import { pool } from "./db";
 import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema } from "@shared/schema";
+import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES } from "@shared/schema";
 import { seedDatabase } from "./seed";
 import multer from "multer";
 import path from "path";
@@ -59,15 +59,30 @@ export async function registerRoutes(
     next();
   }
 
-  async function requireAdmin(req: Request, res: Response, next: Function) {
+  async function requireAnyAdmin(req: Request, res: Response, next: Function) {
     if (!req.session.userId) {
       return res.status(401).json({ message: "Not authenticated" });
     }
     const user = await storage.getUser(req.session.userId);
-    if (!user || user.role !== "admin") {
+    if (!user || !isAnyAdmin(user.role)) {
       return res.status(403).json({ message: "Admin access required" });
     }
     next();
+  }
+
+  async function requireFederationAdmin(req: Request, res: Response, next: Function) {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+    const user = await storage.getUser(req.session.userId);
+    if (!user || !isFederationAdminOrAbove(user.role)) {
+      return res.status(403).json({ message: "Federation admin access required" });
+    }
+    next();
+  }
+
+  async function getAdminClubIds(userId: number): Promise<number[]> {
+    return storage.getUserClubIds(userId);
   }
 
   app.post("/api/register", async (req: Request, res: Response) => {
@@ -226,9 +241,16 @@ export async function registerRoutes(
     res.json(safeAtt);
   });
 
-  app.post("/api/events", requireAdmin, async (req: Request, res: Response) => {
+  app.post("/api/events", requireAnyAdmin, async (req: Request, res: Response) => {
     try {
       const data = insertEventSchema.parse(req.body);
+      const user = await storage.getUser(req.session.userId!);
+      if (user && user.role === "club_admin") {
+        const clubIds = await getAdminClubIds(req.session.userId!);
+        if (!clubIds.includes(data.clubId)) {
+          return res.status(403).json({ message: "You can only create events for your own club" });
+        }
+      }
       const event = await storage.createEvent(data);
       res.json(event);
     } catch (error: any) {
@@ -338,18 +360,18 @@ export async function registerRoutes(
     res.json(att);
   });
 
-  app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
+  app.get("/api/admin/stats", requireFederationAdmin, async (_req: Request, res: Response) => {
     const stats = await storage.getAdminStats(1);
     res.json(stats);
   });
 
-  app.get("/api/admin/users", requireAdmin, async (_req: Request, res: Response) => {
+  app.get("/api/admin/users", requireFederationAdmin, async (_req: Request, res: Response) => {
     const allUsers = await storage.getAllUsers(1);
     const safeUsers = allUsers.map(({ password: _, ...u }) => u);
     res.json(safeUsers);
   });
 
-  app.get("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/users/:id", requireFederationAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.id);
       const user = await storage.getUser(userId);
@@ -371,13 +393,23 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/users/:id/role", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/users/:id/role", requireFederationAdmin, async (req: Request, res: Response) => {
     try {
       const { role } = req.body;
-      if (!role || !["player", "coach", "personnel", "supporter", "admin"].includes(role)) {
+      const validRoles: readonly string[] = ALL_ROLES;
+      if (!role || !validRoles.includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
-      const updated = await storage.updateUserRole(parseInt(req.params.id), role);
+      const targetUserId = parseInt(req.params.id);
+      if (targetUserId === req.session.userId) {
+        return res.status(403).json({ message: "You cannot change your own role" });
+      }
+      const currentUser = await storage.getUser(req.session.userId!);
+      if (!currentUser) return res.status(401).json({ message: "Not authenticated" });
+      if (!canAssignRole(currentUser.role, role)) {
+        return res.status(403).json({ message: "You do not have permission to assign this role" });
+      }
+      const updated = await storage.updateUserRole(targetUserId, role);
       if (!updated) return res.status(404).json({ message: "User not found" });
       const { password: _, ...safeUser } = updated;
       res.json(safeUser);
@@ -386,18 +418,35 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/admin/memberships", requireAdmin, async (req: Request, res: Response) => {
+  app.get("/api/admin/memberships", requireAnyAdmin, async (req: Request, res: Response) => {
     const status = req.query.status as string | undefined;
     const all = await storage.getAllMemberships(status);
-    const safe = all.map(({ user: { password: _, ...u }, ...rest }) => ({ ...rest, user: u }));
+    const user = await storage.getUser(req.session.userId!);
+    let filtered = all;
+    if (user && user.role === "club_admin") {
+      const clubIds = await getAdminClubIds(req.session.userId!);
+      filtered = all.filter(m => clubIds.includes(m.clubId));
+    }
+    const safe = filtered.map(({ user: { password: _, ...u }, ...rest }) => ({ ...rest, user: u }));
     res.json(safe);
   });
 
-  app.patch("/api/admin/memberships/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/memberships/:id", requireAnyAdmin, async (req: Request, res: Response) => {
     try {
       const { status } = req.body;
       if (!status || !["active", "pending", "rejected", "inactive"].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
+      }
+      const user = await storage.getUser(req.session.userId!);
+      if (user && user.role === "club_admin") {
+        const allMemberships = await storage.getAllMemberships();
+        const membership = allMemberships.find(m => m.id === parseInt(req.params.id));
+        if (membership) {
+          const clubIds = await getAdminClubIds(req.session.userId!);
+          if (!clubIds.includes(membership.clubId)) {
+            return res.status(403).json({ message: "You can only manage memberships for your own club" });
+          }
+        }
       }
       await storage.updateMembershipStatus(parseInt(req.params.id), status);
       res.json({ message: "Membership updated" });
@@ -406,9 +455,19 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/events/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/events/:id", requireAnyAdmin, async (req: Request, res: Response) => {
     try {
       const data = adminUpdateEventSchema.parse(req.body);
+      const user = await storage.getUser(req.session.userId!);
+      if (user && user.role === "club_admin") {
+        const event = await storage.getEvent(parseInt(req.params.id));
+        if (event) {
+          const clubIds = await getAdminClubIds(req.session.userId!);
+          if (!clubIds.includes(event.clubId)) {
+            return res.status(403).json({ message: "You can only edit events for your own club" });
+          }
+        }
+      }
       const updated = await storage.updateEvent(parseInt(req.params.id), data as any);
       if (!updated) return res.status(404).json({ message: "Event not found" });
       res.json(updated);
@@ -417,8 +476,18 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/events/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.delete("/api/admin/events/:id", requireAnyAdmin, async (req: Request, res: Response) => {
     try {
+      const user = await storage.getUser(req.session.userId!);
+      if (user && user.role === "club_admin") {
+        const event = await storage.getEvent(parseInt(req.params.id));
+        if (event) {
+          const clubIds = await getAdminClubIds(req.session.userId!);
+          if (!clubIds.includes(event.clubId)) {
+            return res.status(403).json({ message: "You can only delete events for your own club" });
+          }
+        }
+      }
       await storage.deleteEvent(parseInt(req.params.id));
       res.json({ message: "Event deleted" });
     } catch (error: any) {
@@ -426,9 +495,16 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/clubs/:id", requireAdmin, async (req: Request, res: Response) => {
+  app.patch("/api/admin/clubs/:id", requireAnyAdmin, async (req: Request, res: Response) => {
     try {
       const data = adminUpdateClubSchema.parse(req.body);
+      const user = await storage.getUser(req.session.userId!);
+      if (user && user.role === "club_admin") {
+        const clubIds = await getAdminClubIds(req.session.userId!);
+        if (!clubIds.includes(parseInt(req.params.id))) {
+          return res.status(403).json({ message: "You can only edit your own club" });
+        }
+      }
       const updated = await storage.updateClub(parseInt(req.params.id), data as any);
       if (!updated) return res.status(404).json({ message: "Club not found" });
       res.json(updated);
@@ -459,7 +535,7 @@ export async function registerRoutes(
 
   app.use("/uploads", express.static(uploadsDir));
 
-  app.post("/api/upload", requireAdmin, upload.single("file"), (req: Request, res: Response) => {
+  app.post("/api/upload", requireAnyAdmin, upload.single("file"), (req: Request, res: Response) => {
     if (!req.file) return res.status(400).json({ message: "No file uploaded" });
     const url = `/uploads/${req.file.filename}`;
     res.json({ url });
@@ -511,7 +587,7 @@ export async function registerRoutes(
     res.json({ subscribed: subs.length > 0 });
   });
 
-  app.post("/api/admin/events/:id/notify", requireAdmin, async (req: Request, res: Response) => {
+  app.post("/api/admin/events/:id/notify", requireFederationAdmin, async (req: Request, res: Response) => {
     try {
       const event = await storage.getEvent(parseInt(req.params.id));
       if (!event) return res.status(404).json({ message: "Event not found" });

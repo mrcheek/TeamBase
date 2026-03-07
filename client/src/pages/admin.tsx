@@ -16,17 +16,34 @@ import {
   Upload, Bell
 } from "lucide-react";
 import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
+import { isAnyAdmin, isFederationAdminOrAbove, isTeambaseAdmin, canAssignRole, ALL_ROLES, ADMIN_ROLES } from "@shared/schema";
 
 const ICON_STROKE = 1.5;
 
 type AdminUser = Omit<User, "password">;
 type AdminMembership = Membership & { user: AdminUser; club: Club };
 
+const adminLevelLabels: Record<string, string> = {
+  teambase_admin: "TeamBase Admin",
+  federation_admin: "Federation Admin",
+  club_admin: "Club Admin",
+};
+
+function useAdminClubIds(user: AdminUser | null) {
+  const { data: memberships } = useQuery<(Membership & { club: Club })[]>({
+    queryKey: ["/api/memberships"],
+    enabled: !!user && user.role === "club_admin",
+  });
+  if (!user || user.role !== "club_admin") return null;
+  return memberships?.filter(m => m.status === "active").map(m => m.clubId) ?? [];
+}
+
 export default function AdminPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
+  const adminClubIds = useAdminClubIds(user);
 
-  if (!user || user.role !== "admin") {
+  if (!user || !isAnyAdmin(user.role)) {
     return (
       <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
@@ -38,18 +55,41 @@ export default function AdminPage() {
     );
   }
 
+  const isClubAdmin = user.role === "club_admin";
+  const showOverview = isFederationAdminOrAbove(user.role);
+
   const tabs = [
-    { id: "overview", label: "Overview" },
+    ...(showOverview ? [{ id: "overview", label: "Overview" }] : []),
     { id: "members", label: "Members" },
     { id: "events", label: "Events" },
     { id: "clubs", label: "Clubs" },
   ];
 
-  const activeLabel = tabs.find(t => t.id === activeTab)?.label || "Overview";
+  const effectiveTab = (activeTab === "overview" && !showOverview) ? "members" : activeTab;
+
+  const activeLabel = tabs.find(t => t.id === effectiveTab)?.label || tabs[0]?.label || "Members";
+
+  const { data: adminClubs } = useQuery<(Membership & { club: Club })[]>({
+    queryKey: ["/api/memberships"],
+    enabled: isClubAdmin,
+  });
+  const clubAdminClubNames = isClubAdmin
+    ? adminClubs?.filter(m => m.status === "active").map(m => m.club.name).join(", ") ?? ""
+    : "";
 
   return (
     <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
-      <h2 className="text-base font-semibold mb-4" data-testid="text-admin-title">{activeLabel}</h2>
+      <div className="flex items-center gap-2 mb-1">
+        <h2 className="text-base font-semibold" data-testid="text-admin-title">{activeLabel}</h2>
+      </div>
+      <div className="flex items-center gap-2 mb-4">
+        <Badge variant="outline" className="text-[10px] capitalize" data-testid="badge-admin-level">
+          {adminLevelLabels[user.role] || user.role}
+        </Badge>
+        {isClubAdmin && clubAdminClubNames && (
+          <span className="text-[11px] text-muted-foreground" data-testid="text-admin-club-scope">{clubAdminClubNames}</span>
+        )}
+      </div>
 
       <div className="flex border-b border-divider mb-6">
         {tabs.map((tab) => (
@@ -57,24 +97,24 @@ export default function AdminPage() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`px-3 pb-2.5 text-sm font-medium transition-colors relative ${
-              activeTab === tab.id
+              effectiveTab === tab.id
                 ? "text-foreground"
                 : "text-muted-foreground"
             }`}
             data-testid={`tab-admin-${tab.id}`}
           >
             {tab.label}
-            {activeTab === tab.id && (
+            {effectiveTab === tab.id && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />
             )}
           </button>
         ))}
       </div>
 
-      {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
-      {activeTab === "members" && <MembersTab />}
-      {activeTab === "events" && <EventsTab />}
-      {activeTab === "clubs" && <ClubsTab />}
+      {effectiveTab === "overview" && showOverview && <OverviewTab onNavigate={setActiveTab} />}
+      {effectiveTab === "members" && <MembersTab adminRole={user.role} adminClubIds={adminClubIds} />}
+      {effectiveTab === "events" && <EventsTab adminRole={user.role} adminClubIds={adminClubIds} />}
+      {effectiveTab === "clubs" && <ClubsTab adminRole={user.role} adminClubIds={adminClubIds} />}
     </div>
   );
 }
@@ -167,14 +207,18 @@ const roleColors: Record<string, string> = {
   coach: "text-purple-700 bg-purple-50",
   personnel: "text-cyan-700 bg-cyan-50",
   supporter: "text-pink-700 bg-pink-50",
-  admin: "text-red-700 bg-red-50",
+  club_admin: "text-orange-700 bg-orange-50",
+  federation_admin: "text-red-700 bg-red-50",
+  teambase_admin: "text-red-700 bg-red-50",
 };
 
-function MemberDetail({ userId, onBack }: { userId: number; onBack: () => void }) {
+function MemberDetail({ userId, onBack, adminRole }: { userId: number; onBack: () => void; adminRole: string }) {
   const { toast } = useToast();
+  const canViewDetails = isFederationAdminOrAbove(adminRole);
 
   const { data, isLoading } = useQuery<UserDetail>({
     queryKey: ["/api/admin/users", userId],
+    enabled: canViewDetails,
   });
 
   const roleMutation = useMutation({
@@ -186,6 +230,17 @@ function MemberDetail({ userId, onBack }: { userId: number; onBack: () => void }
       toast({ title: "Role updated" });
     },
   });
+
+  if (!canViewDetails) {
+    return (
+      <div className="space-y-4">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="button-back-to-members">
+          <ArrowLeft className="w-4 h-4" strokeWidth={ICON_STROKE} /> All Members
+        </button>
+        <p className="text-sm text-muted-foreground">Detailed member view is available to Federation Admins and above.</p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -233,26 +288,36 @@ function MemberDetail({ userId, onBack }: { userId: number; onBack: () => void }
         </div>
       </div>
 
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Role</h4>
+      {adminRole !== "club_admin" && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Role</h4>
+          </div>
+          <Select
+            value={u.role}
+            onValueChange={(role) => roleMutation.mutate({ userId: u.id, role })}
+          >
+            <SelectTrigger className="h-8 text-xs" data-testid="select-member-role">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="player">Player</SelectItem>
+              <SelectItem value="coach">Coach</SelectItem>
+              <SelectItem value="personnel">Personnel</SelectItem>
+              <SelectItem value="supporter">Supporter</SelectItem>
+              {isFederationAdminOrAbove(adminRole) && (
+                <SelectItem value="club_admin">Club Admin</SelectItem>
+              )}
+              {isTeambaseAdmin(adminRole) && (
+                <>
+                  <SelectItem value="federation_admin">Federation Admin</SelectItem>
+                  <SelectItem value="teambase_admin">TeamBase Admin</SelectItem>
+                </>
+              )}
+            </SelectContent>
+          </Select>
         </div>
-        <Select
-          value={u.role}
-          onValueChange={(role) => roleMutation.mutate({ userId: u.id, role })}
-        >
-          <SelectTrigger className="h-8 text-xs" data-testid="select-member-role">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="player">Player</SelectItem>
-            <SelectItem value="coach">Coach</SelectItem>
-            <SelectItem value="personnel">Personnel</SelectItem>
-            <SelectItem value="supporter">Supporter</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      )}
 
       {infoRows.length > 0 && (
         <div>
@@ -392,15 +457,39 @@ function MemberDetail({ userId, onBack }: { userId: number; onBack: () => void }
   );
 }
 
-function MembersTab() {
+function MembersTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds: number[] | null }) {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"all" | "pending">("all");
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
 
   const { data: allUsers, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
+    enabled: isFederationAdminOrAbove(adminRole),
   });
+
+  const { data: clubMembers, isLoading: clubMembersLoading } = useQuery<AdminUser[]>({
+    queryKey: ["/api/clubs", adminClubIds?.[0], "members"],
+    queryFn: async () => {
+      if (!adminClubIds || adminClubIds.length === 0) return [];
+      const results: AdminUser[] = [];
+      for (const clubId of adminClubIds) {
+        const res = await fetch(`/api/clubs/${clubId}/members`, { credentials: "include" });
+        if (res.ok) {
+          const members = await res.json();
+          for (const m of members) {
+            if (!results.find(r => r.id === m.id)) results.push(m);
+          }
+        }
+      }
+      return results;
+    },
+    enabled: isClubScoped,
+  });
+
+  const displayUsers = isClubScoped ? clubMembers : allUsers;
+  const displayUsersLoading = isClubScoped ? clubMembersLoading : usersLoading;
 
   const { data: pendingMemberships, isLoading: membershipsLoading } = useQuery<AdminMembership[]>({
     queryKey: ["/api/admin/memberships", "pending"],
@@ -422,13 +511,13 @@ function MembersTab() {
     },
   });
 
-  const filteredUsers = allUsers?.filter((u) =>
+  const filteredUsers = displayUsers?.filter((u) =>
     u.fullName.toLowerCase().includes(search.toLowerCase()) ||
     u.phone.includes(search)
   );
 
   if (selectedUserId) {
-    return <MemberDetail userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
+    return <MemberDetail userId={selectedUserId} onBack={() => setSelectedUserId(null)} adminRole={adminRole} />;
   }
 
   return (
@@ -439,7 +528,7 @@ function MembersTab() {
           className={`pb-2 px-3 text-sm font-medium relative ${view === "all" ? "text-foreground" : "text-muted-foreground"}`}
           data-testid="button-view-all-members"
         >
-          All ({allUsers?.length ?? 0})
+          All ({displayUsers?.length ?? 0})
           {view === "all" && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground rounded-full" />}
         </button>
         <button
@@ -465,7 +554,7 @@ function MembersTab() {
             />
           </div>
 
-          {usersLoading ? (
+          {displayUsersLoading ? (
             <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse bg-muted rounded-md" />)}</div>
           ) : (
             <div className="divide-y divide-divider">
@@ -548,16 +637,24 @@ function MembersTab() {
   );
 }
 
-function EventsTab() {
+function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds: number[] | null }) {
   const { toast } = useToast();
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
 
-  const { data: allEvents, isLoading } = useQuery<Event[]>({
+  const { data: rawEvents, isLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
   });
 
-  const { data: clubs } = useQuery<Club[]>({ queryKey: ["/api/clubs"] });
+  const allEvents = isClubScoped && adminClubIds
+    ? rawEvents?.filter(e => adminClubIds.includes(e.clubId))
+    : rawEvents;
+
+  const { data: rawClubs } = useQuery<Club[]>({ queryKey: ["/api/clubs"] });
+  const clubs = isClubScoped && adminClubIds
+    ? rawClubs?.filter(c => adminClubIds.includes(c.id))
+    : rawClubs;
 
   const deleteMutation = useMutation({
     mutationFn: async (eventId: number) => {
@@ -782,13 +879,18 @@ function EventForm({
   );
 }
 
-function ClubsTab() {
+function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds: number[] | null }) {
   const { toast } = useToast();
   const [editingClub, setEditingClub] = useState<Club | null>(null);
+  const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
 
-  const { data: allClubs, isLoading } = useQuery<Club[]>({
+  const { data: rawClubs, isLoading } = useQuery<Club[]>({
     queryKey: ["/api/clubs"],
   });
+
+  const allClubs = isClubScoped && adminClubIds
+    ? rawClubs?.filter(c => adminClubIds.includes(c.id))
+    : rawClubs;
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Club> }) => {

@@ -119,6 +119,30 @@ export const xpTransactions = pgTable("xp_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const ADMIN_ROLES = ["teambase_admin", "federation_admin", "club_admin"] as const;
+export const ALL_ROLES = ["player", "coach", "personnel", "supporter", ...ADMIN_ROLES] as const;
+
+export function isAnyAdmin(role: string): boolean {
+  return (ADMIN_ROLES as readonly string[]).includes(role);
+}
+
+export function isTeambaseAdmin(role: string): boolean {
+  return role === "teambase_admin";
+}
+
+export function isFederationAdminOrAbove(role: string): boolean {
+  return role === "teambase_admin" || role === "federation_admin";
+}
+
+export function canAssignRole(assignerRole: string, targetRole: string): boolean {
+  if (!isAnyAdmin(assignerRole)) return false;
+  if (assignerRole === "teambase_admin") return true;
+  if (assignerRole === "federation_admin") {
+    return !["teambase_admin", "federation_admin"].includes(targetRole);
+  }
+  return false;
+}
+
 export const insertFederationSchema = createInsertSchema(federations).omit({ id: true });
 export const insertClubSchema = createInsertSchema(clubs).omit({ id: true });
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, xpTotal: true, tier: true, createdAt: true, profileCompleted: true });

@@ -63,6 +63,7 @@ export interface IStorage {
   getUserPushSubscriptions(userId: number): Promise<PushSubscription[]>;
   getClubPushSubscriptions(clubId: number): Promise<PushSubscription[]>;
   getActivityHeatmap(clubId?: number): Promise<{ day: number; count: number }[]>;
+  getUserClubIds(userId: number): Promise<number[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -385,6 +386,14 @@ export class DatabaseStorage implements IStorage {
       counts[dayIdx].count++;
     }
     return counts;
+  }
+
+  async getUserClubIds(userId: number): Promise<number[]> {
+    const rows = await db
+      .select({ clubId: memberships.clubId })
+      .from(memberships)
+      .where(and(eq(memberships.userId, userId), eq(memberships.status, "active")));
+    return rows.map((r) => r.clubId);
   }
 }
 

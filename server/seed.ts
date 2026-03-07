@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { federations, clubs, users, memberships, events, activities, xpTransactions } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 
@@ -13,6 +13,13 @@ async function hashPassword(password: string): Promise<string> {
 }
 
 export async function seedDatabase() {
+  const legacyResult = await db.execute(sql`SELECT COUNT(*) as count FROM users WHERE role = 'admin'`);
+  const legacyCount = Number((legacyResult as any).rows?.[0]?.count ?? (legacyResult as any)[0]?.count ?? 0);
+  if (legacyCount > 0) {
+    await db.execute(sql`UPDATE users SET role = 'federation_admin' WHERE role = 'admin'`);
+    console.log("Migrated legacy 'admin' roles to 'federation_admin'");
+  }
+
   const existing = await db.select().from(federations);
   if (existing.length > 0) return;
 
@@ -104,7 +111,7 @@ export async function seedDatabase() {
     fullName: "Fatma Ali",
     phone: "+255777100004",
     password: hashedPw,
-    role: "player",
+    role: "club_admin",
     preferredLanguage: "sw",
     xpTotal: 150,
     tier: "green",
@@ -115,7 +122,7 @@ export async function seedDatabase() {
     fullName: "Omar Khamis",
     phone: "+255777100005",
     password: hashedPw,
-    role: "admin",
+    role: "federation_admin",
     preferredLanguage: "en",
     xpTotal: 1100,
     tier: "gold",

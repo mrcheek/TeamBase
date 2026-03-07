@@ -18,6 +18,7 @@ import {
   Plus,
 } from "lucide-react";
 import type { Activity as ActivityType, User, Club, Membership, Event } from "@shared/schema";
+import { isAnyAdmin } from "@shared/schema";
 
 const ICON_STROKE = 1.5;
 
@@ -87,7 +88,7 @@ export default function ClubPage() {
     ?.filter((e) => e.clubId === userClub?.id && e.date >= new Date().toISOString().split("T")[0])
     .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time))[0];
 
-  const isAdminOrCoach = user?.role === "admin" || user?.role === "coach";
+  const isAdminOrCoach = (user?.role && isAnyAdmin(user.role)) || user?.role === "coach";
 
   if (!user) {
     return (

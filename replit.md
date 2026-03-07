@@ -78,39 +78,51 @@ Each club has its own color palette stored in the `clubs` table:
 - Right: XP pill badge (tier-colored: emerald/blue/gray/amber) → taps to `/profile#xp`
 
 ## Admin Dashboard
-Accessible only to users with role="admin". Accessed via "Admin Dashboard" link in Profile settings (not in bottom nav).
+Accessed via "Admin Dashboard" link in Profile settings (visible to any admin tier). 
 Design philosophy: Lists → rows, Forms → vertical layout, Actions → buttons, Stats → small grids. No card wrappers.
-- Underline tabs (not pills) for navigation
-- Flat row + divider lists (no bordered containers)
-- Forms use vertical rhythm without card wrapper
-- Cancel buttons use ghost variant, primary buttons use club primary
-- Icons use `strokeWidth={1.5}` for lighter visual weight
-- Section headers with helper text in club form
+
+### Three-Tier Admin Hierarchy:
+| Level | Role Value | Scope | Can Assign |
+|-------|-----------|-------|------------|
+| TeamBase Admin | `teambase_admin` | Full platform access — all federations, clubs, users | Any role |
+| Federation Admin | `federation_admin` | Their federation — all clubs, events, memberships, users within it | Up to `club_admin` |
+| Club Admin | `club_admin` | Their own club only — club members, events, details | Cannot assign admin roles |
+
+**Governance chain**: Each admin level can only be created by the level above:
+- `club_admin` → confirmed by `federation_admin` or `teambase_admin`
+- `federation_admin` → created by `teambase_admin` only
+- No self-promotion. No peer promotion.
+
+**Scoping**:
+- `club_admin` scope determined by active membership(s)
+- `federation_admin` scope determined by `user.federationId`
+- Self-role-change blocked for all users
+
+**Shared helpers** (in `shared/schema.ts`): `isAnyAdmin()`, `isTeambaseAdmin()`, `isFederationAdminOrAbove()`, `canAssignRole()`
+
+### Server Middleware:
+- `requireAnyAdmin` — any of the 3 admin roles
+- `requireFederationAdmin` — `teambase_admin` or `federation_admin` only
+- Club-scoped checks via `getUserClubIds()` for club admin routes
+
+### Frontend Scoping:
+- Club admins: see only their club's members, events, club details. No role dropdown. No overview tab.
+- Federation admins: see all clubs, members, events. Role dropdown shows up to `club_admin`.
+- TeamBase admins: see everything. Role dropdown shows all roles.
+- Admin level badge shown at top of dashboard.
 
 ### Tabs:
-1. **Overview** - 3x2 compact stat grid + quick action buttons (flat rows, divider separated)
+1. **Overview** (federation+ only) - 3x2 compact stat grid + quick action buttons
 2. **Members** - Flat rows with underline sub-tabs (All/Pending), search, drill-down detail
-3. **Events** - Flat rows with inline create/edit forms (no card wrapper)
-4. **Clubs** - Flat rows with inline club branding editor (no card wrapper), section headers with helper text
-   - Logo/Banner URL inputs
-   - Color pickers: Primary, Secondary, Accent, Text on Primary/Secondary
-   - Brand Style selector (Classic/Bold/Minimal)
-   - Live Preview showing club hero, buttons in real-time
-
-### Member Detail View:
-Full drill-down showing profile, role change, player/coach fields, memberships, activities, XP history.
-
-### RBAC:
-- `requireAdmin` middleware checks user role is "admin"
-- Event creation restricted to admins only
-- All admin mutations validated with Zod schemas
+3. **Events** - Flat rows with inline create/edit forms
+4. **Clubs** - Flat rows with inline club branding editor
 
 ### Demo Accounts:
 - Phone: +255777100001 / Password: rugby123 (Juma Hassan, Player, Blue tier)
 - Phone: +255777100002 / Password: rugby123 (Amina Said, Coach, Silver tier)
 - Phone: +255777100003 / Password: rugby123 (Bakari Mohamed, Player, Blue tier)
-- Phone: +255777100004 / Password: rugby123 (Fatma Ali, Player, Green tier)
-- Phone: +255777100005 / Password: rugby123 (Omar Khamis, Admin, Gold tier)
+- Phone: +255777100004 / Password: rugby123 (Fatma Ali, Club Admin - Pemba RFC, Green tier)
+- Phone: +255777100005 / Password: rugby123 (Omar Khamis, Federation Admin, Gold tier)
 - Phone: +255777100006 / Password: rugby123 (Salma Rashid, Supporter, Green tier)
 
 ## Registration Flow (Two-Step)
@@ -155,19 +167,19 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 - POST `/api/memberships` - Join club
 - GET `/api/memberships`, `/api/activities`, `/api/xp-history`, `/api/club/weekly-stats`, `/api/club/roster`
 
-### Admin Only (requireAdmin)
-- GET `/api/admin/stats` - Dashboard statistics
-- GET `/api/admin/users` - All users (password excluded)
-- GET `/api/admin/users/:id` - Full user detail
-- PATCH `/api/admin/users/:id/role` - Change user role
-- GET `/api/admin/memberships?status=` - All memberships (filterable)
-- PATCH `/api/admin/memberships/:id` - Approve/reject membership
-- POST `/api/events` - Create event
-- PATCH `/api/admin/events/:id` - Edit event
-- DELETE `/api/admin/events/:id` - Delete event
-- PATCH `/api/admin/clubs/:id` - Edit club (including branding fields)
-- POST `/api/admin/events/:id/notify` - Send push reminder to club members
-- POST `/api/upload` - Upload image file (returns URL)
+### Admin (tiered access)
+- GET `/api/admin/stats` - Dashboard statistics (federation+)
+- GET `/api/admin/users` - All users (federation+)
+- GET `/api/admin/users/:id` - Full user detail (federation+)
+- PATCH `/api/admin/users/:id/role` - Change user role (federation+, governance enforced)
+- GET `/api/admin/memberships?status=` - Memberships (any admin, club admin scoped)
+- PATCH `/api/admin/memberships/:id` - Approve/reject membership (any admin, club admin scoped)
+- POST `/api/events` - Create event (any admin, club admin scoped)
+- PATCH `/api/admin/events/:id` - Edit event (any admin, club admin scoped)
+- DELETE `/api/admin/events/:id` - Delete event (any admin, club admin scoped)
+- PATCH `/api/admin/clubs/:id` - Edit club (any admin, club admin scoped)
+- POST `/api/admin/events/:id/notify` - Send push reminder (federation+)
+- POST `/api/upload` - Upload image file (any admin)
 
 ### Push Notifications
 - GET `/api/push/vapid-key` - Public VAPID key
