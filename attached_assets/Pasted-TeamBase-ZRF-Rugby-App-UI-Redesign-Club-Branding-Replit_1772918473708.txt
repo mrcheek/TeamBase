@@ -1,0 +1,466 @@
+TeamBase / ZRF Rugby App
+UI Redesign + Club Branding
+Replit Implementation Plan (V2)
+Objective
+
+Transform the ZRF Rugby App from an XP-centric utility interface into a premium club-first sports platform.
+
+Each member should feel like they are entering:
+
+their club’s digital home
+
+Key outcomes:
+
+• Club identity dominates the experience
+• Each club can define its own branding
+• UI dynamically adapts to club theme
+• XP and tiers remain visible but subtle
+• Homepage emphasizes club momentum and participation
+• Platform remains scalable to multi-sport / multi-federation
+
+Implementation Architecture
+
+The redesign introduces four main systems:
+
+1️⃣ Club Branding Data Model
+2️⃣ Dynamic Club Theme Engine
+3️⃣ Premium Design System
+4️⃣ UI Refactor Across All Screens
+
+PHASE 1 — Club Branding Data Model
+T001 — Expand Club Schema
+
+Blocked by: none
+
+Add full branding fields to the clubs table.
+
+Update:
+
+shared/schema.ts
+
+New Fields
+logoUrl
+bannerUrl
+
+primaryColor
+secondaryColor
+accentColor
+
+textOnPrimary
+textOnSecondary
+
+brandStyle
+Field Details
+Field	Purpose
+logoUrl	main club crest
+bannerUrl	hero/banner image
+primaryColor	club primary brand color
+secondaryColor	secondary color
+accentColor	optional highlight
+textOnPrimary	contrast text color
+textOnSecondary	contrast text
+brandStyle	visual style preset
+Example Club Record
+Sharks RFC
+
+logoUrl: /assets/sharks-logo.png
+bannerUrl: /assets/sharks-banner.jpg
+
+primaryColor: #0A2342
+secondaryColor: #C8A951
+accentColor: #FFD700
+
+textOnPrimary: #FFFFFF
+textOnSecondary: #111111
+
+brandStyle: classic
+Files
+shared/schema.ts
+server/seed.ts
+Acceptance
+
+• Clubs support full branding
+• Schema migrated successfully
+• Seed data updated
+
+PHASE 2 — Club Branding Assets
+T002 — Club Logo & Banner Upload System
+
+Blocked by: T001
+
+Allow clubs to upload assets.
+
+Supported uploads:
+
+• club crest/logo
+• optional banner/hero image
+
+Validation:
+
+• PNG / SVG / JPG
+• max size 2MB
+• recommended aspect ratios
+
+Logo:
+
+1:1 square
+
+Banner:
+
+16:9 landscape
+Backend
+
+Create upload endpoints:
+
+POST /api/clubs/:id/logo
+POST /api/clubs/:id/banner
+
+Store:
+
+logoUrl
+bannerUrl
+Fallback
+
+If no logo:
+
+Generate club initials.
+
+Example:
+
+Sharks RFC → SR
+Files
+server/routes.ts
+client/components/logo-upload.tsx
+client/components/banner-upload.tsx
+Acceptance
+
+• Club admins can upload logo
+• Logo appears in UI immediately
+• Banner available for hero sections
+
+PHASE 3 — Dynamic Club Theme Engine
+T003 — Club Theme Context
+
+Blocked by: T001
+
+Create:
+
+client/src/hooks/use-club-theme.tsx
+
+This provider:
+
+1️⃣ fetches user's active club
+2️⃣ applies club branding globally
+3️⃣ exposes theme values to components
+
+CSS Variables
+
+Set at root:
+
+--club-primary
+--club-secondary
+--club-accent
+
+--club-primary-foreground
+--club-secondary-foreground
+
+--club-surface
+--club-surface-strong
+--club-border
+Example
+
+For Sharks RFC:
+
+--club-primary: #0A2342
+--club-secondary: #C8A951
+--club-accent: #FFD700
+Tailwind Integration
+
+Update:
+
+tailwind.config.ts
+
+Add:
+
+colors: {
+clubPrimary: "var(--club-primary)",
+clubSecondary: "var(--club-secondary)",
+clubAccent: "var(--club-accent)"
+}
+Acceptance
+
+• UI dynamically adopts club colors
+• fallback federation theme works
+• multi-club users supported
+
+PHASE 4 — Premium Design System
+T004 — Global Design Tokens
+
+Blocked by: none
+
+Refactor index.css.
+
+Background
+
+Replace pure white with warmer tone.
+
+Example:
+
+--app-background: hsl(40 10% 98%)
+Typography
+
+Neutral slate palette.
+
+Example:
+
+--text-primary
+--text-muted
+Premium Accent
+
+Add gold token.
+
+--accent-gold
+
+Used for:
+
+• achievements
+• highlight moments
+
+UI Radius
+
+Replace overly rounded UI.
+
+Old:
+
+20px
+
+New:
+
+6px
+8px
+Borders Instead of Shadows
+
+Use:
+
+1px neutral border
+
+instead of heavy drop shadows.
+
+Acceptance
+
+• UI feels premium
+• no pastel color clutter
+• clean neutral base
+
+PHASE 5 — Homepage Redesign
+T005 — Club Hero Section
+
+Blocked by: T002, T003
+
+Top of homepage becomes club hero.
+
+Displays:
+
+• club logo
+• club name
+• location
+• user name + role
+• XP pill badge
+
+Example layout:
+
+[Club Crest]
+
+SHARKS RFC
+Stone Town, Zanzibar
+
+Fatma Ali • Player
+
+                     [150]
+
+Badge color = tier color.
+
+Click:
+
+/profile#xp
+T006 — Next Event Block
+
+Hero activity panel.
+
+Shows:
+
+• next event
+• time
+• venue
+• type badge
+
+Primary CTA:
+
+Check In
+
+Secondary:
+
+Details
+T007 — Club Momentum Panel
+
+Shows team progress.
+
+Example:
+
+CLUB MOMENTUM
+
+Sharks RFC
+
+██████████████████
+
+1197 pts
+Rank #1
+
+Purpose:
+
+Members see contribution to team success.
+
+T008 — Activity Feed
+
+Refactor feed:
+
+• timeline rows
+• lighter UI
+• fewer boxes
+
+Example:
+
+👟 Juma Hassan
+5km run +10
+
+⚡ Amina Said
+SAQ drills +20
+T009 — Quick Actions
+
+Horizontal action row:
+
+Run | Gym | SAQ | Recovery | Social
+
+Each triggers quick check-in.
+
+T010 — Club Leaderboard
+
+Compact table style.
+
+1 Sharks RFC 1197
+2 Stone Town 177
+3 Pemba 75
+PHASE 6 — Profile Redesign
+T011 — XP Detail Anchor
+
+Blocked by: T005
+
+Add anchor:
+
+id="xp"
+
+Homepage XP badge scrolls here.
+
+Profile includes:
+
+• membership card
+• XP progress
+• tier info
+• XP history
+• club memberships
+
+PHASE 7 — Play Page
+T012 — Event List Redesign
+
+Replace stacked cards.
+
+Use premium list rows.
+
+Add filters:
+
+All | Training | Match | Tournament
+T013 — Club Directory
+
+Show clubs with:
+
+• logo
+• colors
+• training schedule
+
+Club accent visible.
+
+PHASE 8 — Check-In Page
+T014 — Action-First Check-In
+
+Primary focus:
+
+Scan Event QR
+
+Quick activities styled using club accent.
+
+Reduce panel clutter.
+
+PHASE 9 — Train Page
+T015 — Premium Training Library
+
+Accordion sections:
+
+SAQ Drills
+Gym Sessions
+Running Programs
+Skills
+Recovery
+
+Cleaner hierarchy.
+
+PHASE 10 — Admin Tools
+T016 — Club Branding Admin Editor
+
+Club admins can edit:
+
+• logo
+• banner
+• primary color
+• secondary color
+• accent color
+
+Include live preview.
+
+T017 — Admin Dashboard Cleanup
+
+Compact metrics grid.
+
+Less soft dashboard styling.
+
+PHASE 11 — Navigation Branding
+T018 — Branded Navigation
+
+Bottom nav active state uses club color.
+
+Center action button uses club accent.
+
+Header displays club crest.
+
+PHASE 12 — Documentation
+T019 — Update replit.md
+
+Document:
+
+• club branding system
+• schema fields
+• theme engine
+• design tokens
+
+Final Result
+
+TeamBase will feel like:
+
+Strava for teams
++
+Clubhouse for sport
++
+Federation infrastructure
+
+Instead of:
+
+an admin participation tracker

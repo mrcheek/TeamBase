@@ -1,0 +1,224 @@
+1. TeamBase Homepage (Premium Club Dashboard)
+Design Goal
+
+When a player opens the app they should feel:
+
+“This is my club’s home.”
+
+Not:
+
+“This is a sports admin app.”
+
+Homepage Layout Blueprint
+┌─────────────────────────────────────┐
+│ TEAMBASE                            │
+│                                     │
+│ [Club Crest]   SHARKS RFC        [150] │
+│                Stone Town, Zanzibar   │
+│                Fatma Ali • Player     │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ NEXT SESSION                        │
+│                                     │
+│ Touch Rugby Afternoon               │
+│ Sat 7 Mar • 15:00                   │
+│ Forodhani Gardens                   │
+│                                     │
+│ [ CHECK IN ]        [ DETAILS ]     │
+└─────────────────────────────────────┘
+
+┌───────────────┬─────────────────────┐
+│ CLUB MOMENTUM │ CLUB ACTIVITY       │
+│               │                     │
+│ Sharks RFC    │ 👟 Juma Hassan      │
+│ ████████████  │ 5km run +10         │
+│ 1197 pts      │                     │
+│ Rank #1       │ ⚡ Amina Said       │
+│               │ SAQ drills +20      │
+│               │                     │
+│               │ 🏋 Juma Hassan      │
+│               │ Gym session +15     │
+└───────────────┴─────────────────────┘
+
+┌─────────────────────────────────────┐
+│ QUICK LOG                           │
+│                                     │
+│ Run   Gym   SAQ   Recovery   Social │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ ZRF CLUB TABLE                      │
+│                                     │
+│ 1  Sharks RFC           1197        │
+│ 2  Stone Town RFC        177        │
+│ 3  Pemba RFC              75        │
+│                                     │
+│ View full table →                   │
+└─────────────────────────────────────┘
+
+──────────────────────────────────────
+Home | Play | CHECK-IN | Train | Profile
+Key Design Decisions
+XP Badge
+
+Top right.
+
+[150]
+
+Color = tier color
+
+Click → /profile#xp
+
+XP stays visible but subtle.
+
+Club Identity
+
+Top section uses:
+
+• club crest
+• club primary color accent
+• club banner if available
+
+Example:
+
+background: club primary tint
+Split Grid Layout
+
+Instead of stacking everything vertically:
+
+Club Momentum | Activity Feed
+
+This cuts scrolling by 40–50%.
+
+Quick Log Strip
+
+Horizontal actions.
+
+Run | Gym | SAQ | Recovery | Social
+
+Tap → quick check-in modal.
+
+Interaction Details
+Check-in Button
+
+Uses club primary color.
+
+Hover/active:
+
+background → club accent
+Momentum Bar
+
+Animated slightly when club points increase.
+
+Example:
+
++15 club points
+
+Bar grows.
+
+Visual System
+Base palette
+Background: warm light grey
+Typography: dark slate
+Accent: club color
+Gold: premium highlight
+Radius
+Cards: 8px
+Buttons: 8px
+Badge: pill
+
+Avoid large 20px soft radius.
+
+2. Club Page (The Heart of the Platform)
+
+This page becomes the real hub of the club community.
+
+Club Page Blueprint
+┌─────────────────────────────────────┐
+│ [Club Banner Image]                 │
+│                                     │
+│          [Club Crest]               │
+│                                     │
+│ SHARKS RFC                          │
+│ Stone Town, Zanzibar                │
+│                                     │
+│ 34 Players • 4 Coaches              │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ NEXT TRAINING                       │
+│                                     │
+│ Thu 17:00                           │
+│ Mnazi Mmoja Grounds                 │
+│                                     │
+│ [ CHECK IN ]                        │
+└─────────────────────────────────────┘
+
+┌───────────────┬─────────────────────┐
+│ CLUB RANK     │ CLUB MOMENTUM       │
+│               │                     │
+│ #1 ZRF        │ ███████████████     │
+│               │ 1197 pts            │
+└───────────────┴─────────────────────┘
+
+┌─────────────────────────────────────┐
+│ MEMBERS                             │
+│                                     │
+│ Fatma Ali        Player             │
+│ Juma Hassan      Player             │
+│ Amina Said       Coach              │
+│ Omar Khamis      Admin              │
+│                                     │
+│ View full roster →                  │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ CLUB ACTIVITY                       │
+│                                     │
+│ 👟 Juma Hassan 5km run +10          │
+│ ⚡ Amina Said SAQ drills +20        │
+│ 🏋 Juma Hassan gym session +15      │
+└─────────────────────────────────────┘
+Club Branding Behaviour
+
+Every club can configure:
+
+logo
+banner
+primary color
+secondary color
+accent color
+
+Those automatically theme:
+
+• hero section
+• buttons
+• progress bars
+• nav highlights
+
+Example
+Sharks RFC
+primary: navy
+secondary: gold
+accent: bright gold
+Stone Town RFC
+primary: red
+secondary: white
+accent: dark red
+Result
+
+The entire app subtly shifts based on the user’s club.
+
+Players feel like they’re in:
+
+Sharks RFC App
+
+not:
+
+Generic Rugby System
+One More Screen Worth Designing
+
+The Event Page.
+
+This is where players will spend a lot of time.

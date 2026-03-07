@@ -1,0 +1,212 @@
+You are redesigning the TeamBase mobile PWA UI to feel like a premium sports platform, not a federation utility dashboard.
+
+PROJECT CONTEXT
+TeamBase is a multi-sport grassroots-to-federation platform. This current instance is for ZRF Rugby. The app supports:
+- club members
+- club admins
+- federation admins
+- events
+- check-ins
+- training library
+- club rankings
+- activity feed
+- XP / tiers
+- digital membership cards
+
+DESIGN GOAL
+Shift the emotional center of the product from:
+“XP tracker / admin utility”
+to:
+“My club’s digital home”
+
+The UI should feel closer to:
+- Strava
+- Apple Fitness
+- elite sports/team products
+and less like:
+- stacked cards
+- soft prototype UI
+- generic admin dashboard
+
+CORE UX PRINCIPLES
+1. Club identity first
+2. Next rugby/sport activity second
+3. Club momentum / team contribution third
+4. Community activity fourth
+5. Personal XP / tier subtle, not dominant
+
+IMPORTANT CHANGES
+1. Remove repetition at the top of the homepage.
+   - Do NOT show separate large XP, Tier, Club Rank stat cards.
+   - Replace them with a single subtle XP badge in the header.
+   - The badge should use the player’s tier color as its background.
+   - The badge should only display the user’s current XP number.
+   - Example: a compact pill badge with “150”.
+   - Tapping the badge should navigate to or scroll to the XP details section lower on the Profile page.
+
+2. Make each user’s experience club-led.
+   - The homepage top section should be about the member’s club, not the federation.
+   - Use the logo / crest of the user’s primary member organization at top.
+   - Use club colors dynamically throughout the UI for accents, active states, hero tints, and buttons.
+   - The user should feel “this is my club’s home” when they open the app.
+
+3. Make the color system more premium and dynamic.
+   - Replace the generic washed-out soft boxes/pastels with a more refined sports UI palette.
+   - Use:
+     - dark neutral typography
+     - soft warm/light background
+     - strong club-color accents
+     - restrained use of gold as a premium accent
+   - Avoid random pastel icon blocks everywhere.
+
+4. Reduce card clutter.
+   - Current layout is still too “one below another”.
+   - Reduce rounded-box repetition.
+   - Use more:
+     - section grouping
+     - split layouts where appropriate
+     - dividers
+     - whitespace
+     - tinted panels
+   - Reduce radius across the UI to a tighter premium system (around 6–10px, not overly soft 16–20px everywhere).
+
+5. Keep the homepage premium and sports-driven.
+   Homepage structure should become:
+   - club hero
+   - next event / next session
+   - club momentum
+   - activity feed
+   - quick actions
+   - club leaderboard
+   NOT:
+   - stacked stats cards
+   - repeated XP/tier blocks
+
+TARGET REDESIGN: HOMEPAGE
+Redesign the homepage using this structure:
+
+A. CLUB HERO
+- Club crest/logo
+- Club name prominently
+- Secondary text: location or federation context
+- User name + role
+- Single subtle XP badge aligned top right using tier color background
+- Optional club-color tinted hero background
+
+B. NEXT RUGBY / NEXT SESSION
+- Most important block on homepage
+- Show next event clearly
+- Include date, time, venue, type tag
+- Strong primary CTA: Check In
+- Secondary CTA: Details
+
+C. CLUB MOMENTUM
+- Show club points / standing / team progress
+- Make it feel like the member contributes to the club’s progress
+- Example:
+  - club rank
+  - club points
+  - momentum/progress bar
+- This should be more important than individual XP
+
+D. CLUB ACTIVITY FEED
+- Cleaner timeline/list style
+- Less boxed
+- Keep icons and XP additions but make rows lighter and more premium
+- Show teammate activity in a social/team context
+
+E. QUICK ACTIONS
+- Horizontal or compact action row
+- Examples:
+  - Run
+  - Gym
+  - SAQ
+  - Recovery
+  - Social
+- Tapping starts quick activity check-in flow
+
+F. CLUB TABLE / LEADERBOARD
+- Compact and clean
+- More like a premium table/list
+- Avoid giant boxed cards
+
+PROFILE PAGE REQUIREMENTS
+- XP and tier details should live mainly here
+- Tapping the XP badge on the homepage should go to the XP section on Profile
+- Profile should include:
+  - membership card
+  - XP progress
+  - current tier
+  - progress to next tier
+  - recent XP history
+  - club membership(s)
+
+PLAY PAGE REQUIREMENTS
+- Improve Events + Clubs tabs to feel less like stacked cards
+- Cleaner list style
+- Better filters
+- Better spacing and more premium row-based layout
+- Club identity should be stronger here too
+
+CHECK-IN PAGE REQUIREMENTS
+- Make this feel fast, premium, and action-first
+- Primary action should be event check-in / scan
+- Quick activities should be displayed more elegantly
+- Reduce oversized generic panels
+
+TRAIN PAGE REQUIREMENTS
+- Redesign as a premium training library
+- Cleaner hierarchy
+- Possibly collapsible categories or better grouped list sections
+- Less card repetition
+
+ADMIN PAGE REQUIREMENTS
+- Keep useful, but visually aligned with the new premium design system
+- Less “soft dashboard”
+- More compact metrics and tighter layout
+- Cleaner tab treatment
+
+DESIGN SYSTEM REQUIREMENTS
+Create or refactor toward a reusable design system with:
+- tighter radius scale
+- refined spacing scale
+- club-driven accent color system
+- premium typography hierarchy
+- cleaner button variants
+- subtle borders instead of heavy box/shadow overuse
+- better empty states
+- better section headers
+- more sophisticated table/list row styling
+
+CLUB BRANDING SYSTEM
+Implement dynamic theming based on current user’s club:
+- primary accent color
+- subtle tinted surfaces
+- logo/crest in header and key places
+- active tab/check-in button can reflect club accent
+- maintain accessibility and readability
+
+TECHNICAL TASK
+Please redesign/refactor the current mobile app screens and components to reflect all of the above.
+Prioritize:
+1. Homepage
+2. Profile
+3. Play
+4. Check-In
+5. Train
+6. Admin
+
+DELIVERABLES
+1. Updated homepage UI
+2. Updated profile page with XP section anchor target
+3. Updated shared design system / tokens / reusable components
+4. Dynamic club branding support
+5. Cleaner global layout and reduced card clutter across screens
+
+IMPORTANT
+Do not just restyle existing stacked cards.
+Do not keep repeating XP/tier stats in multiple places.
+Do not make the app feel like a generic admin dashboard.
+Make it feel like a premium sports participation platform centered around club identity and momentum.
+
+Please make the redesign directly in the codebase, update components systematically, and keep the result production-quality and mobile-first.

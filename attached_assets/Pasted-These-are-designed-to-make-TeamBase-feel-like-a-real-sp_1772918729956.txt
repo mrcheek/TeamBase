@@ -1,0 +1,422 @@
+These are designed to make TeamBase feel like a real sports product, with a consistent club-first system and cleaner UX.
+
+1. Event Page Wireframe
+Design goal
+
+The event page should feel like the live home of a rugby session or match, not just an info card.
+
+It should answer:
+
+what is happening
+
+when and where
+
+who is going
+
+what action should I take now
+
+Event Page Layout Blueprint
+┌─────────────────────────────────────┐
+│ [Club Accent Header / Event Type]   │
+│                                     │
+│ TOUCH RUGBY AFTERNOON               │
+│ Sharks RFC                          │
+│ Sat 7 Mar • 15:00                   │
+│ Forodhani Gardens                   │
+│                                     │
+│ [ CHECK IN ]     [ SHARE ]          │
+└─────────────────────────────────────┘
+
+┌───────────────┬─────────────────────┐
+│ EVENT TYPE    │ STATUS              │
+│               │                     │
+│ Touch Rugby   │ Open for check-in   │
+└───────────────┴─────────────────────┘
+
+┌─────────────────────────────────────┐
+│ ABOUT                               │
+│                                     │
+│ Informal club touch session focused │
+│ on passing, movement and fitness.   │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ ATTENDING                           │
+│                                     │
+│ [Photo] Fatma Ali                   │
+│ [Photo] Juma Hassan                 │
+│ [Photo] Amina Said                  │
+│ [Photo] +12 more                    │
+│                                     │
+│ View full list →                    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ CHECK-IN OPTIONS                    │
+│                                     │
+│ Scan QR                             │
+│ Quick Confirm                       │
+│ Add Selfie Bonus                    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ PHOTOS / MOMENTS                    │
+│                                     │
+│ [image] [image] [image]             │
+│                                     │
+│ View all photos →                   │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ RELATED CLUB ACTIVITY               │
+│                                     │
+│ 👟 Juma logged a run +10            │
+│ ⚡ Amina logged SAQ +20             │
+└─────────────────────────────────────┘
+Key design rules
+Hero section
+
+Use:
+
+club color tinted background
+
+event type tag
+
+one strong CTA only: Check In
+
+Information density
+
+Do not make everything a big card.
+Use:
+
+one hero block
+
+one split row
+
+clean content sections below
+
+Event type accent
+
+Use color-coded event tags:
+
+Training = green
+
+Match = red
+
+Tournament = gold
+
+Touch = blue
+
+Social = amber
+
+UX details
+If check-in is open
+
+Primary button:
+
+[ CHECK IN ]
+If user already checked in
+
+Replace with:
+
+[ CHECKED IN ✓ ]
+If no event description
+
+Show compact fallback:
+
+No extra event notes
+2. Check-In UX Redesign
+Design goal
+
+Check-in must feel:
+
+immediate
+
+satisfying
+
+premium
+
+obvious
+
+This is one of the most important interactions in the entire product.
+
+Check-In Screen Layout Blueprint
+┌─────────────────────────────────────┐
+│ CHECK IN                            │
+│                                     │
+│ Sharks RFC                          │
+│ Sat 7 Mar                           │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ EVENT CHECK-IN                      │
+│                                     │
+│ [ SCAN EVENT QR ]                   │
+│                                     │
+│ Fastest way to check in to training │
+│ matches and club events             │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ QUICK LOG                           │
+│                                     │
+│  Run      Gym                       │
+│  SAQ      Recovery                  │
+│  Social   Watching Rugby            │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ SELFIE BONUS                        │
+│                                     │
+│ Add a selfie to this check-in       │
+│ for bonus XP and club activity      │
+│                                     │
+│ [ OPEN CAMERA ]                     │
+└─────────────────────────────────────┘
+Success state
+
+After check-in, the app should respond with energy.
+
+┌─────────────────────────────────────┐
+│ ✓ CHECKED IN                        │
+│                                     │
+│ Sharks Weekly Training              │
+│ +25 XP                              │
+│ +12 club points                     │
+│                                     │
+│ [ ADD SELFIE ]   [ DONE ]           │
+└─────────────────────────────────────┘
+Quick activity design
+
+Do not use giant chunky cards.
+
+Use a clean 2-column action grid:
+
+Run        Gym
+SAQ        Recovery
+Social     Watch Rugby
+
+Selected state:
+
+club primary tint
+
+darker label
+
+subtle border
+
+Check-in interaction rules
+Event check-in
+
+Primary action always first.
+
+Quick activity
+
+Second priority.
+
+Selfie bonus
+
+Offered after check-in, not before.
+
+That keeps the flow clean.
+
+Premium behaviour
+Small animation
+
+When check-in succeeds:
+
+button morphs
+
+success tick appears
+
+XP count increments briefly
+
+Club reinforcement
+
+Show:
+
++12 club points
+
+That links the individual action to the team.
+
+3. Club Branding Admin Screen
+Design goal
+
+This needs to be simple enough for club admins, but powerful enough to make each club feel unique.
+
+This screen should let clubs control how their brand appears across members’ UI.
+
+Club Branding Admin Layout Blueprint
+┌─────────────────────────────────────┐
+│ CLUB BRANDING                       │
+│                                     │
+│ Sharks RFC                          │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ LOGO                                │
+│                                     │
+│ [ Current Logo Preview ]            │
+│                                     │
+│ [ UPLOAD LOGO ]                     │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ BANNER IMAGE                        │
+│                                     │
+│ [ Current Banner Preview ]          │
+│                                     │
+│ [ UPLOAD BANNER ]                   │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ BRAND COLOURS                       │
+│                                     │
+│ Primary Color       [ picker ]      │
+│ Secondary Color     [ picker ]      │
+│ Accent Color        [ picker ]      │
+│                                     │
+│ Text on Primary     [ auto/manual ] │
+│ Text on Secondary   [ auto/manual ] │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ BRAND STYLE                         │
+│                                     │
+│ Classic   Bold   Minimal            │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ LIVE PREVIEW                        │
+│                                     │
+│ [ mini homepage preview ]           │
+│ [ mini membership card preview ]    │
+│ [ mini check-in button preview ]    │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│ [ SAVE CHANGES ]                    │
+└─────────────────────────────────────┘
+Required fields
+
+At minimum, the club admin should control:
+
+logo
+
+banner
+
+primary color
+
+secondary color
+
+accent color
+
+Optional advanced:
+
+text on primary
+
+text on secondary
+
+style preset
+
+Live preview behaviour
+
+This is important.
+
+When the admin changes colors, preview updates immediately for:
+
+homepage hero
+
+membership card
+
+nav active state
+
+check-in button
+
+That avoids bad branding decisions.
+
+Smart safeguards
+Contrast check
+
+If a club picks unreadable colors:
+
+auto-adjust text color
+
+show warning if needed
+
+Asset fallback
+
+If no logo:
+
+show initials crest
+
+Banner fallback
+
+If no banner:
+
+use tinted club surface background
+
+Recommended system behaviour across the app
+
+Once this branding is saved, it should feed into every member UI for that club:
+
+Homepage
+
+hero tint
+
+crest
+
+accents
+
+Profile
+
+membership card
+
+XP section accents
+
+Play
+
+event highlights
+
+club rows
+
+Check-In
+
+button color
+
+selected states
+
+Nav
+
+active tab accent
+
+center action button accent
+
+Final design principle
+
+The app should not become chaotic just because each club has branding.
+
+So the rule should be:
+
+Neutral base, branded accents
+
+Use:
+
+neutral background
+
+dark text
+
+club branding in focused places only
+
+That keeps the app sharp and premium.
+
+Best implementation order for these 3 screens
+
+Club Branding Admin Screen
+
+Homepage / Event theming
+
+Check-In screen theming
+
+Event page polish
+
+Because once branding works centrally, the other screens become much easier.
