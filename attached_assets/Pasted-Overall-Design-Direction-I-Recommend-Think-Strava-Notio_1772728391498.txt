@@ -1,0 +1,334 @@
+Overall Design Direction I Recommend
+
+Think:
+
+Strava + Notion + Apple Fitness
+
+Design principles:
+
+Reduce boxes
+
+Use sections instead of cards
+
+Use dividers instead of containers
+
+Introduce grid layouts
+
+Make typography carry hierarchy
+
+Use colour only for meaning (XP / events / clubs)
+
+Also:
+
+Reduce corner radius from ~16px → 6px or 8px
+
+This alone makes the app feel much more professional.
+
+Redesigned Homepage Layout
+
+Your current homepage is a long list of cards. Instead use three structured zones.
+
+1. HEADER ZONE
+
+Keep the greeting but compress it.
+
+Current:
+
+Habari Omar
+Zanzibar Rugby Federation
+
+Better:
+
+Omar Khamis
+Sharks RFC • Gold Tier
+
+Right side:
+
+1125 XP
+
+No box needed.
+
+2. PERFORMANCE STRIP (horizontal)
+
+Instead of two large boxes, use compact stat blocks.
+
+Example:
+
+XP        TIER       CLUB RANK
+1125      GOLD       #1
+
+Displayed in 3 equal columns.
+
+This removes 2 big cards instantly.
+
+3. NEXT EVENT (PRIMARY ACTION)
+
+Events are the most important thing in the app, so highlight one.
+
+Instead of a list of cards, show one large event highlight.
+
+Example layout:
+
+NEXT EVENT
+
+Sharks Weekly Training
+Thu 17:00 • Mnazi Mmoja Grounds
+
+[Check In]     [Details]
+
+Only one box here.
+
+Then below:
+
+View All Events →
+4. CLUB RANKINGS (Compact)
+
+Current design wastes vertical space.
+
+Instead use table style:
+
+CLUB RANKINGS
+
+1  Sharks RFC        1197
+2  Stone Town RFC    177
+3  Pemba RFC         75
+
+No boxes.
+
+Just rows with subtle separators.
+
+5. ACTIVITY FEED
+
+Instead of big cards, make it timeline style.
+
+Example:
+
+ACTIVITY
+
+👟 Juma Hassan
+5km morning run
++10 XP
+
+⚡ Amina Said
+SAQ drills
++20 XP
+
+🏋 Juma Hassan
+Weight session
++15 XP
+
+Icons replace card backgrounds.
+
+Resulting Homepage Layout
+Header
+Performance Strip
+Next Event
+Club Rankings
+Activity Feed
+
+Much cleaner.
+
+Play Page Improvements
+
+Current problem: too many large cards.
+
+Better layout:
+
+Add filters row
+All | Training | Matches | Tournaments
+
+Then show compact event rows.
+
+Example:
+
+ZRF Season Opening Tournament
+15 Apr • Amaan Stadium
+[Tournament]
+
+Sharks vs Stone Town
+12 Mar • Amaan Stadium
+[Match]
+
+Only one subtle divider between rows.
+
+Clubs Page
+
+This page is good structurally but again too card-heavy.
+
+Use list layout:
+
+Sharks RFC
+Stone Town
+Training: Tue & Thu
+
+Stone Town RFC
+Shangani
+Training: Mon & Wed
+
+You can add a club crest circle but remove the box.
+
+Check-In Page
+
+This page is actually good but could be more action focused.
+
+Current:
+
+2 big cards.
+
+Better:
+
+CHECK IN
+
+[ Scan Event QR ]
+
+Quick Activity
+• Run
+• Gym
+• SAQ
+• Recovery
+
+Make Scan QR the dominant action.
+
+Admin Dashboard Improvements
+
+The stat boxes are fine but currently too tall.
+
+Better:
+
+MEMBERS   PLAYERS   EVENTS   CLUBS
+8         5         6        3
+
+4 columns.
+
+Much tighter.
+
+Members Page
+
+This is actually one of the strongest screens.
+
+Small improvements:
+
+reduce row height
+
+make XP smaller
+
+highlight role colour
+
+Example:
+
+Omar Khamis
+Admin • Gold
+1125 XP
+Training Library Page
+
+This page is good conceptually but too verbose.
+
+Better:
+
+Use expandable sections.
+
+Example:
+
+SAQ Drills
+▶
+
+Gym Sessions
+▶
+
+Running Programs
+▶
+
+Skills Training
+▶
+
+Tap expands.
+
+Much cleaner.
+
+Visual System Improvements
+1. Reduce corner radius
+
+Current: ~16px
+Better:
+
+6px or 8px
+2. Reduce card shadows
+
+Flat design works better for PWA.
+
+Use:
+
+1px border
+
+instead of shadows.
+
+3. Typography hierarchy
+
+Use 3 levels only:
+
+Section Title
+Item Title
+Metadata
+
+Avoid too many font weights.
+
+4. Event Tags
+
+These are good.
+
+Example:
+
+Training → green
+Match → red
+Tournament → gold
+Touch → blue
+
+Keep them small.
+
+Biggest Improvement Opportunity
+
+The Homepage hero section.
+
+Add a progress bar for XP tier.
+
+Example:
+
+GOLD TIER
+
+1125 XP
+█████████████
+
+Next tier: Ambassador
+
+This drives engagement.
+
+One Very Important UX Tip
+
+You currently show a lot of information above the fold.
+
+Instead prioritize:
+
+1️⃣ Next event
+2️⃣ Check-in
+3️⃣ Activity
+
+Everything else should sit below scroll.
+
+If I were to summarise the redesign
+
+Reduce:
+
+Boxes
+Rounded corners
+Vertical stacking
+
+Increase:
+
+Grids
+Dividers
+Hierarchy
+Whitespace
+
+Result:
+
+The app will feel more professional and less “prototype-like”.
