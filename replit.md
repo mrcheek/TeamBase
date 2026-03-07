@@ -8,6 +8,15 @@ A mobile-first PWA serving as the digital infrastructure for rugby in Zanzibar. 
 - **Backend**: Express.js, PostgreSQL with Drizzle ORM
 - **Auth**: Session-based with express-session + connect-pg-simple, scrypt password hashing
 
+## Design System
+- **Style**: Strava + Apple Fitness + Notion inspired — flat, clean, sports dashboard
+- **Radius**: 0.375rem (6px) globally via `--radius` in index.css
+- **Shadows**: Flat (no shadows), border-based card styling (1px border)
+- **Layout**: Dividers instead of card wrapping where possible, compact grids, timeline-style feeds
+- **Typography**: Section headers use `text-xs font-semibold uppercase tracking-wider text-muted-foreground`
+- **Colors**: Rugby green (HSL 152), tier colors (green/blue/silver/gold), role colors (blue/purple/cyan/pink/red)
+- **Font**: Montserrat, mobile-first bottom nav
+
 ## Architecture
 - `shared/schema.ts` - All database models plus Zod validation schemas (including admin schemas)
 - `server/db.ts` - Drizzle + pg pool connection
@@ -16,18 +25,18 @@ A mobile-first PWA serving as the digital infrastructure for rugby in Zanzibar. 
 - `server/seed.ts` - Seeds ZRF federation, 3 clubs, 5 users, sample events/activities
 - `client/src/App.tsx` - Main app with auth gating, bottom nav routing, profile completion toast
 - `client/src/hooks/use-auth.tsx` - AuthProvider context with login/register/updateProfile/logout
-- `client/src/components/bottom-nav.tsx` - Mobile bottom navigation (shows Admin tab for admin users)
+- `client/src/components/bottom-nav.tsx` - Mobile bottom navigation (backdrop blur, clean inline layout)
 - `client/src/components/membership-card.tsx` - Digital membership card with tier gradients
-- `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs
+- `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + member drill-down
 
 ## Pages
-- `/` - Home (activity feed, upcoming events, club rankings)
-- `/play` - Events & clubs tabs
-- `/check-in` - Event check-in and activity logging
-- `/train` - Training programs library
-- `/profile` - Membership card, XP progress, clubs, activity history
+- `/` - Home (3-col stats strip, XP progress, next event hero, club rankings, activity timeline, quick check-in grid)
+- `/play` - Events (filter row: All/Training/Matches/Tournaments/Touch/Social, grouped by Today/Upcoming/Past) & clubs (compact rows)
+- `/check-in` - Event check-in hero + 2-column quick activity grid (Run/Gym/SAQ/Recovery/Social/Watching)
+- `/train` - Training programs as collapsible accordion sections
+- `/profile` - Membership card, XP progress bar with tier labels, clubs as compact rows, activity timeline, XP history with dividers
 - `/complete-profile` - Full ZRF registration form with accordion sections
-- `/admin` - Admin dashboard (admin role only) with 4 tabs
+- `/admin` - Admin dashboard (admin role only) with 4 tabs + member detail drill-down
 - `/clubs/:id` - Club detail with members, events, score
 - `/events/:id` - Event detail with check-in and attendee list
 
@@ -35,10 +44,21 @@ A mobile-first PWA serving as the digital infrastructure for rugby in Zanzibar. 
 Accessible only to users with role="admin". Bottom nav shows Admin tab (shield icon) instead of Train for admin users.
 
 ### Tabs:
-1. **Overview** - Stat cards: Total Players, Pending Approvals, Upcoming Events, Active Clubs
-2. **Members** - All registered users list with search, role management (player/coach/personnel/admin), pending membership approvals (approve/reject)
+1. **Overview** - 3x2 compact stat grid (Members/Players/Supporters/Pending/Events/Clubs) + quick action buttons
+2. **Members** - Compact rows with avatar, name, role/tier/XP summary, ChevronRight for drill-down. Search + pending membership tabs. Tapping a member shows full detail view.
 3. **Events** - Create, edit, delete events. Inline form for event creation/editing.
 4. **Clubs** - View and edit club details (name, location, description, training schedule)
+
+### Member Detail View:
+Shown when tapping a member in the Members tab:
+- Header with avatar initials, name, role badge, tier badge, XP
+- Role change dropdown (admin action)
+- Profile info rows (phone, email, DOB, gender, nationality, country, emergency contact)
+- Player/Coach specific fields (position, level, height, weight / certification, team)
+- Club memberships with status badges
+- Recent activities with XP earned
+- XP transaction history
+- Back button to return to member list
 
 ### RBAC:
 - `requireAdmin` middleware checks user role is "admin" before allowing access to admin routes
@@ -67,7 +87,9 @@ Accessible only to users with role="admin". Bottom nav shows Admin tab (shield i
 6. Digital membership card with tier-based gradient
 7. Club score system (50% of member XP)
 8. Activity feed and leaderboards
-9. Admin dashboard with full member/event/club management
+9. Admin dashboard with full member/event/club management + member drill-down
+10. Collapsible training programs (accordion sections)
+11. Event filtering by type
 
 ## API Endpoints
 ### Public
@@ -85,9 +107,10 @@ Accessible only to users with role="admin". Bottom nav shows Admin tab (shield i
 - GET `/api/memberships`, `/api/activities`, `/api/xp-history`
 
 ### Admin Only (requireAdmin)
-- GET `/api/admin/stats` - Dashboard statistics
-- GET `/api/admin/users` - All users
-- PATCH `/api/admin/users/:id/role` - Change user role
+- GET `/api/admin/stats` - Dashboard statistics (totalUsers, totalPlayers, totalSupporters, pendingMemberships, upcomingEvents, totalClubs)
+- GET `/api/admin/users` - All users (password excluded)
+- GET `/api/admin/users/:id` - Full user detail (profile, memberships with clubs, activities, XP history, attendance)
+- PATCH `/api/admin/users/:id/role` - Change user role (player/coach/personnel/supporter/admin)
 - GET `/api/admin/memberships?status=` - All memberships (filterable)
 - PATCH `/api/admin/memberships/:id` - Approve/reject membership
 - POST `/api/events` - Create event

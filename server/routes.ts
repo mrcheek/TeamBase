@@ -345,10 +345,32 @@ export async function registerRoutes(
     res.json(safeUsers);
   });
 
+  app.get("/api/admin/users/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const { password: _, ...safeUser } = user;
+      const membershipsList = await storage.getUserMemberships(userId);
+      const activitiesList = await storage.getUserActivities(userId);
+      const xpHistory = await storage.getUserXpTransactions(userId);
+      const attendanceList = await storage.getUserAttendance(userId);
+      res.json({
+        user: safeUser,
+        memberships: membershipsList,
+        activities: activitiesList,
+        xpHistory,
+        attendance: attendanceList,
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.patch("/api/admin/users/:id/role", requireAdmin, async (req: Request, res: Response) => {
     try {
       const { role } = req.body;
-      if (!role || !["player", "coach", "personnel", "admin"].includes(role)) {
+      if (!role || !["player", "coach", "personnel", "supporter", "admin"].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
       const updated = await storage.updateUserRole(parseInt(req.params.id), role);

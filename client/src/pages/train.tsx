@@ -1,5 +1,4 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dumbbell, Zap, Footprints, Target, Heart, Users } from "lucide-react";
 
 const trainingCategories = [
@@ -7,7 +6,8 @@ const trainingCategories = [
     title: "SAQ Drills",
     description: "Speed, Agility & Quickness drills to improve your game performance",
     icon: Zap,
-    color: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+    color: "text-amber-600 dark:text-amber-400",
+    iconBg: "bg-amber-500/10",
     items: [
       "Ladder Drills - Quick feet patterns",
       "Cone Agility - Change of direction",
@@ -19,7 +19,8 @@ const trainingCategories = [
     title: "Gym Sessions",
     description: "Strength and conditioning programs for rugby players",
     icon: Dumbbell,
-    color: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    color: "text-blue-600 dark:text-blue-400",
+    iconBg: "bg-blue-500/10",
     items: [
       "Upper Body Power - Bench, rows, press",
       "Lower Body Strength - Squats, lunges",
@@ -31,7 +32,8 @@ const trainingCategories = [
     title: "Running Programs",
     description: "Endurance and fitness programs for match preparation",
     icon: Footprints,
-    color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    color: "text-emerald-600 dark:text-emerald-400",
+    iconBg: "bg-emerald-500/10",
     items: [
       "Easy Run - 3-5km steady pace",
       "Interval Training - 400m repeats",
@@ -43,7 +45,8 @@ const trainingCategories = [
     title: "Skills Training",
     description: "Rugby-specific skills development drills",
     icon: Target,
-    color: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+    color: "text-purple-600 dark:text-purple-400",
+    iconBg: "bg-purple-500/10",
     items: [
       "Passing Accuracy - Spiral & pop passes",
       "Tackle Technique - Safe tackling practice",
@@ -55,7 +58,8 @@ const trainingCategories = [
     title: "Recovery",
     description: "Recovery and mobility sessions for injury prevention",
     icon: Heart,
-    color: "bg-red-500/10 text-red-600 dark:text-red-400",
+    color: "text-red-600 dark:text-red-400",
+    iconBg: "bg-red-500/10",
     items: [
       "Yoga Flow - Flexibility routine",
       "Foam Rolling - Muscle recovery",
@@ -67,7 +71,8 @@ const trainingCategories = [
     title: "Team Drills",
     description: "Group training exercises for team cohesion",
     icon: Users,
-    color: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+    color: "text-cyan-600 dark:text-cyan-400",
+    iconBg: "bg-cyan-500/10",
     items: [
       "Touch Rugby - Small-sided games",
       "Defence Patterns - Line speed drills",
@@ -87,36 +92,44 @@ export default function TrainPage() {
         </p>
       </div>
 
-      <div className="space-y-4">
-        {trainingCategories.map((category) => (
-          <Card key={category.title} data-testid={`card-training-${category.title.toLowerCase().replace(/\s+/g, '-')}`}>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3 mb-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${category.color.split(" ")[0]}`}>
-                  <category.icon className={`w-5 h-5 ${category.color.split(" ").slice(1).join(" ")}`} />
+      <Accordion type="multiple" className="w-full">
+        {trainingCategories.map((category, index) => (
+          <AccordionItem
+            key={category.title}
+            value={category.title}
+            data-testid={`accordion-training-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
+            className={index === trainingCategories.length - 1 ? "border-b-0" : ""}
+          >
+            <AccordionTrigger className="py-3 hover:no-underline" data-testid={`button-expand-${category.title.toLowerCase().replace(/\s+/g, '-')}`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${category.iconBg}`}>
+                  <category.icon className={`w-4 h-4 ${category.color}`} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="text-left">
                   <h3 className="font-semibold text-sm">{category.title}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {category.description}
                   </p>
                 </div>
               </div>
-              <div className="space-y-2 ml-13">
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 pl-12 pb-1">
                 {category.items.map((item, idx) => (
                   <div
                     key={idx}
                     className="flex items-center gap-2 text-xs text-muted-foreground"
+                    data-testid={`text-drill-${category.title.toLowerCase().replace(/\s+/g, '-')}-${idx}`}
                   >
                     <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
                     <span>{item}</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
+            </AccordionContent>
+          </AccordionItem>
         ))}
-      </div>
+      </Accordion>
     </div>
   );
 }

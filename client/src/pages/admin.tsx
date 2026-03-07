@@ -13,9 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Users, Calendar, Building2, BarChart3,
   Check, X, Edit2, Trash2, Plus, ChevronRight, Search,
-  Shield
+  Shield, ArrowLeft, Phone, Mail, MapPin, Heart, Dumbbell, TrendingUp
 } from "lucide-react";
-import type { User, Club, Event, Membership } from "@shared/schema";
+import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
 
 type AdminUser = Omit<User, "password">;
 type AdminMembership = Omit<Membership, ""> & { user: AdminUser; club: Club };
@@ -68,7 +68,7 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {activeTab === "overview" && <OverviewTab />}
+      {activeTab === "overview" && <OverviewTab onNavigate={setActiveTab} />}
       {activeTab === "members" && <MembersTab />}
       {activeTab === "events" && <EventsTab />}
       {activeTab === "clubs" && <ClubsTab />}
@@ -76,7 +76,7 @@ export default function AdminPage() {
   );
 }
 
-function OverviewTab() {
+function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
   const { data: stats, isLoading } = useQuery<{
     totalUsers: number;
     totalPlayers: number;
@@ -90,30 +90,280 @@ function OverviewTab() {
     return <div className="space-y-3">{[1, 2, 3, 4].map((i) => <Card key={i}><CardContent className="p-4 h-20 animate-pulse bg-muted" /></Card>)}</div>;
   }
 
-  const statCards = [
-    { label: "Total Members", value: stats?.totalUsers ?? 0, icon: Users, color: "text-blue-600 bg-blue-100" },
-    { label: "Players", value: stats?.totalPlayers ?? 0, icon: Users, color: "text-cyan-600 bg-cyan-100" },
-    { label: "Supporters", value: stats?.totalSupporters ?? 0, icon: Users, color: "text-pink-600 bg-pink-100" },
-    { label: "Pending Approvals", value: stats?.pendingMemberships ?? 0, icon: Shield, color: "text-amber-600 bg-amber-100" },
-    { label: "Upcoming Events", value: stats?.upcomingEvents ?? 0, icon: Calendar, color: "text-emerald-600 bg-emerald-100" },
-    { label: "Active Clubs", value: stats?.totalClubs ?? 0, icon: Building2, color: "text-purple-600 bg-purple-100" },
-  ];
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-3 gap-px border rounded-md overflow-hidden bg-border">
+        {[
+          { label: "Members", value: stats?.totalUsers ?? 0 },
+          { label: "Players", value: stats?.totalPlayers ?? 0 },
+          { label: "Supporters", value: stats?.totalSupporters ?? 0 },
+          { label: "Pending", value: stats?.pendingMemberships ?? 0 },
+          { label: "Events", value: stats?.upcomingEvents ?? 0 },
+          { label: "Clubs", value: stats?.totalClubs ?? 0 },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-background text-center py-3 px-2" data-testid={`stat-${stat.label.toLowerCase()}`}>
+            <p className="text-xl font-bold">{stat.value}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Quick Actions</h4>
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="justify-start text-xs" onClick={() => onNavigate("events")} data-testid="button-quick-create-event">
+            <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Event
+          </Button>
+          <Button variant="outline" size="sm" className="justify-start text-xs" onClick={() => onNavigate("members")} data-testid="button-quick-view-members">
+            <Users className="w-3.5 h-3.5 mr-1.5" /> View Members
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type UserDetail = {
+  user: AdminUser;
+  memberships: (Membership & { club: Club })[];
+  activities: Activity[];
+  xpHistory: XpTransaction[];
+  attendance: Attendance[];
+};
+
+const tierColors: Record<string, string> = {
+  green: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  blue: "text-blue-600 bg-blue-50 border-blue-200",
+  silver: "text-gray-500 bg-gray-50 border-gray-200",
+  gold: "text-amber-600 bg-amber-50 border-amber-200",
+};
+
+const roleColors: Record<string, string> = {
+  player: "text-blue-700 bg-blue-50",
+  coach: "text-purple-700 bg-purple-50",
+  personnel: "text-cyan-700 bg-cyan-50",
+  supporter: "text-pink-700 bg-pink-50",
+  admin: "text-red-700 bg-red-50",
+};
+
+function MemberDetail({ userId, onBack }: { userId: number; onBack: () => void }) {
+  const { toast } = useToast();
+
+  const { data, isLoading } = useQuery<UserDetail>({
+    queryKey: ["/api/admin/users", userId],
+  });
+
+  const roleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: number; role: string }) => {
+      await apiRequest("PATCH", `/api/admin/users/${userId}/role`, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Role updated" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground" data-testid="button-back-to-members">
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+        {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 animate-pulse bg-muted rounded-md" />)}
+      </div>
+    );
+  }
+
+  if (!data) return null;
+  const { user: u, memberships, activities, xpHistory } = data;
+
+  const infoRows = [
+    { icon: Phone, label: "Phone", value: u.phone },
+    { icon: Mail, label: "Email", value: u.email },
+    { icon: Calendar, label: "Date of Birth", value: u.dateOfBirth },
+    { icon: Users, label: "Gender", value: u.gender },
+    { icon: MapPin, label: "Nationality", value: u.nationality },
+    { icon: MapPin, label: "Country", value: u.residentialCountry },
+    { icon: Heart, label: "Emergency Contact", value: u.emergencyContactName ? `${u.emergencyContactName} (${u.emergencyContactNumber || "N/A"})` : null },
+  ].filter((r) => r.value);
 
   return (
-    <div className="space-y-3">
-      {statCards.map((stat) => (
-        <Card key={stat.label} data-testid={`card-stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}>
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="text-xs text-muted-foreground">{stat.label}</p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+    <div className="space-y-4">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors" data-testid="button-back-to-members">
+        <ArrowLeft className="w-4 h-4" /> All Members
+      </button>
+
+      <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-primary text-lg font-bold">
+            {u.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base" data-testid="text-member-name">{u.fullName}</h3>
+          <div className="flex items-center gap-2 mt-1 flex-wrap">
+            <Badge className={`text-[10px] capitalize border ${roleColors[u.role] || ""}`} variant="outline">{u.role}</Badge>
+            <Badge className={`text-[10px] capitalize border ${tierColors[u.tier] || ""}`} variant="outline">{u.tier}</Badge>
+            <span className="text-xs font-semibold text-primary">{u.xpTotal} XP</span>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Role</h4>
+        </div>
+        <Select
+          value={u.role}
+          onValueChange={(role) => roleMutation.mutate({ userId: u.id, role })}
+        >
+          <SelectTrigger className="h-8 text-xs" data-testid="select-member-role">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="player">Player</SelectItem>
+            <SelectItem value="coach">Coach</SelectItem>
+            <SelectItem value="personnel">Personnel</SelectItem>
+            <SelectItem value="supporter">Supporter</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {infoRows.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Profile</h4>
+          <div className="border rounded-md divide-y">
+            {infoRows.map((row) => (
+              <div key={row.label} className="flex items-center gap-3 px-3 py-2.5" data-testid={`row-profile-${row.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                <row.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <span className="text-xs text-muted-foreground w-24 shrink-0">{row.label}</span>
+                <span className="text-xs font-medium capitalize truncate">{row.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {u.role === "player" && (u.position || u.playingLevel || u.height || u.weight) && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Player Details</h4>
+          <div className="border rounded-md divide-y">
+            {u.position && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Position</span>
+                <span className="text-xs font-medium capitalize">{u.position}</span>
+              </div>
+            )}
+            {u.playingLevel && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Level</span>
+                <span className="text-xs font-medium capitalize">{u.playingLevel}</span>
+              </div>
+            )}
+            {u.height && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Height</span>
+                <span className="text-xs font-medium">{u.height}</span>
+              </div>
+            )}
+            {u.weight && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Weight</span>
+                <span className="text-xs font-medium">{u.weight}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {u.role === "coach" && (u.coachingCertification || u.teamCoached) && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Coach Details</h4>
+          <div className="border rounded-md divide-y">
+            {u.coachingCertification && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Certification</span>
+                <span className="text-xs font-medium">{u.coachingCertification}</span>
+              </div>
+            )}
+            {u.teamCoached && (
+              <div className="flex items-center gap-3 px-3 py-2.5">
+                <span className="text-xs text-muted-foreground w-24 shrink-0">Team</span>
+                <span className="text-xs font-medium">{u.teamCoached}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {memberships.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Clubs</h4>
+          <div className="border rounded-md divide-y">
+            {memberships.map((m) => (
+              <div key={m.id} className="flex items-center justify-between px-3 py-2.5" data-testid={`row-membership-${m.id}`}>
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                    <span className="text-primary text-[9px] font-bold">
+                      {m.club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                    </span>
+                  </div>
+                  <span className="text-xs font-medium">{m.club.name}</span>
+                </div>
+                <Badge variant="outline" className={`text-[9px] capitalize ${m.status === "active" ? "text-emerald-600 border-emerald-200" : m.status === "pending" ? "text-amber-600 border-amber-200" : "text-red-600 border-red-200"}`}>
+                  {m.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activities.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Recent Activities</h4>
+          <div className="border rounded-md divide-y">
+            {activities.slice(0, 10).map((a) => (
+              <div key={a.id} className="flex items-center justify-between px-3 py-2.5" data-testid={`row-activity-${a.id}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <Dumbbell className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-xs font-medium capitalize">{a.type.replace("_", " ")}</span>
+                    {a.notes && <p className="text-[10px] text-muted-foreground truncate">{a.notes}</p>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-muted-foreground">{a.date}</span>
+                  <span className="text-xs font-semibold text-primary">+{a.xpEarned}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {xpHistory.length > 0 && (
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">XP History</h4>
+          <div className="border rounded-md divide-y">
+            {xpHistory.slice(0, 10).map((tx) => (
+              <div key={tx.id} className="flex items-center justify-between px-3 py-2.5" data-testid={`row-xp-detail-${tx.id}`}>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-3 h-3 text-primary shrink-0" />
+                  <span className="text-xs">{tx.description}</span>
+                </div>
+                <span className="text-xs font-semibold text-primary">+{tx.amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="text-[10px] text-muted-foreground pt-2 border-t">
+        Joined {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "N/A"}
+        {u.profileCompleted && " · Profile Complete"}
+      </div>
     </div>
   );
 }
@@ -122,6 +372,7 @@ function MembersTab() {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"all" | "pending">("all");
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const { data: allUsers, isLoading: usersLoading } = useQuery<AdminUser[]>({
     queryKey: ["/api/admin/users"],
@@ -162,6 +413,10 @@ function MembersTab() {
     u.phone.includes(search)
   );
 
+  if (selectedUserId) {
+    return <MemberDetail userId={selectedUserId} onBack={() => setSelectedUserId(null)} />;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex gap-1 bg-muted rounded-md p-1">
@@ -199,54 +454,34 @@ function MembersTab() {
           </div>
 
           {usersLoading ? (
-            <div className="space-y-2">{[1, 2, 3].map((i) => <Card key={i}><CardContent className="p-3 h-16 animate-pulse bg-muted" /></Card>)}</div>
+            <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse bg-muted rounded-md" />)}</div>
           ) : (
-            <div className="space-y-2">
+            <div className="border rounded-md divide-y">
               {filteredUsers?.map((u) => (
-                <Card key={u.id} data-testid={`card-admin-user-${u.id}`}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <span className="text-primary text-[10px] font-bold">
-                            {u.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">{u.fullName}</p>
-                          <p className="text-xs text-muted-foreground">{u.phone}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant="secondary" className="text-[10px] capitalize">{u.tier}</Badge>
-                        <Select
-                          value={u.role}
-                          onValueChange={(role) => roleMutation.mutate({ userId: u.id, role })}
-                        >
-                          <SelectTrigger className="h-7 w-[90px] text-[10px]" data-testid={`select-role-${u.id}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="player">Player</SelectItem>
-                            <SelectItem value="coach">Coach</SelectItem>
-                            <SelectItem value="personnel">Personnel</SelectItem>
-                            <SelectItem value="supporter">Supporter</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                <div
+                  key={u.id}
+                  className="flex items-center justify-between gap-2 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                  onClick={() => setSelectedUserId(u.id)}
+                  data-testid={`card-admin-user-${u.id}`}
+                >
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-primary text-[10px] font-bold">
+                        {u.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <span>{u.xpTotal} XP</span>
-                      {u.profileCompleted && <Badge variant="outline" className="text-[9px] text-emerald-600 border-emerald-200">Profile Complete</Badge>}
-                      {u.gender && <span className="capitalize">{u.gender}</span>}
-                      {u.nationality && <span>{u.nationality}</span>}
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{u.fullName}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        <span className="capitalize">{u.role}</span> · <span className="capitalize">{u.tier}</span> · {u.xpTotal} XP
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                </div>
               ))}
               {filteredUsers?.length === 0 && (
-                <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No members found</CardContent></Card>
+                <div className="p-6 text-center text-sm text-muted-foreground">No members found</div>
               )}
             </div>
           )}
@@ -256,48 +491,44 @@ function MembersTab() {
       {view === "pending" && (
         <>
           {membershipsLoading ? (
-            <div className="space-y-2">{[1, 2].map((i) => <Card key={i}><CardContent className="p-3 h-16 animate-pulse bg-muted" /></Card>)}</div>
+            <div className="space-y-2">{[1, 2].map((i) => <div key={i} className="h-14 animate-pulse bg-muted rounded-md" />)}</div>
           ) : pendingMemberships && pendingMemberships.length > 0 ? (
-            <div className="space-y-2">
+            <div className="border rounded-md divide-y">
               {pendingMemberships.map((m) => (
-                <Card key={m.id} data-testid={`card-pending-${m.id}`}>
-                  <CardContent className="p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{m.user.fullName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Wants to join <span className="font-medium text-foreground">{m.club.name}</span>
-                        </p>
-                      </div>
-                      <div className="flex gap-1.5 shrink-0">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50"
-                          onClick={() => membershipMutation.mutate({ id: m.id, status: "active" })}
-                          disabled={membershipMutation.isPending}
-                          data-testid={`button-approve-${m.id}`}
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
-                          onClick={() => membershipMutation.mutate({ id: m.id, status: "rejected" })}
-                          disabled={membershipMutation.isPending}
-                          data-testid={`button-reject-${m.id}`}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div key={m.id} className="flex items-center justify-between gap-2 px-3 py-2.5" data-testid={`card-pending-${m.id}`}>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{m.user.fullName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Wants to join <span className="font-medium text-foreground">{m.club.name}</span>
+                    </p>
+                  </div>
+                  <div className="flex gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-50"
+                      onClick={() => membershipMutation.mutate({ id: m.id, status: "active" })}
+                      disabled={membershipMutation.isPending}
+                      data-testid={`button-approve-${m.id}`}
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
+                      onClick={() => membershipMutation.mutate({ id: m.id, status: "rejected" })}
+                      disabled={membershipMutation.isPending}
+                      data-testid={`button-reject-${m.id}`}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
-            <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No pending membership requests</CardContent></Card>
+            <div className="border rounded-md p-6 text-center text-sm text-muted-foreground">No pending membership requests</div>
           )}
         </>
       )}

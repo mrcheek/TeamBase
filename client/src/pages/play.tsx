@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
-import { Calendar, MapPin, Users, ChevronRight } from "lucide-react";
+import { Calendar, MapPin, ChevronRight, Clock } from "lucide-react";
 import type { Event, Club } from "@shared/schema";
 
 const eventTypeColors: Record<string, string> = {
@@ -15,8 +14,118 @@ const eventTypeColors: Record<string, string> = {
   social: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
 };
 
+const filterOptions = [
+  { label: "All", value: "all" },
+  { label: "Training", value: "training" },
+  { label: "Matches", value: "match" },
+  { label: "Tournaments", value: "tournament" },
+  { label: "Touch", value: "touch_rugby" },
+  { label: "Social", value: "social" },
+];
+
+function isToday(dateStr: string): boolean {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  return dateStr === todayStr;
+}
+
+function isFuture(dateStr: string): boolean {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  return dateStr > todayStr;
+}
+
+function formatEventDate(dateStr: string): string {
+  return new Date(dateStr + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  });
+}
+
+function EventRow({ event }: { event: Event }) {
+  return (
+    <Link href={`/events/${event.id}`}>
+      <div
+        className="flex items-center gap-3 py-3 hover-elevate cursor-pointer"
+        data-testid={`row-event-${event.id}`}
+      >
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-medium text-sm" data-testid={`text-event-title-${event.id}`}>
+              {event.title}
+            </span>
+            <Badge
+              variant="secondary"
+              className={`text-[10px] px-1.5 py-0 ${eventTypeColors[event.type] || ""}`}
+              data-testid={`badge-event-type-${event.id}`}
+            >
+              {event.type.replace("_", " ")}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3 h-3" />
+              {formatEventDate(event.date)}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {event.time}
+            </span>
+            {event.location && (
+              <span className="flex items-center gap-1 truncate">
+                <MapPin className="w-3 h-3 shrink-0" />
+                <span className="truncate">{event.location}</span>
+              </span>
+            )}
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+      </div>
+    </Link>
+  );
+}
+
+function ClubRow({ club }: { club: Club }) {
+  return (
+    <Link href={`/clubs/${club.id}`}>
+      <div
+        className="flex items-center gap-3 py-3 hover-elevate cursor-pointer"
+        data-testid={`row-club-${club.id}`}
+      >
+        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+          <span className="text-primary font-bold text-xs">
+            {club.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+          </span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="font-medium text-sm" data-testid={`text-club-name-${club.id}`}>
+            {club.name}
+          </span>
+          <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground flex-wrap">
+            {club.location && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                {club.location}
+              </span>
+            )}
+            {club.trainingSchedule && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                {club.trainingSchedule}
+              </span>
+            )}
+          </div>
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+      </div>
+    </Link>
+  );
+}
+
 export default function PlayPage() {
   const [tab, setTab] = useState<"events" | "clubs">("events");
+  const [filter, setFilter] = useState("all");
 
   const { data: events, isLoading: eventsLoading } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -25,6 +134,14 @@ export default function PlayPage() {
   const { data: clubs, isLoading: clubsLoading } = useQuery<Club[]>({
     queryKey: ["/api/clubs"],
   });
+
+  const filteredEvents = events?.filter(
+    (e) => filter === "all" || e.type === filter
+  );
+
+  const todayEvents = filteredEvents?.filter((e) => isToday(e.date)) || [];
+  const upcomingEvents = filteredEvents?.filter((e) => isFuture(e.date)) || [];
+  const pastEvents = filteredEvents?.filter((e) => !isToday(e.date) && !isFuture(e.date)) || [];
 
   return (
     <div className="pb-24 px-4 pt-2 max-w-lg mx-auto">
@@ -57,57 +174,74 @@ export default function PlayPage() {
 
       {tab === "events" && (
         <div>
+          <div className="flex gap-1.5 overflow-x-auto pb-3 mb-2 no-scrollbar" data-testid="filter-row">
+            {filterOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className={`shrink-0 px-3 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                  filter === opt.value
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-transparent text-muted-foreground border-border hover-elevate"
+                }`}
+                data-testid={`button-filter-${opt.value}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           {eventsLoading ? (
-            <div className="space-y-3">
+            <div className="space-y-3 mt-4">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-24 rounded-md" />
+                <Skeleton key={i} className="h-14 rounded-md" />
               ))}
             </div>
-          ) : events && events.length > 0 ? (
-            <div className="space-y-3">
-              {events.map((event) => (
-                <Link key={event.id} href={`/events/${event.id}`}>
-                  <Card className="hover-elevate" data-testid={`card-event-${event.id}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-semibold text-sm flex-1">{event.title}</h4>
-                        <Badge variant="secondary" className={eventTypeColors[event.type] || ""}>
-                          {event.type.replace("_", " ")}
-                        </Badge>
-                      </div>
-                      {event.description && (
-                        <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
-                          {event.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(event.date + "T00:00:00").toLocaleDateString("en-GB", {
-                            weekday: "short",
-                            day: "numeric",
-                            month: "short",
-                          })}
-                        </span>
-                        <span>{event.time}</span>
-                        {event.location && (
-                          <span className="flex items-center gap-1 truncate">
-                            <MapPin className="w-3 h-3 shrink-0" />
-                            <span className="truncate">{event.location}</span>
-                          </span>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
+          ) : filteredEvents && filteredEvents.length > 0 ? (
+            <div className="mt-2">
+              {todayEvents.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1" data-testid="text-section-today">
+                    Today
+                  </h3>
+                  <div className="divide-y divide-border">
+                    {todayEvents.map((event) => (
+                      <EventRow key={event.id} event={event} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {upcomingEvents.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1" data-testid="text-section-upcoming">
+                    Upcoming
+                  </h3>
+                  <div className="divide-y divide-border">
+                    {upcomingEvents.map((event) => (
+                      <EventRow key={event.id} event={event} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {pastEvents.length > 0 && (
+                <div className="mb-4">
+                  <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1" data-testid="text-section-past">
+                    Past
+                  </h3>
+                  <div className="divide-y divide-border">
+                    {pastEvents.map((event) => (
+                      <EventRow key={event.id} event={event} />
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                No events scheduled
-              </CardContent>
-            </Card>
+            <div className="py-12 text-center text-sm text-muted-foreground" data-testid="text-no-events">
+              No events scheduled
+            </div>
           )}
         </div>
       )}
@@ -117,48 +251,19 @@ export default function PlayPage() {
           {clubsLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-28 rounded-md" />
+                <Skeleton key={i} className="h-14 rounded-md" />
               ))}
             </div>
           ) : clubs && clubs.length > 0 ? (
-            <div className="space-y-3">
+            <div className="divide-y divide-border">
               {clubs.map((club) => (
-                <Link key={club.id} href={`/clubs/${club.id}`}>
-                  <Card className="hover-elevate" data-testid={`card-club-${club.id}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <span className="text-primary font-bold text-sm">
-                            {club.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-sm">{club.name}</h4>
-                          {club.location && (
-                            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <MapPin className="w-3 h-3" />
-                              {club.location}
-                            </p>
-                          )}
-                          {club.description && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                              {club.description}
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <ClubRow key={club.id} club={club} />
               ))}
             </div>
           ) : (
-            <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                No clubs found
-              </CardContent>
-            </Card>
+            <div className="py-12 text-center text-sm text-muted-foreground" data-testid="text-no-clubs">
+              No clubs found
+            </div>
           )}
         </div>
       )}
