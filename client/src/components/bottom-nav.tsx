@@ -43,9 +43,9 @@ export function BottomNav() {
                 href={item.path}
                 data-testid="nav-check-in"
               >
-                <div className="flex flex-col items-center gap-0.5">
+                <div className="flex flex-col items-center gap-0.5 -mt-3">
                   <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                    className="w-12 h-12 rounded-full flex items-center justify-center transition-colors shadow-md"
                     style={{
                       backgroundColor: isActive
                         ? "hsl(var(--club-accent))"
@@ -53,7 +53,7 @@ export function BottomNav() {
                       color: "hsl(var(--club-primary-foreground))",
                     }}
                   >
-                    <span className="font-bold text-xs">GO</span>
+                    <span className="font-bold text-sm">GO</span>
                   </div>
                   <span
                     className={`text-[10px] font-medium ${isActive ? "" : "text-muted-foreground"}`}

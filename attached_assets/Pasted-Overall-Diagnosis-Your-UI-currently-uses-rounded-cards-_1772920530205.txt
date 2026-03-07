@@ -1,0 +1,291 @@
+Overall Diagnosis
+
+Your UI currently uses:
+
+• rounded cards
+• subtle shadows
+• grouped panels
+
+This pattern works for finance dashboards, but sports apps usually use:
+
+• section layout
+• full-width rows
+• divider lines
+• hero sections
+
+Right now the structure is still:
+
+card
+card
+card
+card
+card
+
+We want:
+
+hero
+space
+section
+divider
+section
+divider
+section
+Page 1 — Home
+What's good
+
+✔ hierarchy is clear
+✔ next session stands out
+✔ quick log is clean
+✔ club momentum concept works
+
+What's wrong
+
+Still too many surfaces:
+
+club header card
+
+next session card
+
+momentum card
+
+activity card
+
+leaderboard card
+
+That's five containers.
+
+Correct structure
+
+Home should look like this:
+
+[Club hero banner]
+
+Next Session
+
+Rank + Momentum
+
+Club Activity
+
+Quick Log
+
+Leaderboard
+
+Only 1 container allowed here: the Next Session highlight.
+
+Everything else should be flat sections.
+
+Fix
+
+Remove these containers:
+
+Club header
+Club momentum
+Club activity
+Leaderboard
+
+Replace with:
+
+• spacing
+• section headers
+• thin dividers
+
+Page 2 — Play (Events)
+
+This page is actually quite good.
+
+But two issues remain.
+
+Problem 1 — Event Cards
+
+Every event is a large rounded card.
+
+Better pattern:
+
+event row
+divider
+event row
+divider
+event row
+
+Like Apple Calendar.
+
+Fix
+
+Replace cards with rows:
+
+icon
+event title
+club
+time / location
+tag
+arrow
+
+Only the icon background should have a shape.
+
+Problem 2 — Filter Buttons
+
+The filter pills look slightly heavy.
+
+Better pattern:
+
+All | Training | Matches | Tournaments
+
+Use underline indicator instead of pills.
+
+This immediately feels cleaner.
+
+Page 3 — Admin
+
+This page is still very dashboard-like.
+
+You have a large metrics grid container.
+
+Instead use:
+
+Members        8
+Players        5
+Supporters     1
+Pending        0
+Events         4
+Clubs          3
+
+No box required.
+
+Just a 2 column stat grid.
+
+Quick Actions
+
+These should become:
+
++ Create Event
+👥 View Members
+
+As full width rows.
+
+Not button panels.
+
+Page 4 — Profile
+
+This page is close but still box-heavy.
+
+Problem
+
+The following are all cards:
+
+XP progress
+My clubs
+XP history
+Settings
+
+That's too many.
+
+Correct structure
+Membership Card
+
+XP Progress
+
+My Clubs
+
+Recent Activity
+
+Settings
+
+Only Membership Card should be a card.
+
+Everything else should be sections.
+
+The Biggest Visual Improvement You Can Make
+
+Right now rounded borders are doing the layout.
+
+Instead let spacing and typography do it.
+
+Replace:
+
+border + shadow
+
+with:
+
+space + divider
+
+Example:
+
+XP PROGRESS
+
+Ambassador 1125 XP
+██████████████
+
+----------------
+
+MY CLUBS
+
+Jambiani Jackals
+
+No box required.
+
+Color Usage
+
+This is another improvement opportunity.
+
+Right now the blue color appears everywhere.
+
+Instead:
+
+Use club color only for:
+
+• buttons
+• progress bars
+• active tabs
+• event tags
+
+Everything else:
+
+neutral grey
+
+This will make the UI feel far more premium.
+
+Navigation Bar
+
+The bottom nav is actually good.
+
+But one tweak:
+
+The GO button should be larger.
+
+Make it feel like the primary action.
+
+One More Small UX Improvement
+
+Move XP badge slightly closer to the profile avatar.
+
+Right now it floats too far right.
+
+Better grouping:
+
+[avatar] Jambiani Jackals RFC     1125
+Overall Score
+
+Current UI:
+
+7 / 10
+
+It’s functional and clear.
+
+But still slightly:
+
+box-heavy
+dashboard-like
+After These Fixes
+
+If you:
+
+• remove 60% of containers
+• switch event cards → rows
+• reduce button surfaces
+• use spacing instead of panels
+
+It will jump to:
+
+9 / 10
+
+And start to feel like a real sports platform.

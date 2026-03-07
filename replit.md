@@ -8,13 +8,16 @@ A mobile-first PWA for the Zanzibar Rugby Federation. A premium club-first sport
 - **Auth**: Session-based with express-session + connect-pg-simple, scrypt password hashing
 
 ## Design System
-- **Style**: Premium sports platform — Strava + Apple Fitness + Notion inspired, flat, clean, club-branded
+- **Style**: Premium sports platform — section-based layout, NOT card-heavy dashboard
+- **Layout Philosophy**: Hero → space → section → divider → section. Cards used sparingly (Next Session, Membership Card only). Everything else: flat sections with thin dividers.
 - **Radius**: 0.375rem (6px) globally via `--radius` in index.css
-- **Shadows**: Flat (no shadows), border-based card styling (1px border)
-- **Layout**: Dividers instead of card wrapping where possible, compact grids, split grid sections, timeline feeds
+- **Shadows**: Flat (no shadows) except GO button and membership card
+- **Layout**: Full-width rows, divider lines, section headers, hero sections. NOT rounded cards stacked.
 - **Typography**: Section headers use `text-xs font-semibold uppercase tracking-wider text-muted-foreground`
 - **Background**: Warm light `40 10% 98%` instead of pure white
 - **Font**: Montserrat, mobile-first bottom nav
+- **Color usage**: Club color only for buttons, progress bars, active tabs, event tags. Everything else neutral grey.
+- **Dark mode**: ThemeProvider (`client/src/hooks/use-theme.tsx`) with class-based toggle, persisted in localStorage. Toggle in Profile Settings.
 
 ### Club Branding
 Each club has its own color palette stored in the `clubs` table:
@@ -55,8 +58,8 @@ Each club has its own color palette stored in the `clubs` table:
 - `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + club branding editor
 
 ## Pages
-- `/` - Home: Club Hero, Next Session block, Split Grid (Club Momentum | Activity Feed), Quick Log strip, ZRF Club Table
-- `/play` - Events & Clubs directory: premium filter row, event cards with club identity, clubs tab with color swatches
+- `/` - Home: Club Hero (gradient banner), Next Session (only card), Rank+Momentum | Activity (flat split grid), Quick Log strip, Club Table (divider rows)
+- `/play` - Events & Clubs: underline tab switcher, underline filter indicators, event/club rows with dividers (not cards)
 - `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
 - `/train` - Training library: accordion sections with category-colored accent bars, grouped drills
 - `/profile` - Membership card (club-branded), XP section with `id="xp"` anchor, tier progress, clubs, activity timeline, XP history

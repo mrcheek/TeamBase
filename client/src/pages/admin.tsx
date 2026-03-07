@@ -91,8 +91,8 @@ function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-px border rounded-md overflow-hidden bg-border">
+    <div>
+      <div className="grid grid-cols-2 gap-y-4 gap-x-6 mb-6">
         {[
           { label: "Members", value: stats?.totalUsers ?? 0 },
           { label: "Players", value: stats?.totalPlayers ?? 0 },
@@ -101,22 +101,34 @@ function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
           { label: "Events", value: stats?.upcomingEvents ?? 0 },
           { label: "Clubs", value: stats?.totalClubs ?? 0 },
         ].map((stat) => (
-          <div key={stat.label} className="bg-background text-center py-3 px-2" data-testid={`stat-${stat.label.toLowerCase()}`}>
-            <p className="text-xl font-bold">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
+          <div key={stat.label} className="flex items-baseline justify-between" data-testid={`stat-${stat.label.toLowerCase()}`}>
+            <span className="text-sm text-muted-foreground">{stat.label}</span>
+            <span className="text-lg font-bold">{stat.value}</span>
           </div>
         ))}
       </div>
 
-      <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Quick Actions</h4>
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="justify-start text-xs" onClick={() => onNavigate("events")} data-testid="button-quick-create-event">
-            <Plus className="w-3.5 h-3.5 mr-1.5" /> Create Event
-          </Button>
-          <Button variant="outline" size="sm" className="justify-start text-xs" onClick={() => onNavigate("members")} data-testid="button-quick-view-members">
-            <Users className="w-3.5 h-3.5 mr-1.5" /> View Members
-          </Button>
+      <div className="border-t pt-4">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h4>
+        <div className="divide-y">
+          <button
+            onClick={() => onNavigate("events")}
+            className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left"
+            data-testid="button-quick-create-event"
+          >
+            <Plus className="w-4 h-4 text-muted-foreground" />
+            Create Event
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 ml-auto" />
+          </button>
+          <button
+            onClick={() => onNavigate("members")}
+            className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left"
+            data-testid="button-quick-view-members"
+          >
+            <Users className="w-4 h-4 text-muted-foreground" />
+            View Members
+            <ChevronRight className="w-4 h-4 text-muted-foreground/40 ml-auto" />
+          </button>
         </div>
       </div>
     </div>
