@@ -8,20 +8,19 @@ import { Link } from "wouter";
 import {
   Calendar,
   Users,
-  Trophy,
-  TrendingUp,
   Dumbbell,
   Eye,
   Footprints,
   MapPin,
   Clock,
-  ChevronRight,
   Zap,
   Heart,
-  Activity,
-  BarChart3,
+  TrendingUp,
+  Target,
 } from "lucide-react";
 import type { Event, Activity as ActivityType, User, Club, Membership } from "@shared/schema";
+
+const ICON_STROKE = 1.5;
 
 const activityIcons: Record<string, any> = {
   gym: Dumbbell,
@@ -52,17 +51,17 @@ export default function HomePage() {
     queryKey: ["/api/feed"],
   });
 
-  const { data: clubLeaderboard } = useQuery<{ club: Club; score: number }[]>({
-    queryKey: ["/api/leaderboard/clubs"],
-  });
-
   const { data: memberships } = useQuery<(Membership & { club: Club })[]>({
     queryKey: ["/api/memberships"],
     enabled: !!user,
   });
 
-  const { data: heatmap } = useQuery<{ day: number; count: number }[]>({
-    queryKey: ["/api/activities/heatmap"],
+  const { data: challenge } = useQuery<{ type: string; title: string; xp: number; icon: string }>({
+    queryKey: ["/api/daily-challenge"],
+  });
+
+  const { data: weeklyStats } = useQuery<{ target: number; completed: number; participantCount: number; clubName?: string }>({
+    queryKey: ["/api/club/weekly-stats"],
     enabled: !!user,
   });
 
@@ -74,20 +73,13 @@ export default function HomePage() {
   const userMembership = memberships?.find((m) => m.status === "approved" || m.status === "active");
   const userClub = userMembership?.club ?? themeClub;
 
-  const userClubRank = clubLeaderboard && userClub
-    ? clubLeaderboard.findIndex((e) => e.club.id === userClub.id) + 1
-    : null;
-
-  const userClubScore = clubLeaderboard && userClub
-    ? clubLeaderboard.find((e) => e.club.id === userClub.id)?.score ?? 0
-    : 0;
-
   const clubInitials = userClub
     ? userClub.name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()
     : "ZR";
 
   return (
     <div className="pb-24 pt-3 max-w-lg mx-auto">
+      {/* 1. CLUB HERO */}
       {user && (
         <section className="mb-8 px-4" data-testid="section-club-hero">
           <div
@@ -115,7 +107,7 @@ export default function HomePage() {
                 </h2>
                 {userClub?.location && (
                   <p className="text-xs opacity-80 flex items-center gap-1 mt-0.5">
-                    <MapPin className="w-3 h-3 shrink-0" />
+                    <MapPin className="w-3 h-3 shrink-0" strokeWidth={ICON_STROKE} />
                     <span className="truncate">{userClub.location}</span>
                   </p>
                 )}
@@ -132,6 +124,7 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* 2. NEXT SESSION */}
       <section className="mb-7 px-4" data-testid="section-next-session">
         {eventsLoading ? (
           <Skeleton className="h-32 rounded-md" />
@@ -143,7 +136,7 @@ export default function HomePage() {
             }}
           >
             <div className="flex items-center gap-2 mb-2">
-              <Zap className="w-4 h-4" style={{ color: `hsl(var(--club-primary))` }} />
+              <Zap className="w-4 h-4" strokeWidth={ICON_STROKE} style={{ color: `hsl(var(--club-primary))` }} />
               <span
                 className="text-[10px] font-bold uppercase tracking-wider"
                 style={{ color: `hsl(var(--club-primary))` }}
@@ -156,7 +149,7 @@ export default function HomePage() {
             </h3>
             <div className="flex items-center flex-wrap gap-3 text-xs text-muted-foreground mb-3">
               <span className="flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+                <Calendar className="w-3 h-3" strokeWidth={ICON_STROKE} />
                 {new Date(nextEvent.date + "T00:00:00").toLocaleDateString("en-GB", {
                   weekday: "short",
                   day: "numeric",
@@ -164,12 +157,12 @@ export default function HomePage() {
                 })}
               </span>
               <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
+                <Clock className="w-3 h-3" strokeWidth={ICON_STROKE} />
                 {nextEvent.time}
               </span>
               {nextEvent.location && (
                 <span className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
+                  <MapPin className="w-3 h-3" strokeWidth={ICON_STROKE} />
                   {nextEvent.location}
                 </span>
               )}
@@ -197,7 +190,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="py-6 text-center">
-            <Calendar className="w-6 h-6 mx-auto text-muted-foreground/40 mb-1.5" />
+            <Calendar className="w-6 h-6 mx-auto text-muted-foreground/40 mb-1.5" strokeWidth={ICON_STROKE} />
             <p className="text-sm text-muted-foreground">No upcoming sessions</p>
           </div>
         )}
@@ -205,80 +198,125 @@ export default function HomePage() {
 
       {user && (
         <>
-          <div className="border-t mx-4" />
+          {/* 3. TODAY'S CHALLENGE */}
+          <div className="border-t border-divider mx-4" />
 
-          <section className="py-6 px-4" data-testid="section-split-grid">
-            <div className="grid grid-cols-2 gap-6">
+          <section className="py-6 px-4" data-testid="section-daily-challenge">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Target className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={ICON_STROKE} />
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Today's Challenge
+              </h3>
+            </div>
+            {challenge ? (
               <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Trophy className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Rank + Momentum
-                  </span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const CIcon = activityIcons[challenge.icon] || Dumbbell;
+                      return <CIcon className="w-4 h-4" strokeWidth={ICON_STROKE} style={{ color: `hsl(var(--club-primary))` }} />;
+                    })()}
+                    <span className="text-sm font-semibold">{challenge.title}</span>
+                    <span className="text-xs font-semibold" style={{ color: `hsl(var(--club-accent))` }}>
+                      +{challenge.xp} XP
+                    </span>
+                  </div>
                 </div>
-                <p className="text-xs font-medium truncate mb-1.5" data-testid="text-momentum-club">
-                  {userClub ? userClub.name : "No Club"}
-                </p>
-                {userClub ? (
-                  <>
-                    <Progress
-                      value={Math.min((userClubScore / Math.max(clubLeaderboard?.[0]?.score || 1, 1)) * 100, 100)}
-                      className="h-1.5 mb-1.5"
-                    />
-                    <div className="flex items-center justify-between gap-1">
-                      <span className="text-xs font-semibold" data-testid="text-club-points">
-                        {userClubScore} pts
+                {weeklyStats && weeklyStats.participantCount > 0 && (
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {weeklyStats.participantCount} teammate{weeklyStats.participantCount !== 1 ? "s" : ""} active today
+                  </p>
+                )}
+                <Link href={`/check-in?activity=${challenge.type}`}>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    data-testid="button-start-challenge"
+                    style={{
+                      backgroundColor: `hsl(var(--club-primary))`,
+                      color: `hsl(var(--club-primary-foreground))`,
+                      borderColor: `hsl(var(--club-primary))`,
+                    }}
+                  >
+                    Start Activity
+                  </Button>
+                </Link>
+
+                {weeklyStats && weeklyStats.target > 0 && (
+                  <div className="mt-4 pt-3 border-t border-divider">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        This Week
                       </span>
-                      <span className="text-[10px] text-muted-foreground" data-testid="text-club-rank">
-                        {userClubRank ? `#${userClubRank}` : "—"}
+                      <span className="text-[11px] text-muted-foreground">
+                        {weeklyStats.completed} / {weeklyStats.target}
                       </span>
                     </div>
-                  </>
-                ) : (
-                  <p className="text-xs text-muted-foreground">Join a club</p>
+                    <Progress
+                      value={Math.min((weeklyStats.completed / weeklyStats.target) * 100, 100)}
+                      className="h-2"
+                    />
+                  </div>
                 )}
               </div>
-
-              <div>
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Activity className="w-3.5 h-3.5 text-muted-foreground" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Club Activity
-                  </span>
-                </div>
-                {feedLoading ? (
-                  <div className="space-y-1.5">
-                    {[1, 2, 3].map((i) => (
-                      <Skeleton key={i} className="h-4 rounded" />
-                    ))}
-                  </div>
-                ) : feed && feed.length > 0 ? (
-                  <div className="space-y-1.5">
-                    {feed.slice(0, 3).map((activity) => {
-                      const Icon = activityIcons[activity.type] || Dumbbell;
-                      return (
-                        <div
-                          key={activity.id}
-                          className="flex items-center gap-1.5"
-                          data-testid={`row-activity-mini-${activity.id}`}
-                        >
-                          <Icon className="w-3 h-3 text-muted-foreground shrink-0" />
-                          <span className="text-[11px] truncate flex-1">{activity.user.fullName}</span>
-                          <span className="text-[10px] font-semibold shrink-0" style={{ color: `hsl(var(--club-accent))` }}>
-                            +{activity.xpEarned}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground">No recent activity</p>
-                )}
-              </div>
-            </div>
+            ) : (
+              <Skeleton className="h-16 rounded-md" />
+            )}
           </section>
 
-          <div className="border-t mx-4" />
+          {/* 4. CLUB ACTIVITY */}
+          <div className="border-t border-divider mx-4" />
+
+          <section className="py-6 px-4" data-testid="section-club-activity">
+            <div className="flex items-center gap-1.5 mb-3">
+              <Zap className="w-3.5 h-3.5 text-muted-foreground" strokeWidth={ICON_STROKE} />
+              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Club Activity
+              </h3>
+            </div>
+            {feedLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-12 rounded-md" />
+                ))}
+              </div>
+            ) : feed && feed.length > 0 ? (
+              <div className="divide-y divide-divider">
+                {feed.slice(0, 8).map((activity) => {
+                  const Icon = activityIcons[activity.type] || Dumbbell;
+                  return (
+                    <div
+                      key={activity.id}
+                      className="flex items-start gap-3 py-3"
+                      data-testid={`row-feed-activity-${activity.id}`}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                        style={{ backgroundColor: `hsl(var(--club-primary) / 0.1)` }}
+                      >
+                        <Icon className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} style={{ color: `hsl(var(--club-primary))` }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{activity.user.fullName}</p>
+                        <p className="text-[13px] text-muted-foreground capitalize">
+                          {activity.type.replace("_", " ")}
+                          {activity.notes && ` · ${activity.notes}`}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold shrink-0 mt-1" style={{ color: `hsl(var(--club-accent))` }}>
+                        +{activity.xpEarned}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground py-4 text-center">No recent activity</p>
+            )}
+          </section>
+
+          {/* 5. QUICK LOG */}
+          <div className="border-t border-divider mx-4" />
 
           <section className="py-6 px-4" data-testid="section-quick-log">
             <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
@@ -292,93 +330,9 @@ export default function HomePage() {
                     data-testid={`button-quick-${act.type}`}
                   >
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                      <act.icon className="w-4.5 h-4.5 text-muted-foreground" />
+                      <act.icon className="w-4.5 h-4.5 text-muted-foreground" strokeWidth={ICON_STROKE} />
                     </div>
                     <span className="text-[10px] font-medium text-muted-foreground">{act.label}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-          {heatmap && heatmap.some(h => h.count > 0) && (
-            <>
-              <div className="border-t mx-4" />
-
-              <section className="py-6 px-4" data-testid="section-heatmap">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <BarChart3 className="w-3.5 h-3.5 text-muted-foreground" />
-                  <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Club Activity This Week
-                  </h3>
-                </div>
-                <div className="space-y-1.5">
-                  {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => {
-                    const count = heatmap[i]?.count || 0;
-                    const max = Math.max(...heatmap.map(h => h.count), 1);
-                    const pct = (count / max) * 100;
-                    return (
-                      <div key={day} className="flex items-center gap-2" data-testid={`heatmap-bar-${day.toLowerCase()}`}>
-                        <span className="text-[10px] font-medium text-muted-foreground w-7 shrink-0">{day}</span>
-                        <div className="flex-1 h-4 bg-muted/50 rounded-sm overflow-hidden">
-                          {count > 0 && (
-                            <div
-                              className="h-full rounded-sm transition-all"
-                              style={{
-                                width: `${Math.max(pct, 8)}%`,
-                                backgroundColor: `hsl(var(--club-primary))`,
-                                opacity: 0.7 + (pct / 100) * 0.3,
-                              }}
-                            />
-                          )}
-                        </div>
-                        <span className="text-[10px] font-semibold tabular-nums w-4 text-right">{count || ""}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            </>
-          )}
-        </>
-      )}
-
-      {clubLeaderboard && clubLeaderboard.length > 0 && (
-        <>
-          <div className="border-t mx-4" />
-
-          <section className="py-6 px-4" data-testid="section-club-table">
-            <div className="flex items-center justify-between gap-2 mb-3">
-              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                ZRF Club Table
-              </h3>
-              <Link href="/play" data-testid="link-view-full-table">
-                <span className="text-[11px] font-medium flex items-center gap-0.5 text-muted-foreground">
-                  View all
-                  <ChevronRight className="w-3 h-3" />
-                </span>
-              </Link>
-            </div>
-            <div className="divide-y">
-              {clubLeaderboard.slice(0, 5).map((entry, idx) => (
-                <Link key={entry.club.id} href={`/clubs/${entry.club.id}`}>
-                  <div
-                    className="flex items-center gap-3 py-2.5 cursor-pointer"
-                    data-testid={`row-club-ranking-${entry.club.id}`}
-                  >
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                        idx === 0
-                          ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                          : idx === 1
-                          ? "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
-                          : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {idx + 1}
-                    </span>
-                    <span className="flex-1 font-medium text-sm truncate">{entry.club.name}</span>
-                    <span className="text-xs font-semibold tabular-nums">{entry.score}</span>
-                    <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/50" />
                   </div>
                 </Link>
               ))}

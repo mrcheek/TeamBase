@@ -554,6 +554,35 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/daily-challenge", async (_req: Request, res: Response) => {
+    const challenges = [
+      { type: "running", title: "Run 3km", xp: 15, icon: "running" },
+      { type: "gym", title: "30min Gym Session", xp: 20, icon: "gym" },
+      { type: "saq", title: "SAQ Drill Circuit", xp: 20, icon: "saq" },
+      { type: "running", title: "Run 5km", xp: 25, icon: "running" },
+      { type: "recovery", title: "Recovery & Stretch", xp: 10, icon: "recovery" },
+      { type: "gym", title: "Upper Body Workout", xp: 20, icon: "gym" },
+      { type: "running", title: "Sprint Intervals", xp: 20, icon: "running" },
+    ];
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    const challenge = challenges[dayOfYear % challenges.length];
+    res.json(challenge);
+  });
+
+  app.get("/api/club/weekly-stats", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userMemberships = await storage.getUserMemberships(req.session.userId!);
+      const activeMembership = userMemberships.find(m => m.status === "active" || m.status === "approved");
+      if (!activeMembership) return res.json({ target: 200, completed: 0, participantCount: 0 });
+      const heatmap = await storage.getActivityHeatmap(activeMembership.clubId);
+      const completed = heatmap.reduce((sum, h) => sum + h.count, 0);
+      const todayChallengers = heatmap[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]?.count || 0;
+      res.json({ target: 200, completed, participantCount: todayChallengers, clubName: activeMembership.club?.name });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   app.get("/api/activities/heatmap", requireAuth, async (req: Request, res: Response) => {
     try {
       const userMemberships = await storage.getUserMemberships(req.session.userId!);

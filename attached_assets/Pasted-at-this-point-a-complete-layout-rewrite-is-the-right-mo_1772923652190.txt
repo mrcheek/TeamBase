@@ -1,0 +1,724 @@
+at this point a complete layout rewrite is the right move.
+
+You’ve evolved the concept enough that the old structure no longer fits. The app is no longer just:
+
+membership
+
+check-ins
+
+XP
+
+It is now becoming:
+
+a personal rugby dashboard
+
+a club operating space
+
+an activity + events hub
+
+a training ideas library
+
+a noticeboard / opportunity channel
+
+a federation infrastructure layer
+
+So the layout needs to be rebuilt around clear user jobs, not around features.
+
+The New Core Principle
+
+The app should be organized around this logic:
+
+Home   = my rugby today
+Play   = all rugby activity and opportunities
+GO     = check in / log activity
+Club   = my club’s shared space
+Profile = me, membership, XP, settings
+
+That is the cleanest structure.
+
+Final Bottom Navigation
+Home | Play | GO | Club | Profile
+
+This should now be locked.
+
+What Each Tab Is For
+1. Home
+
+Personal dashboard.
+A lightweight, focused overview of what matters today.
+
+Home should contain only 5 blocks
+
+Club Hero
+
+Next Session
+
+Today’s Challenge
+
+Club Activity Preview
+
+Quick Log
+
+Home should NOT contain
+
+full event lists
+
+full club feed
+
+full leaderboard
+
+full XP breakdown
+
+full announcements list
+
+It is a summary page, not a destination page.
+
+2. Play
+
+Everything related to rugby activity.
+
+This becomes the main “action discovery” tab.
+
+Play top tabs
+Events | Training | Battle
+
+You could also later add Clubs, but for now I’d keep it tighter.
+
+Play > Events
+
+upcoming events
+
+matches
+
+tournaments
+
+touch sessions
+
+socials
+
+Play > Training
+
+instant drill ideas
+
+SAQ
+
+small games
+
+fitness sessions
+
+touch modifications
+
+session ideas
+
+Play > Battle
+
+weekly club battle
+
+current standings
+
+time remaining
+
+how points are earned
+
+This keeps all rugby action in one place.
+
+3. GO
+
+The primary action tab.
+
+This is for instant participation logging.
+
+GO should contain
+
+Scan Event QR
+
+Quick Activity Log
+
+Selfie Bonus
+
+Recent Check-In Confirmation
+
+Quick activities
+
+Run
+
+Gym
+
+SAQ
+
+Recovery
+
+Watching Rugby
+
+Social
+
+This tab should feel fast, minimal, action-first.
+
+4. Club
+
+The digital clubhouse / locker room.
+
+This is where the social and operational life of the club lives.
+
+Club top tabs
+Feed | Noticeboard | Roster
+
+This is important. Don’t put everything on one long Club page.
+
+Club > Feed
+
+This is the live club timeline.
+
+Contains:
+
+activity logs
+
+event check-ins
+
+selfies
+
+milestones
+
+club event posts
+
+“announcement posted” feed notices
+
+This is the heartbeat of the club.
+
+Club > Noticeboard
+
+This is for structured postings.
+
+Contains:
+
+club requests
+
+opportunities
+
+sponsor posts
+
+important announcements
+
+Examples:
+
+physio needed
+
+photographer wanted
+
+training moved
+
+sponsor offer
+
+This should be separate from the activity feed.
+
+Club > Roster
+
+Contains:
+
+players
+
+coaches
+
+admins
+
+supporters
+
+simple member list
+
+maybe role filters
+
+This gives members a sense of who is in the club.
+
+5. Profile
+
+Everything about me.
+
+This is where XP, identity, and settings live.
+
+Profile should contain
+
+digital membership card
+
+XP progress
+
+current tier
+
+recent XP history
+
+club memberships
+
+language settings
+
+app preferences
+
+XP should live here, not on Home.
+
+Final Information Architecture
+
+Here is the clean full app layout.
+
+HOME
+Club Hero
+Next Session
+Today’s Challenge
+Club Activity Preview
+Quick Log
+Club Hero
+
+club crest/logo
+
+club name
+
+location
+
+user name + role
+
+subtle XP badge top right
+
+Next Session
+
+next event only
+
+check in CTA
+
+details CTA
+
+Today’s Challenge
+
+one daily challenge
+
+optional weekly club progress embedded
+
+Club Activity Preview
+
+2–3 timeline items max
+
+“View Club” CTA
+
+Quick Log
+
+run
+
+gym
+
+SAQ
+
+recovery
+
+social
+
+PLAY
+Events | Training | Battle
+Events
+
+upcoming events
+
+filter by type
+
+row-based list
+
+event detail pages
+
+Training
+
+small games
+
+modified touch
+
+SAQ
+
+basic fitness
+
+session ideas
+
+Battle
+
+weekly club battle standings
+
+progress bars
+
+time remaining
+
+points logic
+
+GO
+Scan Event QR
+Quick Activity Log
+Selfie Bonus
+Success State
+GO flow
+
+open GO
+
+scan QR or log activity
+
+optional selfie
+
+success
+
+XP + club points shown
+
+This is the cleanest action tab.
+
+CLUB
+Feed | Noticeboard | Roster
+Feed
+
+live club timeline
+
+teammate activity
+
+check-ins
+
+selfies
+
+milestones
+
+event posts
+
+Noticeboard
+
+announcements
+
+requests
+
+opportunities
+
+sponsor promotions
+
+Roster
+
+member list
+
+roles
+
+portraits
+
+simple filters
+
+PROFILE
+Membership Card
+XP
+Tier
+Recent Activity
+Settings
+Membership Card
+
+portrait
+
+name
+
+club
+
+QR code
+
+club branding
+
+tier colour
+
+XP
+
+#xp anchor target
+
+progress bar
+
+current tier
+
+next tier
+
+recent gains
+
+Settings
+
+language
+
+notifications
+
+theme
+
+active club selection if multi-club
+
+Admin Layout Rewrite
+
+Admin should not feel like a separate product. It should follow the same visual language.
+
+Admin top tabs
+Overview | Members | Events | Clubs
+Overview
+
+compact metrics
+
+quick actions
+
+pending items
+
+Members
+
+search
+
+rows not cards
+
+role / status filters
+
+Events
+
+row list
+
+create event
+
+edit / delete
+
+Clubs
+
+club list
+
+branding editor
+
+color settings
+
+logo/banner upload
+
+Club Branding Layout Logic
+
+Each club should now control:
+
+logo
+
+banner
+
+primary color
+
+secondary color
+
+accent color
+
+optional text contrast colors
+
+optional style preset
+
+This should flow into every member’s UI via their active club.
+
+Brand usage rules
+
+Use club branding in:
+
+hero areas
+
+primary buttons
+
+active nav states
+
+progress bars
+
+event tags
+
+membership card
+
+Do not flood the whole UI with club color.
+Neutral base + branded accents is the right pattern.
+
+Homepage Anti-Clutter Rules
+
+This is crucial.
+
+Rule 1
+
+Home has 5 blocks max.
+
+Rule 2
+
+Anything that needs scrolling depth moves off Home.
+
+Rule 3
+
+Home only previews:
+
+challenge
+
+activity
+
+announcement
+
+It does not fully host them.
+
+Rule 4
+
+No duplicate content across tabs.
+
+Examples:
+
+full feed only in Club
+
+full events only in Play
+
+full XP only in Profile
+
+The New User Journey
+
+This rewrite creates a much clearer flow.
+
+Daily user flow
+Home
+→ see next session / challenge
+→ GO to log something
+→ Club to see teammates
+Event-driven flow
+Play
+→ open event
+→ GO to check in
+→ Club to see activity after
+Identity flow
+Home
+→ tap XP badge
+→ Profile#xp
+What Changes Immediately
+Remove from Home
+
+full club leaderboard
+
+full momentum panel
+
+full feed
+
+full XP detail
+
+Move to Play
+
+training library
+
+weekly club battle
+
+event discovery
+
+Move to Club
+
+full feed
+
+announcements
+
+opportunities
+
+sponsor promos
+
+roster
+
+Move to Profile
+
+XP detail
+
+tier detail
+
+membership management
+
+Final Layout Summary
+HOME
+My rugby today
+
+PLAY
+Events, training, battle
+
+GO
+Log/check in
+
+CLUB
+Feed, noticeboard, roster
+
+PROFILE
+Me, card, XP, settings
+
+That is the complete rewrite.
+
+What To Implement Next
+
+In this order:
+
+1. Lock the navigation
+
+Change app nav permanently to:
+
+Home | Play | GO | Club | Profile
+2. Move Train into Play
+
+Create Play top tabs:
+
+Events | Training | Battle
+3. Create Club top tabs
+Feed | Noticeboard | Roster
+4. Simplify Home into only 5 blocks
+
+No more feature stacking.
+
+5. Move announcements into Noticeboard
+
+Not Home, not Feed.
+
+Builder-Grade Version
+
+Here is the shortest implementation version to hand to Replit:
+
+Rewrite the app information architecture and screen layout as follows:
+
+BOTTOM NAV
+Home | Play | GO | Club | Profile
+
+HOME
+This is a personal dashboard only.
+It must contain exactly these sections:
+1. Club Hero
+2. Next Session
+3. Today’s Challenge
+4. Club Activity Preview
+5. Quick Log
+
+Do not place full leaderboard, full XP, full announcements, or full event lists on Home.
+
+PLAY
+Merge Train into Play.
+Create top tabs:
+- Events
+- Training
+- Battle
+
+Events = all upcoming matches, trainings, tournaments, socials
+Training = drill library, SAQ, small games, fitness sessions
+Battle = weekly club battle standings and progress
+
+GO
+Primary action tab for:
+- scan event QR
+- quick activity log
+- selfie bonus
+- success states
+
+CLUB
+This is the digital clubhouse.
+Create top tabs:
+- Feed
+- Noticeboard
+- Roster
+
+Feed = live club activity timeline
+Noticeboard = club announcements, opportunities, sponsor promos, requests
+Roster = member list with roles and portraits
+
+PROFILE
+Contains:
+- membership card
+- XP details
+- tier progress
+- recent XP history
+- settings
+- club memberships
+
+ADMIN
+Keep admin as a separate internal section with top tabs:
+- Overview
+- Members
+- Events
+- Clubs
+
+Do not duplicate content across tabs.
+Use Home only as a summary page.
+Use Club for community.
+Use Play for rugby activity discovery.
+Use Profile for personal progression.

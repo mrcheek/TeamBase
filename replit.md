@@ -60,7 +60,7 @@ Each club has its own color palette stored in the `clubs` table:
 - `client/src/pages/admin.tsx` - Admin dashboard with Overview/Members/Events/Clubs tabs + club branding editor
 
 ## Pages
-- `/` - Home: Club Hero (muted gradient), Next Session (subtle tint, no card), Rank+Momentum | Activity (flat split grid), Quick Log (circular icons), Club Activity Heatmap (weekly bars), Club Table (league-style divider rows)
+- `/` - Home: 5 blocks only — (1) Club Hero, (2) Next Session, (3) Today's Challenge + weekly club goal, (4) Club Activity timeline feed, (5) Quick Log
 - `/play` - Events & Clubs: underline tab switcher, underline filter indicators, event/club rows with dividers (not cards)
 - `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
 - `/train` - Training library: accordion sections with category-colored accent bars, grouped drills
@@ -133,8 +133,9 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 15. Club logo/banner file uploads (multer, max 2MB, stored in /uploads/)
 16. Push notifications (Web Push API + VAPID, per-club delivery, admin "Send Reminder" per event)
 17. PWA offline support (cache-first for bundles/images, network-first for API, offline activity queue, offline banner)
-18. Club Activity Heatmap (weekly Mon-Sun bar chart on homepage)
-19. Dark mode toggle (class-based, localStorage persisted)
+18. Daily Club Challenge (rotating challenges with XP reward, weekly club goal progress bar)
+19. Club Activity Feed (timeline-style on homepage, replaces heatmap + leaderboard)
+20. Dark mode toggle (class-based, localStorage persisted)
 
 ## API Endpoints
 ### Public
@@ -142,14 +143,14 @@ Full drill-down showing profile, role change, player/coach fields, memberships, 
 - POST `/api/login` - Login (phone, password)
 - POST `/api/logout` - Logout
 - GET `/api/user` - Current user
-- GET `/api/clubs`, `/api/events`, `/api/feed`, `/api/leaderboard/*`
+- GET `/api/clubs`, `/api/events`, `/api/feed`, `/api/leaderboard/*`, `/api/daily-challenge`
 
 ### Authenticated
 - PATCH `/api/user/profile` - Update profile
 - POST `/api/activities` - Log activity
 - POST `/api/check-in/event` - Event check-in
 - POST `/api/memberships` - Join club
-- GET `/api/memberships`, `/api/activities`, `/api/xp-history`
+- GET `/api/memberships`, `/api/activities`, `/api/xp-history`, `/api/club/weekly-stats`
 
 ### Admin Only (requireAdmin)
 - GET `/api/admin/stats` - Dashboard statistics
