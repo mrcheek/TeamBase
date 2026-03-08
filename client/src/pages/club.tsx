@@ -128,17 +128,17 @@ export default function ClubPage() {
     <div className="pb-24 pt-5 max-w-lg mx-auto relative">
       {/* Club Identity */}
       <section className="px-4 mb-5">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col items-center text-center">
           {userClub.logoUrl ? (
             <img
               src={userClub.logoUrl}
               alt={userClub.name}
-              className="w-12 h-12 rounded-full object-cover shrink-0"
+              className="w-24 h-24 rounded-full object-cover mb-3"
               data-testid="img-club-page-logo"
             />
           ) : (
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0"
+              className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold mb-3"
               style={{
                 backgroundColor: userClub.primaryColor || undefined,
                 color: userClub.textOnPrimary || "#fff",
@@ -147,24 +147,22 @@ export default function ClubPage() {
               {clubInitials}
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold truncate" data-testid="text-club-page-name">
-              {userClub.name}
-            </h2>
-            <div className="flex items-center gap-3 mt-0.5">
-              {userClub.location && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <MapPin className="w-3 h-3" strokeWidth={ICON_STROKE} />
-                  {userClub.location}
-                </p>
-              )}
-              {memberCount !== undefined && memberCount > 0 && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Users className="w-3 h-3" strokeWidth={ICON_STROKE} />
-                  {memberCount} Member{memberCount !== 1 ? "s" : ""}
-                </p>
-              )}
-            </div>
+          <h2 className="text-lg font-bold" data-testid="text-club-page-name">
+            {userClub.name}
+          </h2>
+          <div className="flex items-center gap-3 mt-1">
+            {userClub.location && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <MapPin className="w-3 h-3" strokeWidth={ICON_STROKE} />
+                {userClub.location}
+              </p>
+            )}
+            {memberCount !== undefined && memberCount > 0 && (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="w-3 h-3" strokeWidth={ICON_STROKE} />
+                {memberCount} Member{memberCount !== 1 ? "s" : ""}
+              </p>
+            )}
           </div>
         </div>
       </section>
