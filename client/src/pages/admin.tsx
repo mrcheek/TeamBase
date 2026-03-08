@@ -988,6 +988,7 @@ function ClubForm({
   const [textOnPrimary, setTextOnPrimary] = useState(club.textOnPrimary || "#FFFFFF");
   const [textOnSecondary, setTextOnSecondary] = useState(club.textOnSecondary || "#111111");
   const [brandStyle, setBrandStyle] = useState(club.brandStyle || "classic");
+  const [instagramHandle, setInstagramHandle] = useState(club.instagramHandle || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -997,6 +998,7 @@ function ClubForm({
       bannerUrl: bannerUrl || null,
       primaryColor, secondaryColor, accentColor,
       textOnPrimary, textOnSecondary, brandStyle,
+      instagramHandle: instagramHandle || null,
     });
   };
 
@@ -1022,6 +1024,10 @@ function ClubForm({
             <div className="space-y-1.5">
               <Label className="text-xs">Training Schedule</Label>
               <Input value={trainingSchedule} onChange={(e) => setTrainingSchedule(e.target.value)} data-testid="input-club-schedule" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Instagram Handle</Label>
+              <Input value={instagramHandle} onChange={(e) => setInstagramHandle(e.target.value)} placeholder="e.g. zanzibarsharks" data-testid="input-club-instagram" />
             </div>
           </div>
         </div>

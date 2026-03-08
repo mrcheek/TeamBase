@@ -17,6 +17,7 @@ import {
   Calendar,
   Clock,
   Plus,
+  Instagram,
 } from "lucide-react";
 import type { Activity as ActivityType, User, Club, Membership, Event } from "@shared/schema";
 import { isAnyAdmin } from "@shared/schema";
@@ -164,6 +165,19 @@ export default function ClubPage() {
               </p>
             )}
           </div>
+          {userClub.instagramHandle && (
+            <a
+              href={`https://www.instagram.com/${userClub.instagramHandle.replace(/^@/, "")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-2 text-xs font-medium transition-colors hover:opacity-80"
+              style={{ color: `hsl(var(--club-primary))` }}
+              data-testid="link-club-instagram"
+            >
+              <Instagram className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
+              @{userClub.instagramHandle.replace(/^@/, "")}
+            </a>
+          )}
         </div>
       </section>
 

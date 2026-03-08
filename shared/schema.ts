@@ -25,6 +25,7 @@ export const clubs = pgTable("clubs", {
   textOnPrimary: text("text_on_primary").default("#FFFFFF"),
   textOnSecondary: text("text_on_secondary").default("#111111"),
   brandStyle: text("brand_style").default("classic"),
+  instagramHandle: text("instagram_handle"),
 });
 
 export const users = pgTable("users", {
@@ -220,6 +221,7 @@ export const adminUpdateClubSchema = z.object({
   textOnPrimary: z.string().optional().nullable(),
   textOnSecondary: z.string().optional().nullable(),
   brandStyle: z.string().optional().nullable(),
+  instagramHandle: z.string().optional().nullable(),
 });
 
 export type Federation = typeof federations.$inferSelect;
