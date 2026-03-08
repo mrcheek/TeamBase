@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useClubTheme } from "@/hooks/use-club-theme";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import type { Club } from "@shared/schema";
 
 export default function CompleteProfilePage() {
   const { user, updateProfile, profileCompletion } = useAuth();
+  const { club } = useClubTheme();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [expandedSection, setExpandedSection] = useState<string | null>("personal");
@@ -122,7 +124,7 @@ export default function CompleteProfilePage() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-sm font-medium">Profile Completion</span>
-            <span className="text-sm font-bold text-primary" data-testid="text-profile-completion">
+            <span className="text-sm font-bold" style={{ color: "hsl(var(--club-primary))" }} data-testid="text-profile-completion">
               {profileCompletion}%
             </span>
           </div>
@@ -134,7 +136,7 @@ export default function CompleteProfilePage() {
             </p>
           )}
           {profileCompletion >= 100 && (
-            <p className="text-xs text-primary mt-2 flex items-center gap-1">
+            <p className="text-xs mt-2 flex items-center gap-1" style={{ color: "hsl(var(--club-primary))" }}>
               <CheckCircle2 className="w-3 h-3" />
               Registration complete!
             </p>
@@ -535,6 +537,10 @@ export default function CompleteProfilePage() {
           size="lg"
           onClick={handleSave}
           disabled={loading}
+          style={{
+            backgroundColor: "hsl(var(--club-primary))",
+            color: "hsl(var(--club-primary-foreground))",
+          }}
           data-testid="button-save-profile"
         >
           {loading ? (
