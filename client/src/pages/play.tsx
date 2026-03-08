@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
+import { getEventImage } from "@/lib/event-images";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Link } from "wouter";
@@ -60,29 +61,20 @@ function EventRow({ event, clubs }: { event: Event; clubs?: Club[] }) {
         className="flex items-center gap-3 py-4 cursor-pointer"
         data-testid={`row-event-${event.id}`}
       >
-        {club ? (
-          club.logoUrl ? (
+        <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 relative">
+          <img
+            src={getEventImage(event.type)}
+            alt={event.type.replace("_", " ")}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {club?.logoUrl && (
             <img
               src={club.logoUrl}
               alt={club.name}
-              className="w-10 h-10 rounded-full object-cover shrink-0"
+              className="absolute bottom-0 right-0 w-4 h-4 rounded-full border border-white object-cover"
             />
-          ) : (
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-              style={{
-                backgroundColor: clubColor,
-                color: club.textOnPrimary || "#fff",
-              }}
-            >
-              <span className="text-[10px] font-bold">{getClubInitials(club.name)}</span>
-            </div>
-          )
-        ) : (
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
-          </div>
-        )}
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm leading-tight truncate" data-testid={`text-event-title-${event.id}`}>

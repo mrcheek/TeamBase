@@ -1,5 +1,6 @@
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
+import { getEventImage } from "@/lib/event-images";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -124,9 +125,20 @@ export default function HomePage() {
             >
               Next Session
             </h3>
-            <h2 className="text-lg font-bold leading-tight mb-2" data-testid="text-next-event-title">
-              {nextEvent.title}
-            </h2>
+            <div className="relative overflow-hidden rounded-xl mb-4">
+              <img
+                src={getEventImage(nextEvent.type)}
+                alt={nextEvent.type.replace("_", " ")}
+                className="w-full h-28 object-cover"
+                data-testid="img-next-event-banner"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+              <div className="absolute bottom-0 left-0 p-3">
+                <h2 className="text-white font-bold text-base leading-tight" data-testid="text-next-event-title">
+                  {nextEvent.title}
+                </h2>
+              </div>
+            </div>
             <div className="flex items-center flex-wrap gap-3 text-xs text-muted-foreground mb-5">
               <span className="flex items-center gap-1">
                 <Calendar className="w-3 h-3" strokeWidth={ICON_STROKE} />

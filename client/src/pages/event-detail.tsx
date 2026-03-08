@@ -1,6 +1,7 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getEventImage } from "@/lib/event-images";
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { Card, CardContent } from "@/components/ui/card";
@@ -170,12 +171,22 @@ export default function EventDetailPage() {
   return (
     <div className="pb-24 max-w-lg mx-auto">
       <div
-        className="relative px-4 pt-3 pb-6"
-        style={{
-          background: `linear-gradient(135deg, hsl(var(--club-primary)) 0%, hsl(var(--club-primary) / 0.85) 100%)`,
-        }}
+        className="relative px-4 pt-3 pb-6 overflow-hidden"
         data-testid="section-event-hero"
       >
+        <img
+          src={getEventImage(event.type)}
+          alt=""
+          className="absolute inset-0 w-full h-full object-cover"
+          data-testid="img-event-hero-bg"
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `linear-gradient(135deg, hsl(var(--club-primary) / 0.85) 0%, hsl(var(--club-primary) / 0.7) 100%)`,
+          }}
+        />
+        <div className="relative z-10">
         <div className="flex items-center justify-between gap-2 mb-4">
           <Link href="/play">
             <Button
@@ -262,6 +273,7 @@ export default function EventDetailPage() {
             <Share2 className="w-4 h-4 mr-1.5" />
             SHARE
           </Button>
+        </div>
         </div>
       </div>
 
