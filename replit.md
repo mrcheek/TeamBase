@@ -67,7 +67,7 @@ Each club has its own color palette stored in the `clubs` table:
 ## Pages
 - `/` - Home: 4 blocks only — (1) Club Identity (flat row, no banner), (2) Next Session (dominant, no background box), (3) Today's Challenge (compact row + subtle weekly progress), (4) Club Activity (max 3 items with initials avatars + "View Club →"). No Quick Log (lives in GO). 32px vertical rhythm between sections.
 - `/play` - Events | Training | Battle tabs: events with type filters, training library (accordions), weekly club battle standings
-- `/check-in` - Event check-in (SCAN EVENT QR CTA) + 2-column quick activity grid with club-colored tiles, success state with XP animation
+- `/check-in` - Event check-in (SCAN EVENT QR CTA) + duotone image card grid (first card full-width, rest 2-column) with bold white labels + XP overlay, success state with XP animation
 - `/club` - Club page: Feed | Noticeboard | Roster tabs. Full club activity feed, announcements, member list with roles/tiers
 - `/profile` - Membership card (club-branded), XP section with `id="xp"` anchor, tier progress, clubs, activity timeline, XP history, settings (dark mode, notifications, admin link for admins)
 - `/complete-profile` - Full ZRF registration form with accordion sections
@@ -144,7 +144,7 @@ Design philosophy: Lists → rows, Forms → vertical layout, Actions → button
 9. Club score system (50% of member XP)
 10. Activity feed and leaderboards
 11. Admin dashboard with full member/event/club management + branding editor
-12. Collapsible training programs (accordion sections)
+12. Rich training library with duotone image headers, expandable drills (description, duration, difficulty, coaching tips)
 13. Event filtering by type
 14. Branded bottom navigation with 56px GO button
 15. Club logo/banner file uploads (multer, max 2MB, stored in /uploads/)

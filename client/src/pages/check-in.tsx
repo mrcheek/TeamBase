@@ -27,12 +27,12 @@ import {
 import type { Event } from "@shared/schema";
 
 const activityTypes = [
-  { value: "running", label: "Run", xp: 10, icon: Footprints },
-  { value: "gym", label: "Gym", xp: 15, icon: Dumbbell },
-  { value: "saq", label: "SAQ", xp: 20, icon: Zap },
-  { value: "recovery", label: "Recovery", xp: 5, icon: Heart },
-  { value: "social", label: "Social", xp: 10, icon: Users },
-  { value: "watching", label: "Watching", xp: 5, icon: Eye },
+  { value: "running", label: "RUN", xp: 10, icon: Footprints, image: "/images/activities/running.png" },
+  { value: "gym", label: "GYM", xp: 15, icon: Dumbbell, image: "/images/activities/gym.png" },
+  { value: "saq", label: "SAQ", xp: 20, icon: Zap, image: "/images/activities/saq.png" },
+  { value: "recovery", label: "RECOVERY", xp: 5, icon: Heart, image: "/images/activities/recovery.png" },
+  { value: "social", label: "SOCIAL", xp: 10, icon: Users, image: "/images/activities/social.png" },
+  { value: "watching", label: "WATCHING", xp: 5, icon: Eye, image: "/images/activities/watching.png" },
 ];
 
 export default function CheckInPage() {
@@ -396,29 +396,28 @@ export default function CheckInPage() {
       </Card>
 
       <div className="mb-4">
-        <h3 className="text-sm font-semibold mb-1" data-testid="text-quick-log-title">Quick Log</h3>
-        <p className="text-xs text-muted-foreground mb-3">Log a personal training session</p>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground" data-testid="text-quick-log-title">Activities</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-2" data-testid="section-quick-activity">
-        {activityTypes.map((type) => {
-          const Icon = type.icon;
+      <div className="grid grid-cols-2 gap-2.5" data-testid="section-quick-activity">
+        {activityTypes.map((type, idx) => {
+          const isFirst = idx === 0;
           return (
             <button
               key={type.value}
               onClick={() => handleActivitySelect(type.value)}
-              className="flex items-center gap-3 rounded-md border p-3 text-left hover-elevate active-elevate-2 transition-colors"
+              className={`relative overflow-hidden rounded-xl text-left group focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${isFirst ? "col-span-2 h-40" : "h-36"}`}
               data-testid={`button-activity-${type.value}`}
             >
-              <div
-                className="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
-                style={{ backgroundColor: "hsl(var(--club-primary) / 0.08)" }}
-              >
-                <Icon className="w-4 h-4" style={{ color: "hsl(var(--club-primary))" }} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{type.label}</p>
-                <p className="text-xs text-muted-foreground">+{type.xp} XP</p>
+              <img
+                src={type.image}
+                alt={type.label}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+              <div className="relative h-full flex flex-col justify-end p-3.5">
+                <p className="text-white font-bold text-lg tracking-wide leading-tight" data-testid={`text-activity-label-${type.value}`}>{type.label}</p>
+                <p className="text-white/70 text-xs font-medium mt-0.5" data-testid={`text-activity-xp-${type.value}`}>+{type.xp} XP</p>
               </div>
             </button>
           );

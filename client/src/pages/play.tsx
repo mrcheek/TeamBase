@@ -111,71 +111,97 @@ function EventRow({ event, clubs }: { event: Event; clubs?: Club[] }) {
   );
 }
 
-const trainingCategories = [
+interface Drill {
+  name: string;
+  description: string;
+  duration: string;
+  difficulty: "easy" | "medium" | "hard";
+  tip: string;
+}
+
+const trainingCategories: {
+  title: string;
+  icon: typeof Zap;
+  color: string;
+  image: string;
+  items: Drill[];
+}[] = [
   {
     title: "SAQ Drills",
     icon: Zap,
     color: "text-amber-600 dark:text-amber-400",
+    image: "/images/activities/saq.png",
     items: [
-      "Ladder footwork",
-      "Cone reaction drill",
-      "Zig-zag sprint",
-      "Lateral shuffle",
+      { name: "Ladder Footwork", description: "High-speed foot patterns through an agility ladder. Focus on quick ground contact and arm drive.", duration: "10 min", difficulty: "medium", tip: "Stay on the balls of your feet — heel contact kills speed." },
+      { name: "Cone Reaction Drill", description: "Partner calls a colour; sprint to the matching cone. Trains reaction time and explosive acceleration.", duration: "12 min", difficulty: "hard", tip: "Keep a low athletic stance between reps so you can explode in any direction." },
+      { name: "Zig-Zag Sprint", description: "Sprint between cones set in a zig-zag pattern, cutting sharply at each turn. Builds change-of-direction speed.", duration: "8 min", difficulty: "medium", tip: "Plant your outside foot hard on each cut — don't round the corners." },
+      { name: "Lateral Shuffle", description: "Side-to-side shuffle between two markers without crossing your feet. Great for defensive positioning.", duration: "8 min", difficulty: "easy", tip: "Keep your hips low and chest up throughout the movement." },
+      { name: "T-Drill", description: "Sprint forward, shuffle left, shuffle right, backpedal. The classic agility test covering all movement planes.", duration: "10 min", difficulty: "hard", tip: "Touch each cone to ensure you reach full range on every rep." },
     ],
   },
   {
     title: "Gym Sessions",
     icon: Dumbbell,
     color: "text-blue-600 dark:text-blue-400",
+    image: "/images/activities/gym.png",
     items: [
-      "Upper body power",
-      "Lower body strength",
-      "Core stability",
-      "Full body circuit",
+      { name: "Upper Body Power", description: "Bench press, bent-over rows, and shoulder press. Focus on controlled explosive reps for rugby-specific power.", duration: "40 min", difficulty: "hard", tip: "Use 70-80% of your max and focus on bar speed rather than grinding reps." },
+      { name: "Lower Body Strength", description: "Squats, deadlifts, and lunges. The foundation of scrummaging power and tackling force.", duration: "45 min", difficulty: "hard", tip: "Always warm up with bodyweight squats and hip mobility before loading the bar." },
+      { name: "Core Stability Circuit", description: "Plank variations, pallof press, dead bugs, and anti-rotation holds. Essential for contact stability.", duration: "20 min", difficulty: "medium", tip: "Brace your core as if expecting a tackle — don't just hold your breath." },
+      { name: "Full Body Circuit", description: "Kettlebell swings, box jumps, push-ups, and pull-ups in timed rounds. Builds rugby-ready conditioning.", duration: "30 min", difficulty: "medium", tip: "Keep rest periods short (30-45s) to simulate the demands of a match." },
+      { name: "Olympic Lifts", description: "Power cleans and hang snatches for explosive hip extension. Directly transfers to tackling and lineout lifting.", duration: "35 min", difficulty: "hard", tip: "Start light and nail the technique — these lifts are about speed, not max weight." },
     ],
   },
   {
     title: "Running Programs",
     icon: Footprints,
     color: "text-emerald-600 dark:text-emerald-400",
+    image: "/images/activities/running.png",
     items: [
-      "Easy run (3-5km)",
-      "Interval training",
-      "Tempo run",
-      "Beach run",
+      { name: "Easy Run (3-5km)", description: "Relaxed conversational pace run to build aerobic base and aid recovery between hard sessions.", duration: "20-30 min", difficulty: "easy", tip: "You should be able to hold a conversation — if you can't, slow down." },
+      { name: "Interval Training", description: "6-8 reps of 200m sprints with 90 seconds rest. Builds the speed endurance needed for repeated efforts in a match.", duration: "25 min", difficulty: "hard", tip: "Run each rep at the same pace — don't blast the first two and die on the rest." },
+      { name: "Tempo Run", description: "Sustained effort at 75-80% max heart rate for 20-30 minutes. Builds your lactate threshold for sustained work.", duration: "30 min", difficulty: "medium", tip: "Find a pace that feels 'comfortably hard' — you could speak in short phrases but not full sentences." },
+      { name: "Beach Run", description: "Soft sand running for extra resistance. Builds ankle strength and calf power while being easier on joints.", duration: "20 min", difficulty: "medium", tip: "Shorten your stride on sand — fighting for long strides wastes energy." },
+      { name: "Fartlek Session", description: "Unstructured speed play — alternate between fast bursts and easy jogs using landmarks as markers.", duration: "25 min", difficulty: "medium", tip: "Use trees, lamp posts, or buildings as sprint targets to keep it fun and unpredictable." },
     ],
   },
   {
     title: "Skills Training",
     icon: Target,
     color: "text-purple-600 dark:text-purple-400",
+    image: "/images/activities/skills.png",
     items: [
-      "Passing accuracy",
-      "Tackle technique",
-      "Ruck & maul drills",
-      "Kicking practice",
+      { name: "Passing Accuracy", description: "Stationary and running passes at different distances. Work on spin pass, pop pass, and offloads.", duration: "20 min", difficulty: "easy", tip: "Point your hands at the target after releasing — follow through every time." },
+      { name: "Tackle Technique", description: "Progressive tackling drills from knees, to walk, to jog speed. Focus on shoulder placement and leg drive.", duration: "25 min", difficulty: "medium", tip: "Get your head to the correct side and drive through with your legs, not your arms." },
+      { name: "Ruck & Maul Drills", description: "Body positioning, clean-out technique, and counter-rucking. Work in pairs or small groups.", duration: "20 min", difficulty: "hard", tip: "Stay low and square — the lower player always wins the battle at the breakdown." },
+      { name: "Kicking Practice", description: "Goal kicks, restarts, and tactical box kicks. Work on both feet if possible.", duration: "30 min", difficulty: "medium", tip: "Focus on a smooth, repeatable technique rather than distance — accuracy comes first." },
+      { name: "Catch & Pass Under Pressure", description: "Receive and deliver passes with a defender closing. Builds decision-making and handling under fatigue.", duration: "15 min", difficulty: "hard", tip: "Keep your eyes on the ball into your hands before looking for the pass option." },
     ],
   },
   {
     title: "Recovery",
     icon: Heart,
     color: "text-red-600 dark:text-red-400",
+    image: "/images/activities/recovery.png",
     items: [
-      "Yoga flow",
-      "Foam rolling",
-      "Post-training stretch",
-      "Ice bath protocol",
+      { name: "Yoga Flow", description: "A gentle 20-minute sequence targeting hips, hamstrings, and shoulders — the areas rugby players tighten most.", duration: "20 min", difficulty: "easy", tip: "Focus on deep breathing — exhale into each stretch for a deeper release." },
+      { name: "Foam Rolling", description: "Self-myofascial release for quads, IT bands, calves, and upper back. Reduces soreness and improves mobility.", duration: "15 min", difficulty: "easy", tip: "Roll slowly and pause on tender spots for 20-30 seconds — don't rush through it." },
+      { name: "Post-Training Stretch", description: "Static stretching routine targeting all major muscle groups. Hold each stretch for 30-45 seconds.", duration: "15 min", difficulty: "easy", tip: "Only stretch after exercise when muscles are warm — never force a cold stretch." },
+      { name: "Ice Bath Protocol", description: "10-15 minutes in cold water (10-15°C) to reduce inflammation and accelerate recovery after intense sessions.", duration: "15 min", difficulty: "medium", tip: "Start with your feet and legs before submerging your torso — the shock is easier to manage." },
+      { name: "Active Recovery Walk", description: "A 20-minute brisk walk to promote blood flow without adding training stress. Perfect for rest days.", duration: "20 min", difficulty: "easy", tip: "Walk at a pace that feels purposeful but not tiring — arms swinging naturally." },
     ],
   },
   {
     title: "Team Drills",
     icon: Users,
     color: "text-cyan-600 dark:text-cyan-400",
+    image: "/images/activities/team.png",
     items: [
-      "Touch rugby",
-      "Defence patterns",
-      "Attack shapes",
-      "Set piece practice",
+      { name: "Touch Rugby", description: "Non-contact game focusing on passing, support lines, and spatial awareness. Great warm-up or skills session.", duration: "20 min", difficulty: "easy", tip: "Focus on running onto the ball rather than standing and catching — depth is your friend." },
+      { name: "Defence Patterns", description: "Line speed, drift defence, and blitz defence drills. Communication and alignment are key.", duration: "25 min", difficulty: "medium", tip: "Talk constantly — call 'inside', 'outside', 'up' to keep the line connected." },
+      { name: "Attack Shapes", description: "Running pre-set attacking moves from set piece and phase play. Focus on timing and depth of running lines.", duration: "25 min", difficulty: "medium", tip: "Run your line at pace even in practice — walking through moves builds bad habits." },
+      { name: "Set Piece Practice", description: "Lineout lifting, scrum engagement, and restart receipt. The technical foundations that win possession.", duration: "30 min", difficulty: "hard", tip: "Repetition builds consistency — do 20 perfect lifts rather than 5 sloppy ones." },
+      { name: "Small-Sided Games", description: "3v3 or 4v4 games in a small area. Forces quick decisions, close-quarters handling, and fitness.", duration: "15 min", difficulty: "medium", tip: "Use the touchline as an extra defender — play away from it to create space." },
     ],
   },
 ];
@@ -348,46 +374,91 @@ export default function PlayPage() {
   );
 }
 
+const difficultyColors: Record<string, string> = {
+  easy: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400",
+  medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",
+  hard: "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400",
+};
+
 function TrainingTab() {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedDrill, setExpandedDrill] = useState<string | null>(null);
 
   return (
     <div className="px-4 pt-4">
-      <div className="space-y-1">
+      <div className="space-y-3">
         {trainingCategories.map((category) => {
           const isOpen = expanded === category.title;
-          const Icon = category.icon;
+          const slug = category.title.toLowerCase().replace(/\s+/g, '-');
           return (
-            <div key={category.title} data-testid={`section-training-${category.title.toLowerCase().replace(/\s+/g, '-')}`}>
+            <div key={category.title} data-testid={`section-training-${slug}`}>
               <button
-                className="w-full flex items-center gap-3 py-3 text-left"
+                className="w-full relative overflow-hidden rounded-xl text-left group focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 onClick={() => setExpanded(isOpen ? null : category.title)}
-                data-testid={`button-expand-${category.title.toLowerCase().replace(/\s+/g, '-')}`}
+                aria-expanded={isOpen}
+                data-testid={`button-expand-${slug}`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${category.color}`} strokeWidth={ICON_STROKE} />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium">{category.title}</span>
+                <div className="relative h-24 overflow-hidden rounded-xl">
+                  <img
+                    src={category.image}
+                    alt={category.title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                  <div className="relative h-full flex items-end p-3.5">
+                    <div className="flex-1">
+                      <p className="text-white font-bold text-base tracking-wide" data-testid={`text-category-title-${slug}`}>{category.title}</p>
+                      <p className="text-white/60 text-xs" data-testid={`text-category-count-${slug}`}>{category.items.length} drills</p>
+                    </div>
+                    <ChevronRight
+                      className={`w-5 h-5 text-white/70 transition-transform shrink-0 ${isOpen ? "rotate-90" : ""}`}
+                      strokeWidth={ICON_STROKE}
+                    />
+                  </div>
                 </div>
-                <span className="text-[11px] text-muted-foreground">{category.items.length} drills</span>
-                <ChevronRight
-                  className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isOpen ? "rotate-90" : ""}`}
-                  strokeWidth={ICON_STROKE}
-                />
               </button>
               {isOpen && (
-                <div className="pl-7 pb-3 space-y-2.5">
-                  {category.items.map((item, idx) => (
-                    <p
-                      key={idx}
-                      className="text-[13px] text-muted-foreground"
-                      data-testid={`text-drill-${category.title.toLowerCase().replace(/\s+/g, '-')}-${idx}`}
-                    >
-                      {item}
-                    </p>
-                  ))}
+                <div className="mt-1 space-y-0.5">
+                  {category.items.map((drill, idx) => {
+                    const drillKey = `${slug}-${idx}`;
+                    const drillOpen = expandedDrill === drillKey;
+                    return (
+                      <div key={idx} data-testid={`text-drill-${slug}-${idx}`}>
+                        <button
+                          className="w-full flex items-center gap-3 py-3 px-1 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+                          onClick={() => setExpandedDrill(drillOpen ? null : drillKey)}
+                          aria-expanded={drillOpen}
+                          data-testid={`button-drill-${slug}-${idx}`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium" data-testid={`text-drill-name-${slug}-${idx}`}>{drill.name}</p>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full capitalize ${difficultyColors[drill.difficulty]}`} data-testid={`text-drill-difficulty-${slug}-${idx}`}>
+                              {drill.difficulty}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground" data-testid={`text-drill-duration-${slug}-${idx}`}>{drill.duration}</span>
+                            <ChevronRight
+                              className={`w-3 h-3 text-muted-foreground transition-transform ${drillOpen ? "rotate-90" : ""}`}
+                              strokeWidth={ICON_STROKE}
+                            />
+                          </div>
+                        </button>
+                        {drillOpen && (
+                          <div className="px-1 pb-3 space-y-2">
+                            <p className="text-[13px] text-muted-foreground leading-relaxed" data-testid={`text-drill-desc-${slug}-${idx}`}>{drill.description}</p>
+                            <div className="flex items-start gap-2 rounded-lg p-2.5" style={{ backgroundColor: "hsl(var(--club-primary) / 0.06)" }}>
+                              <Target className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: "hsl(var(--club-primary))" }} strokeWidth={ICON_STROKE} />
+                              <p className="text-xs font-medium" style={{ color: "hsl(var(--club-primary))" }} data-testid={`text-drill-tip-${slug}-${idx}`}>{drill.tip}</p>
+                            </div>
+                          </div>
+                        )}
+                        <div className="border-b border-divider" />
+                      </div>
+                    );
+                  })}
                 </div>
               )}
-              <div className="border-b border-divider" />
             </div>
           );
         })}
