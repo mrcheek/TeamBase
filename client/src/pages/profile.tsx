@@ -189,6 +189,7 @@ export default function ProfilePage() {
           clubName={activeClub?.club.name}
           clubPrimaryColor={primaryColor}
           clubAccentColor={accentColor}
+          clubLogoUrl={activeClub?.club.logoUrl}
         />
       </div>
 
@@ -236,15 +237,19 @@ export default function ProfilePage() {
                 <Link key={m.id} href={`/clubs/${m.clubId}`}>
                   <div className="flex items-center gap-3 py-3 cursor-pointer" data-testid={`row-my-club-${m.clubId}`}>
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                      className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
                       style={{
                         backgroundColor: m.club.primaryColor || undefined,
                         color: m.club.textOnPrimary || "#fff",
                       }}
                     >
-                      <span className="font-bold text-[10px]">
-                        {m.club.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                      </span>
+                      {m.club.logoUrl ? (
+                        <img src={m.club.logoUrl} alt={m.club.name} className="w-full h-full object-cover" data-testid={`img-club-logo-${m.clubId}`} />
+                      ) : (
+                        <span className="font-bold text-[10px]">
+                          {m.club.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
+                        </span>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium">{m.club.name}</p>

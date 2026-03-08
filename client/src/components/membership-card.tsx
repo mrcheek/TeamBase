@@ -35,9 +35,10 @@ interface MembershipCardProps {
   clubName?: string;
   clubPrimaryColor?: string;
   clubAccentColor?: string;
+  clubLogoUrl?: string | null;
 }
 
-export function MembershipCard({ user, clubName, clubPrimaryColor, clubAccentColor }: MembershipCardProps) {
+export function MembershipCard({ user, clubName, clubPrimaryColor, clubAccentColor, clubLogoUrl }: MembershipCardProps) {
   const [flipped, setFlipped] = useState(false);
   const gradient = tierGradients[user.tier] || tierGradients.green;
   const tierLabel = tierLabels[user.tier] || "Starter";
@@ -88,7 +89,11 @@ export function MembershipCard({ user, clubName, clubPrimaryColor, clubAccentCol
         >
           <div className="flex items-start justify-between gap-2 mb-6">
             <div className="flex items-center gap-2">
-              <Shield className="w-5 h-5 opacity-90" />
+              {clubLogoUrl ? (
+                <img src={clubLogoUrl} alt="" className="w-5 h-5 rounded-full object-cover" data-testid="img-card-club-logo" />
+              ) : (
+                <Shield className="w-5 h-5 opacity-90" />
+              )}
               <span className="text-sm font-semibold tracking-wide opacity-90">
                 {clubName ? clubName.toUpperCase() : "ZRF RUGBY"}
               </span>
