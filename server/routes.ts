@@ -7,6 +7,7 @@ import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES } from "@shared/schema";
+import { sendTempPassword } from "./sms";
 import { seedDatabase } from "./seed";
 import multer from "multer";
 import path from "path";
@@ -104,14 +105,9 @@ export async function registerRoutes(
         photoUrl: null,
       });
       req.session.userId = user.id;
+      sendTempPassword(data.phone, data.fullName, tempPassword);
       const { password: _, ...safeUser } = user;
-      res.json(safeUser);
-    } catch (error: any) {
-      res.status(400).json({ message: error.message });
-    }
-  });
-
-  app.patch("/api/user/profile", requireAuth, async (req: Request, res: Response) => {
+      return res.json(safeUser); requireAuth, async (req: Request, res: Response) => {
     try {
       const data = profileUpdateSchema.parse(req.body);
       const { clubId, password: rawPassword, ...profileData } = data;
