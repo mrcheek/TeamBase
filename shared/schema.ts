@@ -44,7 +44,7 @@ export const users = pgTable("users", {
   dateOfBirth: text("date_of_birth"),
   gender: text("gender"),
   nationality: text("nationality"),
-  email: text("email"),
+  email: text("email").unique(),
   residentialCountry: text("residential_country"),
   emergencyContactName: text("emergency_contact_name"),
   emergencyContactNumber: text("emergency_contact_number"),
@@ -160,6 +160,17 @@ export const quickRegisterSchema = z.object({
 
 export const loginSchema = z.object({
   phone: z.string().min(1, "Phone number required"),
+  password: z.string().min(1, "Password required"),
+});
+
+export const emailRegisterSchema = z.object({
+  fullName: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Valid email required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
+export const emailLoginSchema = z.object({
+  email: z.string().email("Valid email required"),
   password: z.string().min(1, "Password required"),
 });
 

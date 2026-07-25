@@ -12,6 +12,8 @@ interface AuthContextType {
   profileCompletion: number;
   login: (phone: string, password: string) => Promise<void>;
   register: (data: { fullName: string; phone: string }) => Promise<void>;
+  loginEmail: (email: string, password: string) => Promise<void>;
+  registerEmail: (data: { fullName: string; email: string; password: string }) => Promise<void>;
   updateProfile: (data: Record<string, any>) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -55,6 +57,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  const loginEmailMutation = useMutation({
+    mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/login/email", { email, password });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+  });
+
+  const registerEmailMutation = useMutation({
+    mutationFn: async (data: { fullName: string; email: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/register/email", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+    },
+  });
+
   const profileMutation = useMutation({
     mutationFn: async (data: Record<string, any>) => {
       const res = await apiRequest("PATCH", "/api/user/profile", data);
@@ -87,6 +109,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         register: async (data) => {
           await registerMutation.mutateAsync(data);
+        },
+        loginEmail: async (email, password) => {
+          await loginEmailMutation.mutateAsync({ email, password });
+        },
+        registerEmail: async (data) => {
+          await registerEmailMutation.mutateAsync(data);
         },
         updateProfile: async (data) => {
           await profileMutation.mutateAsync(data);

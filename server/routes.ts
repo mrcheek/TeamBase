@@ -6,8 +6,9 @@ import { pool } from "./db";
 import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { quickRegisterSchema, loginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES } from "@shared/schema";
+import { quickRegisterSchema, loginSchema, emailRegisterSchema, emailLoginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES } from "@shared/schema";
 import { sendTempPassword } from "./sms";
+import { sendWelcomeEmail } from "./email";
 import { seedDatabase } from "./seed";
 import multer from "multer";
 import path from "path";
@@ -153,6 +154,57 @@ export async function registerRoutes(
       const valid = await comparePasswords(data.password, user.password);
       if (!valid) {
         return res.status(401).json({ message: "Invalid phone number or password" });
+      }
+      req.session.userId = user.id;
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/register/email", async (req: Request, res: Response) => {
+    try {
+      const data = emailRegisterSchema.parse(req.body);
+      const existingEmail = await storage.getUserByEmail(data.email);
+      if (existingEmail) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+      const placeholderPhone = `_email_${data.email.replace(/[^a-zA-Z0-9]/g, "_")}`;
+      const existingPhone = await storage.getUserByPhone(placeholderPhone);
+      if (existingPhone) {
+        return res.status(400).json({ message: "Email already registered" });
+      }
+      const hashedPassword = await hashPassword(data.password);
+      const user = await storage.createUser({
+        fullName: data.fullName,
+        email: data.email,
+        phone: placeholderPhone,
+        password: hashedPassword,
+        role: "player",
+        preferredLanguage: "en",
+        federationId: 1,
+        photoUrl: null,
+      });
+      req.session.userId = user.id;
+      sendWelcomeEmail(data.email, data.fullName);
+      const { password: _, ...safeUser } = user;
+      return res.json(safeUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/login/email", async (req: Request, res: Response) => {
+    try {
+      const data = emailLoginSchema.parse(req.body);
+      const user = await storage.getUserByEmail(data.email);
+      if (!user) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+      const valid = await comparePasswords(data.password, user.password);
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid email or password" });
       }
       req.session.userId = user.id;
       const { password: _, ...safeUser } = user;
