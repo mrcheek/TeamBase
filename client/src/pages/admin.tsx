@@ -11,12 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Users, Calendar, Building2, BarChart3,
-  Check, X, Edit2, Trash2, Plus, ChevronRight, Search,
+  Users, Calendar, Building2, BarChart3, Megaphone, FileText, Settings, Trophy,
+  Check, X, Edit2, Trash2, Plus, ChevronRight, Search, Copy,
   Shield, ArrowLeft, Phone, Mail, MapPin, Heart, Dumbbell, TrendingUp,
-  Bell
+  Bell, Key, Send, Download, Filter, UserPlus
 } from "lucide-react";
-import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance } from "@shared/schema";
+import type { User, Club, Event, Membership, Activity, XpTransaction, Attendance, Notice, MatchResult, AppSetting } from "@shared/schema";
 import { isAnyAdmin, isFederationAdminOrAbove, isTeambaseAdmin, canAssignRole, ALL_ROLES, ADMIN_ROLES } from "@shared/schema";
 
 const ICON_STROKE = 1.5;
@@ -64,6 +64,9 @@ export default function AdminPage() {
     { id: "members", label: "Members" },
     { id: "events", label: "Events" },
     { id: "clubs", label: "Clubs" },
+    ...(showOverview ? [{ id: "noticeboard", label: "Noticeboard" }] : []),
+    ...(showOverview ? [{ id: "reports", label: "Reports" }] : []),
+    ...(showOverview ? [{ id: "settings", label: "Settings" }] : []),
   ];
 
   const effectiveTab = (activeTab === "overview" && !showOverview) ? "members" : activeTab;
@@ -116,19 +119,20 @@ export default function AdminPage() {
       {effectiveTab === "members" && <MembersTab adminRole={user.role} adminClubIds={adminClubIds} />}
       {effectiveTab === "events" && <EventsTab adminRole={user.role} adminClubIds={adminClubIds} />}
       {effectiveTab === "clubs" && <ClubsTab adminRole={user.role} adminClubIds={adminClubIds} />}
+      {effectiveTab === "noticeboard" && showOverview && <NoticeboardTab />}
+      {effectiveTab === "reports" && showOverview && <ReportsTab />}
+      {effectiveTab === "settings" && showOverview && <SettingsTab />}
     </div>
   );
 }
 
 function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
   const { data: stats, isLoading } = useQuery<{
-    totalUsers: number;
-    totalPlayers: number;
-    totalSupporters: number;
-    pendingMemberships: number;
-    upcomingEvents: number;
-    totalClubs: number;
-  }>({ queryKey: ["/api/admin/stats"] });
+    totalUsers: number; totalPlayers: number; totalSupporters: number;
+    totalCoaches: number; totalPersonnel: number;
+    pendingMemberships: number; upcomingEvents: number; totalClubs: number;
+    eventsThisMonth: number; attendanceThisMonth: number;
+  }>({ queryKey: ["/api/admin/stats/enhanced"] });
 
   if (isLoading) {
     return <div className="space-y-3">{[1, 2, 3, 4].map((i) => <div key={i} className="h-12 animate-pulse bg-muted rounded-md" />)}</div>;
@@ -136,18 +140,24 @@ function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-y-4 gap-x-6 mb-8">
+      <div className="grid grid-cols-2 gap-y-4 gap-x-6 mb-6">
         {[
-          { label: "Members", value: stats?.totalUsers ?? 0 },
-          { label: "Players", value: stats?.totalPlayers ?? 0 },
-          { label: "Supporters", value: stats?.totalSupporters ?? 0 },
-          { label: "Pending", value: stats?.pendingMemberships ?? 0 },
-          { label: "Events", value: stats?.upcomingEvents ?? 0 },
-          { label: "Clubs", value: stats?.totalClubs ?? 0 },
+          { label: "Members", value: stats?.totalUsers ?? 0, icon: Users },
+          { label: "Players", value: stats?.totalPlayers ?? 0, icon: Dumbbell },
+          { label: "Coaches", value: stats?.totalCoaches ?? 0, icon: Users },
+          { label: "Supporters", value: stats?.totalSupporters ?? 0, icon: Users },
+          { label: "Pending", value: stats?.pendingMemberships ?? 0, icon: Users },
+          { label: "Events", value: stats?.upcomingEvents ?? 0, icon: Calendar },
+          { label: "Events/ month", value: stats?.eventsThisMonth ?? 0, icon: Calendar },
+          { label: "Check-ins/ month", value: stats?.attendanceThisMonth ?? 0, icon: TrendingUp },
+          { label: "Clubs", value: stats?.totalClubs ?? 0, icon: Building2 },
         ].map((stat) => (
-          <div key={stat.label} className="flex items-baseline justify-between" data-testid={`stat-${stat.label.toLowerCase()}`}>
-            <span className="text-sm text-muted-foreground">{stat.label}</span>
-            <span className="text-lg font-bold">{stat.value}</span>
+          <div key={stat.label} className="flex items-center gap-2" data-testid={`stat-${stat.label.toLowerCase().replace(/\//g, "")}`}>
+            <stat.icon className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={ICON_STROKE} />
+            <div className="flex-1 min-w-0">
+              <div className="text-lg font-bold">{stat.value}</div>
+              <div className="text-[11px] text-muted-foreground truncate">{stat.label}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -155,32 +165,21 @@ function OverviewTab({ onNavigate }: { onNavigate: (tab: string) => void }) {
       <div className="border-t border-divider pt-5">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h4>
         <div className="divide-y divide-divider">
-          <button
-            onClick={() => onNavigate("events")}
-            className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left"
-            data-testid="button-quick-create-event"
-          >
+          <button onClick={() => onNavigate("events")} className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left">
             <Plus className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
-            Create Event
-            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
+            Create Event <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
           </button>
-          <button
-            onClick={() => onNavigate("members")}
-            className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left"
-            data-testid="button-quick-members"
-          >
+          <button onClick={() => onNavigate("members")} className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left">
             <Users className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
-            Manage Members
-            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
+            Manage Members <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
           </button>
-          <button
-            onClick={() => onNavigate("clubs")}
-            className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left"
-            data-testid="button-quick-clubs"
-          >
+          <button onClick={() => onNavigate("noticeboard")} className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left">
+            <Megaphone className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
+            Post Announcement <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
+          </button>
+          <button onClick={() => onNavigate("clubs")} className="flex items-center gap-3 w-full py-3 text-sm font-medium text-left">
             <Building2 className="w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
-            Edit Clubs
-            <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
+            Edit Clubs <ChevronRight className="w-4 h-4 text-muted-foreground ml-auto" strokeWidth={ICON_STROKE} />
           </button>
         </div>
       </div>
@@ -231,6 +230,29 @@ function MemberDetail({ userId, onBack, adminRole }: { userId: number; onBack: (
       toast({ title: "Role updated" });
     },
   });
+
+  const resetPwMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/admin/users/${userId}/reset-password`);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: "Password reset", description: `New password: ${data.newPassword}` });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/admin/users/${userId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "User deleted" });
+      onBack();
+    },
+  });
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   if (!canViewDetails) {
     return (
@@ -319,6 +341,22 @@ function MemberDetail({ userId, onBack, adminRole }: { userId: number; onBack: (
           </Select>
         </div>
       )}
+
+      <div className="flex gap-2">
+        <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px]" onClick={() => resetPwMutation.mutate()} disabled={resetPwMutation.isPending}>
+          <Key className="w-3 h-3 mr-1" strokeWidth={ICON_STROKE} /> Reset Password
+        </Button>
+        {!showDeleteConfirm ? (
+          <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-destructive border-destructive/30" onClick={() => setShowDeleteConfirm(true)}>
+            <Trash2 className="w-3 h-3 mr-1" strokeWidth={ICON_STROKE} /> Delete
+          </Button>
+        ) : (
+          <div className="flex gap-1 flex-1">
+            <Button size="sm" variant="destructive" className="h-7 text-[10px] flex-1" onClick={() => deleteUserMutation.mutate()} disabled={deleteUserMutation.isPending}>Confirm</Button>
+            <Button size="sm" variant="ghost" className="h-7 text-[10px]" onClick={() => setShowDeleteConfirm(false)}>Cancel</Button>
+          </div>
+        )}
+      </div>
 
       {infoRows.length > 0 && (
         <div>
@@ -461,12 +499,35 @@ function MemberDetail({ userId, onBack, adminRole }: { userId: number; onBack: (
 function MembersTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds: number[] | null }) {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [tierFilter, setTierFilter] = useState("");
   const [view, setView] = useState<"all" | "pending">("all");
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createName, setCreateName] = useState("");
+  const [createPhone, setCreatePhone] = useState("");
+  const [createEmail, setCreateEmail] = useState("");
+  const [createPassword, setCreatePassword] = useState("");
+  const [createRole, setCreateRole] = useState("player");
+  const [createClub, setCreateClub] = useState("");
   const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
 
+  const queryParams = new URLSearchParams();
+  if (search) queryParams.set("query", search);
+  if (roleFilter) queryParams.set("role", roleFilter);
+  if (tierFilter) queryParams.set("tier", tierFilter);
+
   const { data: allUsers, isLoading: usersLoading } = useQuery<AdminUser[]>({
-    queryKey: ["/api/admin/users"],
+    queryKey: ["/api/admin/users/search", search, roleFilter, tierFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (search) params.set("query", search);
+      if (roleFilter) params.set("role", roleFilter);
+      if (tierFilter) params.set("tier", tierFilter);
+      const res = await fetch(`/api/admin/users/search?${params}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch");
+      return res.json();
+    },
     enabled: isFederationAdminOrAbove(adminRole),
   });
 
@@ -488,6 +549,24 @@ function MembersTab({ adminRole, adminClubIds }: { adminRole: string; adminClubI
     },
     enabled: isClubScoped,
   });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const body: any = { fullName: createName, password: createPassword, role: createRole };
+      if (createPhone) body.phone = createPhone;
+      if (createEmail) body.email = createEmail;
+      if (createClub) body.clubId = parseInt(createClub);
+      await apiRequest("POST", "/api/admin/users", body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      setShowCreateForm(false); setCreateName(""); setCreatePhone(""); setCreateEmail(""); setCreatePassword(""); setCreateRole("player"); setCreateClub("");
+      toast({ title: "User created" });
+    },
+  });
+
+  const { data: clubs } = useQuery<Club[]>({ queryKey: ["/api/clubs"] });
 
   const displayUsers = isClubScoped ? clubMembers : allUsers;
   const displayUsersLoading = isClubScoped ? clubMembersLoading : usersLoading;
@@ -511,11 +590,6 @@ function MembersTab({ adminRole, adminClubIds }: { adminRole: string; adminClubI
       toast({ title: "Membership updated" });
     },
   });
-
-  const filteredUsers = displayUsers?.filter((u) =>
-    u.fullName.toLowerCase().includes(search.toLowerCase()) ||
-    u.phone.includes(search)
-  );
 
   if (selectedUserId) {
     return <MemberDetail userId={selectedUserId} onBack={() => setSelectedUserId(null)} adminRole={adminRole} />;
@@ -544,47 +618,72 @@ function MembersTab({ adminRole, adminClubIds }: { adminRole: string; adminClubI
 
       {view === "all" && (
         <>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
-            <Input
-              placeholder="Search by name or phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-              data-testid="input-search-members"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" strokeWidth={ICON_STROKE} />
+              <Input placeholder="Search name, phone, email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-8 text-xs" />
+            </div>
+            {isFederationAdminOrAbove(adminRole) && (
+              <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={() => setShowCreateForm(!showCreateForm)}>
+                <UserPlus className="w-4 h-4" strokeWidth={ICON_STROKE} />
+              </Button>
+            )}
           </div>
+
+          <div className="flex gap-1.5">
+            <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} className="flex-1 h-7 text-[10px] rounded-md border border-input bg-background px-1.5">
+              <option value="">All Roles</option>
+              {ALL_ROLES.map(r => <option key={r} value={r} className="capitalize">{r}</option>)}
+            </select>
+            <select value={tierFilter} onChange={e => setTierFilter(e.target.value)} className="flex-1 h-7 text-[10px] rounded-md border border-input bg-background px-1.5">
+              <option value="">All Tiers</option>
+              {["green", "blue", "silver", "gold"].map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
+            </select>
+          </div>
+
+          {showCreateForm && (
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <h4 className="text-xs font-semibold">Create User</h4>
+              <Input className="h-7 text-xs" placeholder="Full Name" value={createName} onChange={e => setCreateName(e.target.value)} />
+              <div className="flex gap-2">
+                <Input className="h-7 text-xs flex-1" placeholder="Phone" value={createPhone} onChange={e => setCreatePhone(e.target.value)} />
+                <Input className="h-7 text-xs flex-1" placeholder="Email" value={createEmail} onChange={e => setCreateEmail(e.target.value)} />
+              </div>
+              <Input className="h-7 text-xs" type="password" placeholder="Password" value={createPassword} onChange={e => setCreatePassword(e.target.value)} />
+              <div className="flex gap-2">
+                <select value={createRole} onChange={e => setCreateRole(e.target.value)} className="flex-1 h-7 text-xs rounded-md border border-input bg-background px-1.5">
+                  {ALL_ROLES.map(r => <option key={r} value={r} className="capitalize">{r}</option>)}
+                </select>
+                <select value={createClub} onChange={e => setCreateClub(e.target.value)} className="flex-1 h-7 text-xs rounded-md border border-input bg-background px-1.5">
+                  <option value="">No Club</option>
+                  {clubs?.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <Button size="sm" className="w-full" disabled={!createName || !createPassword || createMutation.isPending} onClick={() => createMutation.mutate()}>
+                {createMutation.isPending ? "Creating..." : "Create User"}
+              </Button>
+            </div>
+          )}
 
           {displayUsersLoading ? (
             <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-14 animate-pulse bg-muted rounded-md" />)}</div>
           ) : (
             <div className="divide-y divide-divider">
-              {filteredUsers?.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center justify-between gap-2 py-3 cursor-pointer transition-colors"
-                  onClick={() => setSelectedUserId(u.id)}
-                  data-testid={`card-admin-user-${u.id}`}
-                >
+              {displayUsers?.map((u) => (
+                <div key={u.id} className="flex items-center justify-between gap-2 py-3 cursor-pointer transition-colors" onClick={() => setSelectedUserId(u.id)} data-testid={`card-admin-user-${u.id}`}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                      <span className="text-primary text-[10px] font-bold">
-                        {u.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                      </span>
+                      <span className="text-primary text-[10px] font-bold">{u.fullName.split(" ").map((n) => n[0]).join("").slice(0, 2)}</span>
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-medium truncate">{u.fullName}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        <span className="capitalize">{u.role}</span> · <span className="capitalize">{u.tier}</span> · {u.xpTotal} XP
-                      </p>
+                      <p className="text-[11px] text-muted-foreground"><span className="capitalize">{u.role}</span> · <span className="capitalize">{u.tier}</span> · {u.xpTotal} XP</p>
                     </div>
                   </div>
                   <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" strokeWidth={ICON_STROKE} />
                 </div>
               ))}
-              {filteredUsers?.length === 0 && (
-                <div className="py-8 text-center text-sm text-muted-foreground">No members found</div>
-              )}
+              {displayUsers?.length === 0 && <div className="py-8 text-center text-sm text-muted-foreground">No members found</div>}
             </div>
           )}
         </>
@@ -642,11 +741,11 @@ function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubId
   const { toast } = useToast();
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [detailEvent, setDetailEvent] = useState<Event | null>(null);
   const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
+  const isFedAdmin = isFederationAdminOrAbove(adminRole);
 
-  const { data: rawEvents, isLoading } = useQuery<Event[]>({
-    queryKey: ["/api/events"],
-  });
+  const { data: rawEvents, isLoading } = useQuery<Event[]>({ queryKey: ["/api/events"] });
 
   const allEvents = isClubScoped && adminClubIds
     ? rawEvents?.filter(e => adminClubIds.includes(e.clubId))
@@ -691,24 +790,18 @@ function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubId
     },
   });
 
+  if (detailEvent) {
+    return <EventDetailTab event={detailEvent} onBack={() => setDetailEvent(null)} isFedAdmin={isFedAdmin} />;
+  }
+
   return (
     <div className="space-y-5">
-      <Button
-        size="sm"
-        onClick={() => { setShowCreate(!showCreate); setEditingEvent(null); }}
-        className="w-full"
-        data-testid="button-create-event"
-      >
+      <Button size="sm" onClick={() => { setShowCreate(!showCreate); setEditingEvent(null); }} className="w-full" data-testid="button-create-event">
         <Plus className="w-4 h-4 mr-1" strokeWidth={ICON_STROKE} /> Create Event
       </Button>
 
       {showCreate && (
-        <EventForm
-          clubs={clubs || []}
-          onSubmit={(data) => createMutation.mutate(data)}
-          onCancel={() => setShowCreate(false)}
-          isPending={createMutation.isPending}
-        />
+        <EventForm clubs={clubs || []} onSubmit={(data) => createMutation.mutate(data)} onCancel={() => setShowCreate(false)} isPending={createMutation.isPending} />
       )}
 
       {isLoading ? (
@@ -718,16 +811,10 @@ function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubId
           {allEvents?.map((event) => (
             <div key={event.id}>
               {editingEvent?.id === event.id ? (
-                <EventForm
-                  event={event}
-                  clubs={clubs || []}
-                  onSubmit={(data) => updateMutation.mutate({ id: event.id, data })}
-                  onCancel={() => setEditingEvent(null)}
-                  isPending={updateMutation.isPending}
-                />
+                <EventForm event={event} clubs={clubs || []} onSubmit={(data) => updateMutation.mutate({ id: event.id, data })} onCancel={() => setEditingEvent(null)} isPending={updateMutation.isPending} />
               ) : (
                 <div className="flex items-start justify-between gap-2 py-3" data-testid={`card-admin-event-${event.id}`}>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 cursor-pointer" onClick={() => setDetailEvent(event)}>
                     <p className="text-sm font-semibold">{event.title}</p>
                     <p className="text-[13px] text-muted-foreground mt-0.5">
                       <span className="capitalize">{event.type.replace("_", " ")}</span> · {event.date} · {event.time}
@@ -735,40 +822,16 @@ function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubId
                     {event.location && <p className="text-[13px] text-muted-foreground">{event.location}</p>}
                   </div>
                   <div className="flex gap-0.5 shrink-0 mt-0.5">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={() => { setEditingEvent(event); setShowCreate(false); }}
-                      data-testid={`button-edit-event-${event.id}`}
-                    >
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingEvent(event); setShowCreate(false); }} data-testid={`button-edit-event-${event.id}`}>
                       <Edit2 className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={async () => {
-                        try {
-                          const res = await apiRequest("POST", `/api/admin/events/${event.id}/notify`);
-                          const data = await res.json();
-                          alert(`Sent ${data.sent} notification${data.sent !== 1 ? "s" : ""}${data.failed ? `, ${data.failed} failed` : ""}`);
-                        } catch { alert("Failed to send notifications"); }
-                      }}
-                      data-testid={`button-notify-event-${event.id}`}
-                      title="Send push reminder"
-                    >
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={async () => {
+                      try { const res = await apiRequest("POST", `/api/admin/events/${event.id}/notify`); const d = await res.json(); alert(`Sent ${d.sent} notification${d.sent !== 1 ? "s" : ""}${d.failed ? `, ${d.failed} failed` : ""}`); }
+                      catch { alert("Failed to send notifications"); }
+                    }} data-testid={`button-notify-event-${event.id}`} title="Send push reminder">
                       <Bell className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0 text-destructive"
-                      onClick={() => {
-                        if (confirm("Delete this event?")) deleteMutation.mutate(event.id);
-                      }}
-                      data-testid={`button-delete-event-${event.id}`}
-                    >
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => { if (confirm("Delete this event?")) deleteMutation.mutate(event.id); }} data-testid={`button-delete-event-${event.id}`}>
                       <Trash2 className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
                     </Button>
                   </div>
@@ -776,6 +839,160 @@ function EventsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubId
               )}
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EventDetailTab({ event, onBack, isFedAdmin }: { event: Event; onBack: () => void; isFedAdmin: boolean }) {
+  const { toast } = useToast();
+  const { data: report, isLoading } = useQuery<any>({ queryKey: ["/api/admin/events", event.id, "attendance-report"] });
+  const { data: matchData } = useQuery<any>({ queryKey: ["/api/admin/events", event.id, "match"] });
+
+  const [showMatchForm, setShowMatchForm] = useState(false);
+  const [homeScore, setHomeScore] = useState("");
+  const [awayScore, setAwayScore] = useState("");
+  const [homeTeam, setHomeTeam] = useState("");
+  const [awayTeam, setAwayTeam] = useState("");
+  const [matchStatus, setMatchStatus] = useState("finished");
+  const [matchNotes, setMatchNotes] = useState("");
+
+  const matchMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", `/api/admin/events/${event.id}/match`, {
+        homeScore: homeScore ? parseInt(homeScore) : null,
+        awayScore: awayScore ? parseInt(awayScore) : null,
+        homeTeam: homeTeam || null,
+        awayTeam: awayTeam || null,
+        status: matchStatus,
+        notes: matchNotes || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events", event.id, "match"] });
+      setShowMatchForm(false);
+      toast({ title: "Match result saved" });
+    },
+  });
+
+  const [showSendBroadcast, setShowSendBroadcast] = useState(false);
+  const [broadcastTitle, setBroadcastTitle] = useState("");
+  const [broadcastBody, setBroadcastBody] = useState("");
+
+  const broadcastMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/broadcast", { title: broadcastTitle, body: broadcastBody, url: `/events/${event.id}` });
+      return res.json();
+    },
+    onSuccess: (d: any) => {
+      setShowSendBroadcast(false);
+      toast({ title: `Broadcast sent to ${d.sent} users` });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <button onClick={onBack} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors">
+        <ArrowLeft className="w-4 h-4" strokeWidth={ICON_STROKE} /> Events
+      </button>
+
+      <div>
+        <h3 className="font-semibold text-base">{event.title}</h3>
+        <p className="text-xs text-muted-foreground capitalize">{event.type.replace("_", " ")} · {event.date} · {event.time}{event.location ? ` · ${event.location}` : ""}</p>
+      </div>
+
+      {isLoading ? (
+        <div className="animate-pulse h-20 bg-muted rounded-md" />
+      ) : (
+        <div className="rounded-lg border p-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Attendance</h4>
+          <div className="flex items-center gap-4 mb-3">
+            <div><span className="text-lg font-bold">{report?.checkedIn ?? 0}</span><span className="text-xs text-muted-foreground ml-1">/ {report?.totalMembers ?? 0}</span></div>
+            <div className="text-xs text-muted-foreground">checked in</div>
+          </div>
+          {report?.attendance?.length > 0 && (
+            <div className="divide-y divide-divider max-h-48 overflow-y-auto">
+              {report.attendance.map((a: any) => (
+                <div key={a.id} className="flex items-center justify-between py-1.5 text-xs">
+                  <span>{a.user?.fullName}</span>
+                  <span className="text-muted-foreground">{a.checkedInAt ? new Date(a.checkedInAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {report?.absent?.length > 0 && (
+            <details className="mt-2">
+              <summary className="text-xs text-muted-foreground cursor-pointer">Absent ({report.absent.length})</summary>
+              <div className="divide-y divide-divider max-h-32 overflow-y-auto mt-1">
+                {report.absent.map((u: any) => <div key={u.id} className="py-1 text-xs">{u.fullName}</div>)}
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      {event.type === "match" && (
+        <div className="rounded-lg border p-3">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Match Result</h4>
+          {matchData ? (
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium">{matchData.homeTeam || "Home"}</span>
+                <span className="text-lg font-bold">{matchData.homeScore ?? "?"} – {matchData.awayScore ?? "?"}</span>
+                <span className="text-sm font-medium">{matchData.awayTeam || "Away"}</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] mt-1 capitalize">{matchData.status}</Badge>
+              {matchData.notes && <p className="text-xs text-muted-foreground mt-1">{matchData.notes}</p>}
+              <Button size="sm" variant="ghost" className="h-6 text-[10px] mt-2" onClick={() => setShowMatchForm(!showMatchForm)}>Edit</Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setShowMatchForm(true)}>Add Result</Button>
+          )}
+          {showMatchForm && (
+            <div className="mt-2 space-y-2">
+              <div className="flex gap-2">
+                <Input className="h-7 text-xs flex-1" placeholder="Home team" value={homeTeam} onChange={e => setHomeTeam(e.target.value)} />
+                <Input className="h-7 text-xs w-16 text-center" placeholder="Score" value={homeScore} onChange={e => setHomeScore(e.target.value)} />
+                <span className="self-center text-xs">–</span>
+                <Input className="h-7 text-xs w-16 text-center" placeholder="Score" value={awayScore} onChange={e => setAwayScore(e.target.value)} />
+                <Input className="h-7 text-xs flex-1" placeholder="Away team" value={awayTeam} onChange={e => setAwayTeam(e.target.value)} />
+              </div>
+              <div className="flex gap-2">
+                <select value={matchStatus} onChange={e => setMatchStatus(e.target.value)} className="flex-1 h-7 text-xs rounded-md border border-input bg-background px-1.5">
+                  <option value="scheduled">Scheduled</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="finished">Finished</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+                <Button size="sm" className="h-7 text-xs" disabled={matchMutation.isPending} onClick={() => matchMutation.mutate()}>
+                  {matchMutation.isPending ? "Saving..." : "Save"}
+                </Button>
+              </div>
+              <Textarea className="h-14 text-xs" placeholder="Match notes" value={matchNotes} onChange={e => setMatchNotes(e.target.value)} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {isFedAdmin && (
+        <div>
+          {!showSendBroadcast ? (
+            <Button size="sm" variant="outline" className="w-full h-8 text-xs" onClick={() => setShowSendBroadcast(true)}>
+              <Send className="w-3.5 h-3.5 mr-1" strokeWidth={ICON_STROKE} /> Broadcast to All Users
+            </Button>
+          ) : (
+            <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+              <Input className="h-7 text-xs" placeholder="Title" value={broadcastTitle} onChange={e => setBroadcastTitle(e.target.value)} />
+              <Textarea className="h-14 text-xs" placeholder="Body" value={broadcastBody} onChange={e => setBroadcastBody(e.target.value)} />
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 h-7 text-xs" disabled={!broadcastTitle || !broadcastBody || broadcastMutation.isPending} onClick={() => broadcastMutation.mutate()}>
+                  {broadcastMutation.isPending ? "Sending..." : "Send"}
+                </Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowSendBroadcast(false)}>Cancel</Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -883,11 +1100,13 @@ function EventForm({
 function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds: number[] | null }) {
   const { toast } = useToast();
   const [editingClub, setEditingClub] = useState<Club | null>(null);
+  const [showCreateClub, setShowCreateClub] = useState(false);
+  const [newClubName, setNewClubName] = useState("");
+  const [newClubLocation, setNewClubLocation] = useState("");
   const isClubScoped = adminRole === "club_admin" && adminClubIds !== null;
+  const isFedAdmin = isFederationAdminOrAbove(adminRole);
 
-  const { data: rawClubs, isLoading } = useQuery<Club[]>({
-    queryKey: ["/api/clubs"],
-  });
+  const { data: rawClubs, isLoading } = useQuery<Club[]>({ queryKey: ["/api/clubs"] });
 
   const allClubs = isClubScoped && adminClubIds
     ? rawClubs?.filter(c => adminClubIds.includes(c.id))
@@ -904,8 +1123,53 @@ function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds
     },
   });
 
+  const createClubMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/clubs", { name: newClubName, location: newClubLocation || null });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clubs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      setShowCreateClub(false); setNewClubName(""); setNewClubLocation("");
+      toast({ title: "Club created" });
+    },
+  });
+
+  const deleteClubMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/clubs/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clubs"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "Club deleted" });
+    },
+  });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
   return (
     <div>
+      {isFedAdmin && !showCreateClub && (
+        <Button size="sm" variant="outline" className="w-full mb-3 h-8 text-xs" onClick={() => setShowCreateClub(true)}>
+          <Plus className="w-3.5 h-3.5 mr-1" strokeWidth={ICON_STROKE} /> New Club
+        </Button>
+      )}
+
+      {showCreateClub && (
+        <div className="bg-muted/30 rounded-lg p-3 space-y-2 mb-4">
+          <h4 className="text-xs font-semibold">Create Club</h4>
+          <Input className="h-7 text-xs" placeholder="Club name" value={newClubName} onChange={e => setNewClubName(e.target.value)} />
+          <Input className="h-7 text-xs" placeholder="Location (optional)" value={newClubLocation} onChange={e => setNewClubLocation(e.target.value)} />
+          <div className="flex gap-2">
+            <Button size="sm" className="flex-1 h-7 text-xs" disabled={!newClubName || createClubMutation.isPending} onClick={() => createClubMutation.mutate()}>
+              {createClubMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowCreateClub(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-2">{[1, 2, 3].map((i) => <div key={i} className="h-16 animate-pulse bg-muted rounded-md" />)}</div>
       ) : (
@@ -922,35 +1186,36 @@ function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds
               ) : (
                 <div className="flex items-center justify-between gap-2 py-3" data-testid={`card-admin-club-${club.id}`}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: club.primaryColor || undefined, color: club.textOnPrimary || "#fff" }}
-                    >
-                      <span className="font-bold text-xs">
-                        {club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                      </span>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: club.primaryColor || undefined, color: club.textOnPrimary || "#fff" }}>
+                      <span className="font-bold text-xs">{club.name.split(" ").map((w) => w[0]).join("").slice(0, 2)}</span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold">{club.name}</p>
-                      {club.location && <p className="text-[13px] text-muted-foreground">{club.location}</p>}
-                      {club.primaryColor && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: club.primaryColor }} />
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: club.secondaryColor || undefined }} />
-                          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: club.accentColor || undefined }} />
-                        </div>
-                      )}
+                      <p className="text-sm font-medium truncate">{club.name}</p>
+                      {club.location && <p className="text-[11px] text-muted-foreground">{club.location}</p>}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 w-7 p-0 shrink-0"
-                    onClick={() => setEditingClub(club)}
-                    data-testid={`button-edit-club-${club.id}`}
-                  >
-                    <Edit2 className="w-4 h-4" strokeWidth={ICON_STROKE} />
-                  </Button>
+                  <div className="flex gap-0.5">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setEditingClub(club)} data-testid={`button-edit-club-${club.id}`}>
+                      <Edit2 className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
+                    </Button>
+                    {isFedAdmin && (
+                      deleteConfirm === club.id ? (
+                        <div className="flex gap-0.5">
+                          <Button size="sm" variant="destructive" className="h-7 w-7 p-0" onClick={() => { deleteClubMutation.mutate(club.id); setDeleteConfirm(null); }}>
+                            <Check className="w-3 h-3" strokeWidth={ICON_STROKE} />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => setDeleteConfirm(null)}>
+                            <X className="w-3 h-3" strokeWidth={ICON_STROKE} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive" onClick={() => setDeleteConfirm(club.id)}>
+                          <Trash2 className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
+                        </Button>
+                      )
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -963,6 +1228,166 @@ function ClubsTab({ adminRole, adminClubIds }: { adminRole: string; adminClubIds
 
 function ImageUpload({ currentUrl, onUpload, testId }: { currentUrl: string; onUpload: (url: string) => void; testId: string }) {
   return <SharedImageUpload currentUrl={currentUrl} onUpload={onUpload} uploadEndpoint="/api/upload" testId={testId} variant="banner" />;
+}
+
+function NoticeboardTab() {
+  const { toast } = useToast();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [priority, setPriority] = useState("normal");
+
+  const { data: notices, isLoading } = useQuery<(Notice & { author: { fullName: string; role: string } })[]>({ queryKey: ["/api/notices"] });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/notices", { title, body, priority });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notices"] });
+      setTitle(""); setBody(""); setPriority("normal");
+      toast({ title: "Announcement posted" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/notices/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notices"] });
+    },
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-muted/30 rounded-lg p-4 space-y-3">
+        <h4 className="text-sm font-semibold">New Announcement</h4>
+        <Input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} />
+        <Textarea placeholder="Body" value={body} onChange={e => setBody(e.target.value)} rows={3} />
+        <select value={priority} onChange={e => setPriority(e.target.value)} className="w-full h-8 text-xs rounded-md border border-input bg-background px-2">
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+        <Button size="sm" className="w-full" disabled={!title || !body || createMutation.isPending} onClick={() => createMutation.mutate()}>
+          {createMutation.isPending ? "Posting..." : "Post Announcement"}
+        </Button>
+      </div>
+
+      <div className="space-y-2">
+        {isLoading && <p className="text-sm text-muted-foreground">Loading...</p>}
+        {notices?.map(n => (
+          <div key={n.id} className={`rounded-lg border p-3 ${n.priority === "urgent" ? "border-red-300 bg-red-50/50" : n.priority === "high" ? "border-amber-300 bg-amber-50/50" : ""}`}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold">{n.title}</span>
+                  {n.priority === "urgent" && <Badge variant="destructive" className="text-[9px]">URGENT</Badge>}
+                  {n.priority === "high" && <Badge variant="default" className="text-[9px] bg-amber-500">HIGH</Badge>}
+                  {n.pinned && <Badge variant="outline" className="text-[9px]">PINNED</Badge>}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 whitespace-pre-wrap">{n.body}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[10px] text-muted-foreground">{n.author?.fullName || "Unknown"}</span>
+                  <span className="text-[10px] text-muted-foreground">{n.createdAt ? new Date(n.createdAt).toLocaleDateString() : ""}</span>
+                </div>
+              </div>
+              <button onClick={() => deleteMutation.mutate(n.id)} className="shrink-0 p-1 hover:bg-muted rounded"><X className="w-3 h-3 text-muted-foreground" /></button>
+            </div>
+          </div>
+        ))}
+        {notices?.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No announcements yet.</p>}
+      </div>
+    </div>
+  );
+}
+
+function ReportsTab() {
+  const { data: stats } = useQuery<{ totalUsers: number; totalPlayers: number; totalSupporters: number; totalCoaches: number; totalPersonnel: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number; eventsThisMonth: number; attendanceThisMonth: number }>({ queryKey: ["/api/admin/stats/enhanced"] });
+  const { data: auditLogs } = useQuery<any[]>({ queryKey: ["/api/admin/audit-log"] });
+  const { data: notices } = useQuery<any[]>({ queryKey: ["/api/notices"] });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity This Month</h4>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-lg border p-3">
+            <div className="text-xl font-bold">{stats?.eventsThisMonth ?? 0}</div>
+            <div className="text-[11px] text-muted-foreground">Events</div>
+          </div>
+          <div className="rounded-lg border p-3">
+            <div className="text-xl font-bold">{stats?.attendanceThisMonth ?? 0}</div>
+            <div className="text-[11px] text-muted-foreground">Check-ins</div>
+          </div>
+          <div className="rounded-lg border p-3">
+            <div className="text-xl font-bold">{notices?.length ?? 0}</div>
+            <div className="text-[11px] text-muted-foreground">Announcements</div>
+          </div>
+          <div className="rounded-lg border p-3">
+            <div className="text-xl font-bold">{stats?.totalUsers ?? 0}</div>
+            <div className="text-[11px] text-muted-foreground">Total Members</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Audit Log</h4>
+        <div className="space-y-1 max-h-80 overflow-y-auto">
+          {auditLogs?.slice(0, 50).map((l: any) => (
+            <div key={l.id} className="flex items-start gap-2 py-1.5 text-[11px] border-b border-divider/50">
+              <span className="shrink-0 text-muted-foreground w-16">{l.createdAt ? new Date(l.createdAt).toLocaleDateString() : ""}</span>
+              <span className="font-medium w-20 shrink-0 capitalize">{l.action}</span>
+              <span className="text-muted-foreground truncate">{l.details || `${l.entityType} #${l.entityId || ""}`}</span>
+              <span className="shrink-0 text-muted-foreground ml-auto">{l.admin?.fullName || ""}</span>
+            </div>
+          ))}
+          {(!auditLogs || auditLogs.length === 0) && <p className="text-xs text-muted-foreground py-4 text-center">No audit logs yet.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsTab() {
+  const { toast } = useToast();
+  const { data: settings, isLoading } = useQuery<AppSetting[]>({ queryKey: ["/api/admin/settings"] });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string | null }) => {
+      await apiRequest("PUT", `/api/admin/settings/${key}`, { value });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({ title: "Setting saved" });
+    },
+  });
+
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        {settings?.map(s => (
+          <div key={s.id} className="flex items-center gap-2">
+            <span className="text-xs font-mono w-40 truncate">{s.key}</span>
+            <Input className="h-8 text-xs flex-1" value={s.value || ""} onChange={e => updateMutation.mutate({ key: s.key, value: e.target.value || null })} />
+          </div>
+        ))}
+        {(!settings || settings.length === 0) && <p className="text-xs text-muted-foreground">No settings configured.</p>}
+      </div>
+
+      <div className="border-t border-divider pt-4 space-y-2">
+        <h4 className="text-xs font-semibold">Add Setting</h4>
+        <div className="flex gap-2">
+          <Input className="h-8 text-xs flex-1" placeholder="Key" value={newKey} onChange={e => setNewKey(e.target.value)} />
+          <Input className="h-8 text-xs flex-1" placeholder="Value" value={newValue} onChange={e => setNewValue(e.target.value)} />
+          <Button size="sm" disabled={!newKey} onClick={() => { updateMutation.mutate({ key: newKey, value: newValue }); setNewKey(""); setNewValue(""); }}>Add</Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ClubForm({

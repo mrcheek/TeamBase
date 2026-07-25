@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import {
   Users,
@@ -19,7 +23,7 @@ import {
   Plus,
   Instagram,
 } from "lucide-react";
-import type { Activity as ActivityType, User, Club, Membership, Event } from "@shared/schema";
+import type { Activity as ActivityType, User, Club, Membership, Event, Notice } from "@shared/schema";
 import { isAnyAdmin } from "@shared/schema";
 
 const ICON_STROKE = 1.5;
@@ -248,7 +252,7 @@ export default function ClubPage() {
       <div className="border-b border-divider" />
 
       {tab === "feed" && <FeedTab />}
-      {tab === "noticeboard" && <NoticeboardTab />}
+      {tab === "noticeboard" && <NoticeboardTab clubId={club?.id} />}
       {tab === "roster" && <RosterTab />}
 
       {/* FAB for admins/coaches */}
@@ -337,46 +341,68 @@ function FeedTab() {
   );
 }
 
-function NoticeboardTab() {
-  const notices = [
-    { id: 1, type: "announcement", title: "Training moved to Friday", body: "This week's training has been moved to Friday 5pm at Amaan Stadium.", time: "2 hours ago" },
-    { id: 2, type: "request", title: "Physio needed for Saturday match", body: "We need a volunteer physio for this Saturday's league match.", time: "1 day ago" },
-    { id: 3, type: "opportunity", title: "Coaching workshop available", body: "World Rugby Level 1 coaching course, 15-16 March. Limited spots.", time: "3 days ago" },
-  ];
+function NoticeboardTab({ clubId }: { clubId?: number }) {
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
 
-  const typeIcons: Record<string, any> = {
-    announcement: Megaphone,
-    request: Users,
-    opportunity: Zap,
-  };
+  const queryKey = clubId ? [`/api/clubs/${clubId}/notices`] : ["/api/notices"];
 
-  const typeColors: Record<string, string> = {
-    announcement: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30",
-    request: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/30",
-    opportunity: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/30",
-  };
+  const { data: notices, isLoading } = useQuery<(Notice & { author: { fullName: string; role: string } })[]>({ queryKey });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/notices", { title, body, clubId: clubId || null, priority: "normal" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey });
+      setTitle(""); setBody(""); setShowForm(false);
+      toast({ title: "Announcement posted" });
+    },
+  });
 
   return (
     <div className="px-4 pt-4">
-      <div className="divide-y divide-divider">
-        {notices.map((notice) => {
-          const Icon = typeIcons[notice.type] || Megaphone;
-          return (
+      {showForm && (
+        <div className="bg-muted/30 rounded-lg p-3 space-y-2 mb-4">
+          <Input placeholder="Title" value={title} onChange={e => setTitle(e.target.value)} className="h-8 text-xs" />
+          <Textarea placeholder="Body" value={body} onChange={e => setBody(e.target.value)} rows={3} className="text-xs" />
+          <div className="flex gap-2">
+            <Button size="sm" className="flex-1 h-7 text-xs" disabled={!title || !body || createMutation.isPending} onClick={() => createMutation.mutate()}>
+              {createMutation.isPending ? "Posting..." : "Post"}
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setShowForm(false)}>Cancel</Button>
+          </div>
+        </div>
+      )}
+      {isLoading ? (
+        <div className="space-y-2">{[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-md" />)}</div>
+      ) : (
+        <div className="divide-y divide-divider">
+          {notices?.map((notice) => (
             <div key={notice.id} className="py-3.5" data-testid={`row-notice-${notice.id}`}>
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${typeColors[notice.type] || ""}`}>
-                  <Icon className="w-3.5 h-3.5" strokeWidth={ICON_STROKE} />
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Megaphone className="w-3.5 h-3.5 text-primary" strokeWidth={ICON_STROKE} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{notice.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{notice.title}</p>
+                    {notice.priority === "urgent" && <Badge variant="destructive" className="text-[8px]">URGENT</Badge>}
+                    {notice.priority === "high" && <Badge className="text-[8px] bg-amber-500">HIGH</Badge>}
+                  </div>
                   <p className="text-[13px] text-muted-foreground mt-0.5">{notice.body}</p>
-                  <p className="text-[11px] text-muted-foreground mt-1">{notice.time}</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {notice.author?.fullName || "Admin"} · {notice.createdAt ? new Date(notice.createdAt).toLocaleDateString() : ""}
+                  </p>
                 </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+          {notices?.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No announcements yet.</p>}
+        </div>
+      )}
     </div>
   );
 }

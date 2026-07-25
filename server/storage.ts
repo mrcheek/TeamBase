@@ -1,12 +1,16 @@
-import { eq, desc, and, inArray, sql } from "drizzle-orm";
+import { eq, desc, and, inArray, like, or, sql } from "drizzle-orm";
 import { db } from "./db";
 import {
   users, clubs, federations, memberships, events, attendance, activities, xpTransactions, pushSubscriptions,
+  notices, auditLogs, matchResults, matchLineups, appSettings,
   type User, type InsertUser, type Club, type InsertClub, type Federation, type InsertFederation,
   type Membership, type InsertMembership, type Event, type InsertEvent,
   type Attendance, type InsertAttendance, type Activity, type InsertActivity,
   type XpTransaction, type InsertXpTransaction,
   type PushSubscription, type InsertPushSubscription,
+  type Notice, type InsertNotice, type AuditLog, type InsertAuditLog,
+  type MatchResult, type InsertMatchResult, type MatchLineup, type InsertMatchLineup,
+  type AppSetting, type InsertAppSetting,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -23,6 +27,7 @@ export interface IStorage {
   getClubs(federationId?: number): Promise<Club[]>;
   getClub(id: number): Promise<Club | undefined>;
   createClub(club: InsertClub): Promise<Club>;
+  deleteClub(clubId: number): Promise<void>;
   getClubMembers(clubId: number): Promise<User[]>;
   getClubScore(clubId: number): Promise<number>;
 
@@ -35,8 +40,10 @@ export interface IStorage {
   getEvent(id: number): Promise<Event | undefined>;
   getClubEvents(clubId: number): Promise<Event[]>;
   createEvent(event: InsertEvent): Promise<Event>;
+  getEventsInRange(from: string, to: string): Promise<Event[]>;
 
   getEventAttendance(eventId: number): Promise<(Attendance & { user: User })[]>;
+  getEventAttendanceCount(eventId: number): Promise<number>;
   checkIn(attendance: InsertAttendance): Promise<Attendance>;
   getUserAttendance(userId: number): Promise<Attendance[]>;
   getUserEventAttendance(userId: number, eventId: number): Promise<Attendance | undefined>;
@@ -51,16 +58,42 @@ export interface IStorage {
   getLeaderboard(federationId?: number): Promise<User[]>;
   getClubLeaderboard(federationId?: number): Promise<{ club: Club; score: number }[]>;
 
+  searchUsers(params: { query?: string; role?: string; clubId?: number; tier?: string; federationId?: number }): Promise<User[]>;
   getAllUsers(federationId?: number): Promise<User[]>;
+  deleteUser(userId: number): Promise<void>;
+  setUserActive(userId: number, active: boolean): Promise<void>;
+
   getAllMemberships(status?: string): Promise<(Membership & { user: User; club: Club })[]>;
   updateEvent(eventId: number, data: Partial<Event>): Promise<Event | undefined>;
   deleteEvent(eventId: number): Promise<void>;
   updateClub(clubId: number, data: Partial<Club>): Promise<Club | undefined>;
   updateUserRole(userId: number, role: string): Promise<User | undefined>;
-  getAdminStats(federationId?: number): Promise<{ totalUsers: number; totalPlayers: number; totalSupporters: number; pendingMemberships: number; upcomingEvents: number; totalClubs: number }>;
+  getAdminStats(federationId?: number): Promise<{
+    totalUsers: number; totalPlayers: number; totalSupporters: number;
+    pendingMemberships: number; upcomingEvents: number; totalClubs: number;
+    totalCoaches: number; totalPersonnel: number;
+    eventsThisMonth: number; attendanceThisMonth: number;
+  }>;
+
+  getNotices(clubId?: number): Promise<(Notice & { author: User })[]>;
+  createNotice(notice: InsertNotice & { authorId: number }): Promise<Notice>;
+  deleteNotice(noticeId: number): Promise<void>;
+
+  createAuditLog(log: InsertAuditLog): Promise<void>;
+  getAuditLogs(limit?: number): Promise<(AuditLog & { admin: User })[]>;
+
+  getMatchResult(eventId: number): Promise<MatchResult | undefined>;
+  upsertMatchResult(data: InsertMatchResult & { id?: number }): Promise<MatchResult>;
+  getMatchLineups(matchResultId: number): Promise<(MatchLineup & { player: User })[]>;
+  setMatchLineups(matchResultId: number, entries: { playerId: number; team: string; position?: string; jerseyNumber?: number; starting?: boolean; captain?: boolean }[]): Promise<void>;
+
+  getAppSetting(key: string): Promise<AppSetting | undefined>;
+  setAppSetting(key: string, value: string | null): Promise<void>;
+  getAllAppSettings(): Promise<AppSetting[]>;
 
   savePushSubscription(sub: InsertPushSubscription): Promise<PushSubscription>;
   removePushSubscription(userId: number, endpoint: string): Promise<void>;
+  getAllPushSubscriptions(): Promise<PushSubscription[]>;
   getUserPushSubscriptions(userId: number): Promise<PushSubscription[]>;
   getClubPushSubscriptions(clubId: number): Promise<PushSubscription[]>;
   getActivityHeatmap(clubId?: number): Promise<{ day: number; count: number }[]>;
@@ -400,6 +433,149 @@ export class DatabaseStorage implements IStorage {
       .from(memberships)
       .where(and(eq(memberships.userId, userId), eq(memberships.status, "active")));
     return rows.map((r) => r.clubId);
+  }
+
+  async searchUsers(params: { query?: string; role?: string; clubId?: number; tier?: string; federationId?: number }): Promise<User[]> {
+    const conditions: any[] = [];
+    if (params.federationId) conditions.push(eq(users.federationId, params.federationId));
+    if (params.role) conditions.push(eq(users.role, params.role));
+    if (params.tier) conditions.push(eq(users.tier, params.tier));
+    if (params.query) {
+      const q = `%${params.query}%`;
+      conditions.push(or(like(users.fullName, q), like(users.phone, q), like(users.email, q)));
+    }
+    let result: User[];
+    if (params.clubId) {
+      const memberRows = await db.select({ userId: memberships.userId }).from(memberships)
+        .where(and(eq(memberships.clubId, params.clubId), eq(memberships.status, "active")));
+      if (memberRows.length === 0) return [];
+      const userIds = memberRows.map(m => m.userId);
+      conditions.push(inArray(users.id, userIds));
+      result = await db.select().from(users).where(and(...conditions)).orderBy(desc(users.createdAt));
+    } else {
+      result = conditions.length > 0
+        ? await db.select().from(users).where(and(...conditions)).orderBy(desc(users.createdAt))
+        : await db.select().from(users).orderBy(desc(users.createdAt));
+    }
+    return result;
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await db.delete(xpTransactions).where(eq(xpTransactions.userId, userId));
+    await db.delete(activities).where(eq(activities.userId, userId));
+    await db.delete(attendance).where(eq(attendance.userId, userId));
+    await db.delete(memberships).where(eq(memberships.userId, userId));
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
+    await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async setUserActive(userId: number, active: boolean): Promise<void> {
+    await db.update(users).set({ profileCompleted: active }).where(eq(users.id, userId));
+  }
+
+  async getNotices(clubId?: number): Promise<(Notice & { author: User })[]> {
+    const rows = clubId
+      ? await db.select().from(notices).where(or(eq(notices.clubId, clubId), eq(notices.clubId, null as any))).orderBy(desc(notices.pinned), desc(notices.createdAt))
+      : await db.select().from(notices).orderBy(desc(notices.pinned), desc(notices.createdAt));
+    const result: (Notice & { author: User })[] = [];
+    for (const row of rows) {
+      const author = await this.getUser(row.authorId);
+      if (author) result.push({ ...row, author });
+    }
+    return result;
+  }
+
+  async createNotice(data: InsertNotice & { authorId: number }): Promise<Notice> {
+    const [created] = await db.insert(notices).values(data).returning();
+    return created;
+  }
+
+  async deleteNotice(noticeId: number): Promise<void> {
+    await db.delete(notices).where(eq(notices.id, noticeId));
+  }
+
+  async createAuditLog(log: InsertAuditLog): Promise<void> {
+    await db.insert(auditLogs).values(log);
+  }
+
+  async getAuditLogs(limit = 100): Promise<(AuditLog & { admin: User })[]> {
+    const rows = await db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(limit);
+    const result: (AuditLog & { admin: User })[] = [];
+    for (const row of rows) {
+      const admin = await this.getUser(row.adminId);
+      if (admin) result.push({ ...row, admin });
+    }
+    return result;
+  }
+
+  async getEventsInRange(from: string, to: string): Promise<Event[]> {
+    return db.select().from(events).where(and(sql`date >= ${from}`, sql`date <= ${to}`)).orderBy(events.date);
+  }
+
+  async getEventAttendanceCount(eventId: number): Promise<number> {
+    const rows = await db.select().from(attendance).where(eq(attendance.eventId, eventId));
+    return rows.length;
+  }
+
+  async deleteClub(clubId: number): Promise<void> {
+    const clubEvents = await this.getClubEvents(clubId);
+    for (const ev of clubEvents) await this.deleteEvent(ev.id);
+    await db.delete(memberships).where(eq(memberships.clubId, clubId));
+    await db.delete(clubs).where(eq(clubs.id, clubId));
+  }
+
+  async getMatchResult(eventId: number): Promise<MatchResult | undefined> {
+    const [row] = await db.select().from(matchResults).where(eq(matchResults.eventId, eventId));
+    return row;
+  }
+
+  async upsertMatchResult(data: InsertMatchResult & { id?: number }): Promise<MatchResult> {
+    if (data.id) {
+      const { id, ...vals } = data;
+      const [updated] = await db.update(matchResults).set(vals).where(eq(matchResults.id, id)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(matchResults).values(data as InsertMatchResult).returning();
+    return created;
+  }
+
+  async getMatchLineups(matchResultId: number): Promise<(MatchLineup & { player: User })[]> {
+    const rows = await db.select().from(matchLineups).where(eq(matchLineups.matchResultId, matchResultId));
+    const result: (MatchLineup & { player: User })[] = [];
+    for (const row of rows) {
+      const player = await this.getUser(row.playerId);
+      if (player) result.push({ ...row, player });
+    }
+    return result;
+  }
+
+  async setMatchLineups(matchResultId: number, entries: { playerId: number; team: string; position?: string; jerseyNumber?: number; starting?: boolean; captain?: boolean }[]): Promise<void> {
+    await db.delete(matchLineups).where(eq(matchLineups.matchResultId, matchResultId));
+    if (entries.length > 0) {
+      await db.insert(matchLineups).values(entries.map(e => ({ ...e, matchResultId })));
+    }
+  }
+
+  async getAppSetting(key: string): Promise<AppSetting | undefined> {
+    const [row] = await db.select().from(appSettings).where(eq(appSettings.key, key));
+    return row;
+  }
+
+  async setAppSetting(key: string, value: string | null): Promise<void> {
+    const existing = await this.getAppSetting(key);
+    if (existing) {
+      await db.update(appSettings).set({ value, updatedAt: new Date() }).where(eq(appSettings.key, key));
+    } else {
+      await db.insert(appSettings).values({ key, value });
+    }
+  }
+
+  async getAllAppSettings(): Promise<AppSetting[]> {
+    return db.select().from(appSettings);
+  }
+
+  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
+    return db.select().from(pushSubscriptions);
   }
 }
 

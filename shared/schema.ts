@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -296,6 +296,122 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const notices = pgTable("notices", {
+  id: serial("id").primaryKey(),
+  clubId: integer("club_id"),
+  federationId: integer("federation_id").notNull().default(1),
+  authorId: integer("author_id").notNull(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  priority: text("priority").notNull().default("normal"),
+  pinned: boolean("pinned").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  adminId: integer("admin_id").notNull(),
+  action: text("action").notNull(),
+  entityType: text("entity_type").notNull(),
+  entityId: integer("entity_id"),
+  details: text("details"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const matchResults = pgTable("match_results", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().unique(),
+  homeClubId: integer("home_club_id"),
+  awayClubId: integer("away_club_id"),
+  homeScore: integer("home_score"),
+  awayScore: integer("away_score"),
+  homeTeam: text("home_team"),
+  awayTeam: text("away_team"),
+  period: text("period"),
+  status: text("status").notNull().default("scheduled"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const matchLineups = pgTable("match_lineups", {
+  id: serial("id").primaryKey(),
+  matchResultId: integer("match_result_id").notNull(),
+  playerId: integer("player_id").notNull(),
+  team: text("team").notNull(),
+  position: text("position"),
+  jerseyNumber: integer("jersey_number"),
+  starting: boolean("starting").default(false),
+  captain: boolean("captain").default(false),
+  substitutions: integer("substitutions").default(0),
+});
+
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertNoticeSchema = createInsertSchema(notices).omit({ id: true, createdAt: true });
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, createdAt: true });
+export const insertMatchResultSchema = createInsertSchema(matchResults).omit({ id: true, createdAt: true });
+export const insertMatchLineupSchema = createInsertSchema(matchLineups).omit({ id: true });
+export const insertAppSettingSchema = createInsertSchema(appSettings).omit({ id: true, updatedAt: true });
+
+export const noticeSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  body: z.string().min(1, "Body is required"),
+  clubId: z.number().optional().nullable(),
+  priority: z.enum(["normal", "high", "urgent"]).optional(),
+  pinned: z.boolean().optional(),
+});
+
+export const matchResultSchema = z.object({
+  eventId: z.number(),
+  homeClubId: z.number().optional().nullable(),
+  awayClubId: z.number().optional().nullable(),
+  homeScore: z.number().optional().nullable(),
+  awayScore: z.number().optional().nullable(),
+  homeTeam: z.string().optional().nullable(),
+  awayTeam: z.string().optional().nullable(),
+  period: z.string().optional().nullable(),
+  status: z.enum(["scheduled", "in_progress", "finished", "cancelled"]).optional(),
+  notes: z.string().optional().nullable(),
+});
+
+export const lineupEntrySchema = z.object({
+  playerId: z.number(),
+  team: z.enum(["home", "away"]),
+  position: z.string().optional().nullable(),
+  jerseyNumber: z.number().optional().nullable(),
+  starting: z.boolean().optional(),
+  captain: z.boolean().optional(),
+});
+
+export const createUserAdminSchema = z.object({
+  fullName: z.string().min(2, "Name too short"),
+  phone: z.string().min(9, "Phone required").optional(),
+  email: z.string().email().optional(),
+  password: z.string().min(6, "Password min 6 chars"),
+  role: z.enum(ALL_ROLES).optional(),
+  clubId: z.number().optional(),
+});
+
+export const appSettingSchema = z.object({
+  key: z.string().min(1),
+  value: z.string().nullable(),
+});
+
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type Notice = typeof notices.$inferSelect;
+export type InsertNotice = z.infer<typeof insertNoticeSchema>;
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
+export type MatchResult = typeof matchResults.$inferSelect;
+export type InsertMatchResult = z.infer<typeof insertMatchResultSchema>;
+export type MatchLineup = typeof matchLineups.$inferSelect;
+export type InsertMatchLineup = z.infer<typeof insertMatchLineupSchema>;
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = z.infer<typeof insertAppSettingSchema>;

@@ -6,7 +6,7 @@ import { pool } from "./db";
 import { storage } from "./storage";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { quickRegisterSchema, loginSchema, emailRegisterSchema, emailLoginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES } from "@shared/schema";
+import { quickRegisterSchema, loginSchema, emailRegisterSchema, emailLoginSchema, profileUpdateSchema, calculateProfileCompletion, insertEventSchema, insertActivitySchema, insertMembershipSchema, adminUpdateEventSchema, adminUpdateClubSchema, isAnyAdmin, isFederationAdminOrAbove, canAssignRole, ALL_ROLES, noticeSchema, matchResultSchema, lineupEntrySchema, createUserAdminSchema, appSettingSchema } from "@shared/schema";
 import { sendTempPassword } from "./sms";
 import { sendWelcomeEmail } from "./email";
 import { seedDatabase } from "./seed";
@@ -742,6 +742,210 @@ export async function registerRoutes(
     } catch (error: any) {
       res.status(400).json({ message: error.message });
     }
+  });
+
+  // ── Noticeboard ──
+  app.get("/api/notices", async (_req: Request, res: Response) => {
+    const all = await storage.getNotices();
+    const safe = all.map(({ author: { password: _, ...a }, ...n }) => ({ ...n, author: a }));
+    res.json(safe);
+  });
+
+  app.get("/api/clubs/:id/notices", async (req: Request, res: Response) => {
+    const rows = await storage.getNotices(parseInt(req.params.id));
+    const safe = rows.map(({ author: { password: _, ...a }, ...n }) => ({ ...n, author: a }));
+    res.json(safe);
+  });
+
+  app.post("/api/admin/notices", requireAnyAdmin, async (req: Request, res: Response) => {
+    try {
+      const data = noticeSchema.parse(req.body);
+      const notice = await storage.createNotice({ ...data, authorId: req.session.userId! });
+      res.json(notice);
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  app.delete("/api/admin/notices/:id", requireFederationAdmin, async (req: Request, res: Response) => {
+    await storage.deleteNotice(parseInt(req.params.id));
+    res.json({ message: "Notice deleted" });
+  });
+
+  // ── Audit Log ──
+  app.get("/api/admin/audit-log", requireFederationAdmin, async (_req: Request, res: Response) => {
+    const logs = await storage.getAuditLogs();
+    const safe = logs.map(({ admin: { password: _, ...a }, ...l }) => ({ ...l, admin: a }));
+    res.json(safe);
+  });
+
+  // ── Club Create / Delete ──
+  app.post("/api/admin/clubs", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const { name, location, description } = req.body;
+      if (!name) return res.status(400).json({ message: "Club name required" });
+      const club = await storage.createClub({ name, location, description, federationId: 1 });
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "create", entityType: "club", entityId: club.id, details: `Created club ${name}` });
+      res.json(club);
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  app.delete("/api/admin/clubs/:id", requireFederationAdmin, async (req: Request, res: Response) => {
+    await storage.deleteClub(parseInt(req.params.id));
+    await storage.createAuditLog({ adminId: req.session.userId!, action: "delete", entityType: "club", entityId: parseInt(req.params.id), details: "Deleted club" });
+    res.json({ message: "Club deleted" });
+  });
+
+  // ── User Management (create / delete / search) ──
+  app.post("/api/admin/users", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const data = createUserAdminSchema.parse(req.body);
+      if (!data.phone && !data.email) return res.status(400).json({ message: "Phone or email required" });
+      const phone = data.phone || `_admin_${randomBytes(8).toString("hex")}`;
+      const existingPhone = await storage.getUserByPhone(phone);
+      if (existingPhone) return res.status(400).json({ message: "Phone already in use" });
+      if (data.email) {
+        const existingEmail = await storage.getUserByEmail(data.email);
+        if (existingEmail) return res.status(400).json({ message: "Email already in use" });
+      }
+      const hashedPassword = await hashPassword(data.password);
+      const user = await storage.createUser({
+        fullName: data.fullName, phone, email: data.email || null,
+        password: hashedPassword, role: data.role || "player",
+        preferredLanguage: "en", federationId: 1, photoUrl: null,
+      });
+      if (data.clubId) {
+        await storage.createMembership({ userId: user.id, clubId: data.clubId, status: "active" });
+      }
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "create", entityType: "user", entityId: user.id, details: `Created user ${data.fullName}` });
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  app.delete("/api/admin/users/:id", requireFederationAdmin, async (req: Request, res: Response) => {
+    const userId = parseInt(req.params.id);
+    if (userId === req.session.userId) return res.status(403).json({ message: "Cannot delete yourself" });
+    await storage.deleteUser(userId);
+    await storage.createAuditLog({ adminId: req.session.userId!, action: "delete", entityType: "user", entityId: userId, details: "Deleted user" });
+    res.json({ message: "User deleted" });
+  });
+
+  app.get("/api/admin/users/search", requireFederationAdmin, async (req: Request, res: Response) => {
+    const { query, role, clubId, tier } = req.query as any;
+    const usersList = await storage.searchUsers({ query, role, clubId: clubId ? parseInt(clubId) : undefined, tier, federationId: 1 });
+    const safe = usersList.map(({ password: _, ...u }) => u);
+    res.json(safe);
+  });
+
+  // ── Broadcast Push Notification ──
+  app.post("/api/admin/broadcast", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const { title, body, url } = req.body;
+      if (!title || !body) return res.status(400).json({ message: "Title and body required" });
+      if (!vapidPublic || !vapidPrivate) return res.status(500).json({ message: "Push not configured" });
+      const allSubs = await storage.getAllPushSubscriptions();
+      const payload = JSON.stringify({ title, body, icon: "/icon-192.png", data: { url: url || "/" }, tag: `broadcast-${Date.now()}` });
+      let sent = 0, failed = 0;
+      for (const sub of allSubs) {
+        try {
+          await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, payload);
+          sent++;
+        } catch (err: any) {
+          if (err.statusCode === 410 || err.statusCode === 404) await storage.removePushSubscription(sub.userId, sub.endpoint);
+          failed++;
+        }
+      }
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "broadcast", entityType: "push", details: `Broadcast: ${title} (${sent} sent, ${failed} failed)` });
+      res.json({ sent, failed, total: allSubs.length });
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  // ── Enhanced Stats ──
+  app.get("/api/admin/stats/enhanced", requireFederationAdmin, async (_req: Request, res: Response) => {
+    const stats = await storage.getAdminStats(1);
+    const allEvents = await storage.getEvents(1);
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0];
+    const eventsThisMonth = allEvents.filter(e => e.date >= monthStart && e.date <= monthEnd).length;
+    let attendanceThisMonth = 0;
+    for (const ev of allEvents.filter(e => e.date >= monthStart && e.date <= monthEnd)) {
+      attendanceThisMonth += await storage.getEventAttendanceCount(ev.id);
+    }
+    res.json({ ...stats, eventsThisMonth, attendanceThisMonth });
+  });
+
+  // ── Calendar Events ──
+  app.get("/api/admin/events/range", requireFederationAdmin, async (req: Request, res: Response) => {
+    const { from, to } = req.query as any;
+    if (!from || !to) return res.status(400).json({ message: "from and to required (YYYY-MM-DD)" });
+    const evts = await storage.getEventsInRange(from, to);
+    res.json(evts);
+  });
+
+  // ── Match Results ──
+  app.get("/api/admin/events/:id/match", requireFederationAdmin, async (req: Request, res: Response) => {
+    const eventId = parseInt(req.params.id);
+    const result = await storage.getMatchResult(eventId);
+    if (!result) return res.json(null);
+    const lineups = await storage.getMatchLineups(result.id);
+    const safeLineups = lineups.map(({ player: { password: _, ...p }, ...l }) => ({ ...l, player: p }));
+    res.json({ ...result, lineups: safeLineups });
+  });
+
+  app.post("/api/admin/events/:id/match", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const data = matchResultSchema.parse({ ...req.body, eventId });
+      const result = await storage.upsertMatchResult(data);
+      if (req.body.lineups) {
+        const lineups = req.body.lineups.map((l: any) => lineupEntrySchema.parse(l));
+        await storage.setMatchLineups(result.id, lineups);
+      }
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "upsert", entityType: "match_result", entityId: result.id, details: `Match result for event ${eventId}` });
+      res.json(result);
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  // ── Attendance Report ──
+  app.get("/api/admin/events/:id/attendance-report", requireFederationAdmin, async (req: Request, res: Response) => {
+    const eventId = parseInt(req.params.id);
+    const event = await storage.getEvent(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+    const att = await storage.getEventAttendance(eventId);
+    const clubMembers = event.clubId ? await storage.getClubMembers(event.clubId) : [];
+    const checkedIn = att.map(a => a.userId);
+    const absent = clubMembers.filter(m => !checkedIn.includes(m.id)).map(({ password: _, ...u }) => u);
+    const safeAtt = att.map(({ user: { password: _, ...u }, ...a }) => ({ ...a, user: u }));
+    res.json({ event, attendance: safeAtt, absent, totalMembers: clubMembers.length, checkedIn: safeAtt.length });
+  });
+
+  // ── App Settings ──
+  app.get("/api/admin/settings", requireFederationAdmin, async (_req: Request, res: Response) => {
+    const settings = await storage.getAllAppSettings();
+    res.json(settings);
+  });
+
+  app.put("/api/admin/settings/:key", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const data = appSettingSchema.parse({ key: req.params.key, value: req.body.value ?? null });
+      await storage.setAppSetting(data.key, data.value);
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "update", entityType: "setting", details: `Setting ${data.key} = ${data.value}` });
+      res.json({ message: "Setting updated" });
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
+  });
+
+  // ── Admin Password Reset ──
+  app.post("/api/admin/users/:id/reset-password", requireFederationAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const newPassword = randomBytes(8).toString("hex");
+      const hashed = await hashPassword(newPassword);
+      await storage.updateUserProfile(userId, { password: hashed } as any);
+      await storage.createAuditLog({ adminId: req.session.userId!, action: "reset_password", entityType: "user", entityId: userId, details: "Password reset by admin" });
+      res.json({ message: "Password reset", newPassword });
+    } catch (e: any) { res.status(400).json({ message: e.message }); }
   });
 
   return httpServer;
