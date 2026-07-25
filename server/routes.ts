@@ -107,7 +107,13 @@ export async function registerRoutes(
       req.session.userId = user.id;
       sendTempPassword(data.phone, data.fullName, tempPassword);
       const { password: _, ...safeUser } = user;
-      return res.json(safeUser); requireAuth, async (req: Request, res: Response) => {
+      return res.json(safeUser);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/user/profile", requireAuth, async (req: Request, res: Response) => {
     try {
       const data = profileUpdateSchema.parse(req.body);
       const { clubId, password: rawPassword, ...profileData } = data;
