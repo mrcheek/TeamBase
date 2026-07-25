@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { federations, clubs, users, memberships, events, activities, xpTransactions } from "@shared/schema";
+import { federations, clubs, users, memberships, events, activities, xpTransactions, notices, appSettings, auditLogs } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
@@ -231,6 +231,46 @@ export async function seedDatabase() {
     { userId: user2.id, amount: 20, source: "activity", description: "SAQ drills" },
     { userId: user3.id, amount: 5, source: "activity", description: "Watched rugby" },
     { userId: user5.id, amount: 10, source: "activity", description: "Club social" },
+  ]);
+
+  await db.insert(notices).values([
+    {
+      federationId: zrf.id,
+      authorId: user5.id,
+      title: "Welcome to the Season!",
+      body: "The Zanzibar Rugby Federation welcomes all clubs, players, and supporters to the new season. Training schedules are now live on the calendar.",
+      priority: "high",
+    },
+    {
+      clubId: sharks.id,
+      federationId: zrf.id,
+      authorId: user2.id,
+      title: "Sharks Tactical Session Friday",
+      body: "This Friday we'll have a tactical session ahead of our friendly against Stone Town. All players expected to attend.",
+      priority: "normal",
+    },
+    {
+      federationId: zrf.id,
+      authorId: user5.id,
+      title: "Coaching Clinic Registration Open",
+      body: "World Rugby Level 1 coaching course available March 15-16. Limited spots. Contact federation office to register.",
+      priority: "normal",
+    },
+  ]);
+
+  await db.insert(appSettings).values([
+    { key: "registration_open", value: JSON.stringify(true) },
+    { key: "season_terms", value: JSON.stringify("2025/2026 Season – Zanzibar Rugby Federation") },
+    { key: "max_clubs_per_user", value: JSON.stringify(3) },
+  ]);
+
+  await db.insert(auditLogs).values([
+    {
+      userId: user5.id,
+      action: "seed",
+      entity: "system",
+      details: JSON.stringify({ message: "Database seeded with initial data" }),
+    },
   ]);
 
   console.log("Database seeded successfully with ZRF data");
