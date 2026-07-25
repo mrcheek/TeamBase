@@ -21,7 +21,8 @@ export async function seedDatabase() {
   }
 
   const existing = await db.select().from(federations);
-  if (existing.length > 0) return;
+  const existingNotices = await db.select().from(notices);
+  if (existing.length > 0 && existingNotices.length > 0) return;
 
   const [zrf] = await db.insert(federations).values({
     name: "Zanzibar Rugby Federation",
@@ -266,9 +267,9 @@ export async function seedDatabase() {
 
   await db.insert(auditLogs).values([
     {
-      userId: user5.id,
+      adminId: user5.id,
       action: "seed",
-      entity: "system",
+      entityType: "system",
       details: JSON.stringify({ message: "Database seeded with initial data" }),
     },
   ]);

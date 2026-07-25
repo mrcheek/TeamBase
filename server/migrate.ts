@@ -30,11 +30,11 @@ export async function ensureTables() {
     )`,
     sql`CREATE TABLE IF NOT EXISTS audit_logs (
       id SERIAL PRIMARY KEY,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      admin_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       action TEXT NOT NULL,
-      entity TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
       entity_id INTEGER,
-      details JSONB,
+      details TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
     sql`CREATE TABLE IF NOT EXISTS match_results (
