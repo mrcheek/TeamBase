@@ -2,9 +2,9 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 export async function ensureTables() {
-  // Check if match_results has old schema and recreate if needed
+  // Check if match_results has correct schema and recreate if needed
   try {
-    await db.execute(sql`SELECT home_club_id FROM match_results LIMIT 0`);
+    await db.execute(sql`SELECT away_club_id FROM match_results LIMIT 0`);
   } catch {
     await db.execute(sql`DROP TABLE IF EXISTS match_lineups CASCADE`);
     await db.execute(sql`DROP TABLE IF EXISTS match_results CASCADE`);
