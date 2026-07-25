@@ -2,6 +2,14 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 export async function ensureTables() {
+  // Check if match_results has old schema and recreate if needed
+  try {
+    await db.execute(sql`SELECT home_club_id FROM match_results LIMIT 0`);
+  } catch {
+    await db.execute(sql`DROP TABLE IF EXISTS match_lineups CASCADE`);
+    await db.execute(sql`DROP TABLE IF EXISTS match_results CASCADE`);
+  }
+
   const statements = [
     sql`CREATE TABLE IF NOT EXISTS notices (
       id SERIAL PRIMARY KEY,
@@ -22,6 +30,12 @@ export async function ensureTables() {
       details JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
+    sql`DO $$ BEGIN
+      PERFORM home_club_id FROM match_results LIMIT 0;
+    EXCEPTION WHEN undefined_column THEN
+      DROP TABLE IF EXISTS match_lineups CASCADE;
+      DROP TABLE IF EXISTS match_results CASCADE;
+    END $$`,
     sql`CREATE TABLE IF NOT EXISTS match_results (
       id SERIAL PRIMARY KEY,
       event_id INTEGER NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE,
@@ -36,30 +50,6 @@ export async function ensureTables() {
       notes TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS event_id INTEGER NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS home_club_id INTEGER REFERENCES clubs(id) ON DELETE SET NULL;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS home_team TEXT;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS away_team TEXT;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS period TEXT;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
-    sql`DO $$ BEGIN
-      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS notes TEXT;
-    EXCEPTION WHEN duplicate_column THEN NULL;
-    END $$`,
     sql`CREATE TABLE IF NOT EXISTS match_lineups (
       id SERIAL PRIMARY KEY,
       match_result_id INTEGER NOT NULL REFERENCES match_results(id) ON DELETE CASCADE,
