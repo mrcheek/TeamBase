@@ -2,6 +2,7 @@ import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile, copyFile } from "fs/promises";
 import { resolve } from "path";
+import { execSync } from "child_process";
 
 // server deps to bundle to reduce openat(2) syscalls
 // which helps cold start times
@@ -65,6 +66,14 @@ async function buildAll() {
   await copyFile(
     resolve("node_modules/connect-pg-simple/table.sql"),
     resolve("dist/table.sql"),
+  );
+
+  console.log("installing himalaya...");
+  const home = process.env.HOME || "/tmp";
+  const prefix = `${home}/.local`;
+  execSync(
+    `curl -sSL https://raw.githubusercontent.com/pimalaya/himalaya/master/install.sh | PREFIX=${prefix} sh`,
+    { stdio: "inherit", timeout: 120_000 },
   );
 }
 
