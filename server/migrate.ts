@@ -2,7 +2,13 @@ import { db } from "./db";
 import { sql } from "drizzle-orm";
 
 export async function ensureTables() {
-  // Check if match_results has correct schema and recreate if needed
+  // Recreate notices if it has wrong schema
+  try {
+    await db.execute(sql`SELECT federation_id FROM notices LIMIT 0`);
+  } catch {
+    await db.execute(sql`DROP TABLE IF EXISTS notices CASCADE`);
+  }
+  // Recreate match_results if it has wrong schema
   try {
     await db.execute(sql`SELECT away_club_id FROM match_results LIMIT 0`);
   } catch {
@@ -14,12 +20,13 @@ export async function ensureTables() {
     sql`CREATE TABLE IF NOT EXISTS notices (
       id SERIAL PRIMARY KEY,
       club_id INTEGER REFERENCES clubs(id) ON DELETE CASCADE,
+      federation_id INTEGER NOT NULL DEFAULT 1,
       author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       title TEXT NOT NULL,
       body TEXT NOT NULL,
       priority TEXT NOT NULL DEFAULT 'normal',
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+      pinned BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
     sql`CREATE TABLE IF NOT EXISTS audit_logs (
       id SERIAL PRIMARY KEY,
@@ -30,12 +37,6 @@ export async function ensureTables() {
       details JSONB,
       created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
-    sql`DO $$ BEGIN
-      PERFORM home_club_id FROM match_results LIMIT 0;
-    EXCEPTION WHEN undefined_column THEN
-      DROP TABLE IF EXISTS match_lineups CASCADE;
-      DROP TABLE IF EXISTS match_results CASCADE;
-    END $$`,
     sql`CREATE TABLE IF NOT EXISTS match_results (
       id SERIAL PRIMARY KEY,
       event_id INTEGER NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE,
