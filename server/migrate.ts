@@ -24,20 +24,46 @@ export async function ensureTables() {
     )`,
     sql`CREATE TABLE IF NOT EXISTS match_results (
       id SERIAL PRIMARY KEY,
-      event_id INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-      opponent TEXT NOT NULL,
-      venue TEXT,
-      home_score INTEGER NOT NULL DEFAULT 0,
-      away_score INTEGER NOT NULL DEFAULT 0,
+      event_id INTEGER NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE,
+      home_club_id INTEGER REFERENCES clubs(id) ON DELETE SET NULL,
+      away_club_id INTEGER REFERENCES clubs(id) ON DELETE SET NULL,
+      home_score INTEGER DEFAULT 0,
+      away_score INTEGER DEFAULT 0,
+      home_team TEXT,
+      away_team TEXT,
+      period TEXT,
       status TEXT NOT NULL DEFAULT 'scheduled',
-      report TEXT,
-      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
     )`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS event_id INTEGER NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS home_club_id INTEGER REFERENCES clubs(id) ON DELETE SET NULL;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS home_team TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS away_team TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS period TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
+    sql`DO $$ BEGIN
+      ALTER TABLE match_results ADD COLUMN IF NOT EXISTS notes TEXT;
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$`,
     sql`CREATE TABLE IF NOT EXISTS match_lineups (
       id SERIAL PRIMARY KEY,
-      match_id INTEGER NOT NULL REFERENCES match_results(id) ON DELETE CASCADE,
-      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      match_result_id INTEGER NOT NULL REFERENCES match_results(id) ON DELETE CASCADE,
+      player_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       position TEXT,
       jersey_number INTEGER,
       captain BOOLEAN DEFAULT FALSE
