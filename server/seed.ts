@@ -140,6 +140,31 @@ export async function seedDatabase() {
     tier: "green",
   }).returning();
 
+  const [user7] = await db.insert(users).values({
+    federationId: zrf.id,
+    fullName: "Peter Cheek",
+    phone: "+255777100007",
+    password: hashedPw,
+    role: "teambase_admin",
+    preferredLanguage: "en",
+    xpTotal: 9999,
+    tier: "gold",
+  }).returning();
+
+  const [user8] = await db.insert(users).values({
+    federationId: zrf.id,
+    fullName: "Dr. Mwanaidi Juma",
+    phone: "+255777100008",
+    password: hashedPw,
+    role: "personnel",
+    personnelRole: "Team Medic",
+    personnelQualifications: "BSc Physiotherapy, Sports First Aid",
+    personnelExperience: "5 years with Zanzibar sports teams",
+    preferredLanguage: "sw",
+    xpTotal: 320,
+    tier: "blue",
+  }).returning();
+
   await db.insert(memberships).values([
     { userId: user1.id, clubId: sharks.id, status: "active" },
     { userId: user2.id, clubId: sharks.id, status: "active" },
@@ -147,6 +172,8 @@ export async function seedDatabase() {
     { userId: user4.id, clubId: pemba.id, status: "active" },
     { userId: user5.id, clubId: sharks.id, status: "active" },
     { userId: user6.id, clubId: stoneTown.id, status: "active" },
+    { userId: user7.id, clubId: sharks.id, status: "active" },
+    { userId: user8.id, clubId: pemba.id, status: "active" },
   ]);
 
   const today = new Date();

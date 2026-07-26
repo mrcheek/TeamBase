@@ -271,6 +271,7 @@ export default function CompleteProfilePage() {
                       <SelectItem value="player">Player</SelectItem>
                       <SelectItem value="coach">Coach</SelectItem>
                       <SelectItem value="personnel">Personnel / Official</SelectItem>
+                      <SelectItem value="supporter">Supporter</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -465,6 +466,22 @@ export default function CompleteProfilePage() {
                       data-testid="input-personnel-exp"
                     />
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {form.role === "supporter" && (
+          <Card>
+            <CardContent className="px-4 py-0">
+              <SectionHeader id="supporter" title="Supporter Profile" icon={<span className="text-base">📣</span>} />
+              {expandedSection === "supporter" && (
+                <div className="space-y-4 pb-4">
+                  <p className="text-sm text-muted-foreground">
+                    As a supporter you'll get match updates, club news, and access to exclusive content.
+                    Follow your favorite clubs and never miss a game.
+                  </p>
                 </div>
               )}
             </CardContent>

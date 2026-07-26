@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useClubTheme } from "@/hooks/use-club-theme";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { queueOfflineActivity } from "@/App";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,6 +45,8 @@ export default function CheckInPage() {
   const [mode, setMode] = useState<"main" | "activity-confirm" | "success">("main");
   const [successType, setSuccessType] = useState<"event" | "activity">("event");
   const [xpAnimation, setXpAnimation] = useState(false);
+  const [selfieUploading, setSelfieUploading] = useState(false);
+  const selfieInputRef = useRef<HTMLInputElement>(null);
 
   const { data: events } = useQuery<Event[]>({
     queryKey: ["/api/events"],
@@ -133,6 +135,31 @@ export default function CheckInPage() {
     setSelectedActivity(null);
     setActivityNotes("");
     setXpAnimation(false);
+  };
+
+  const handleSelfieCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelfieUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("avatar", file);
+      const res = await fetch("/api/upload/avatar", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (res.ok) {
+        toast({ title: "Selfie uploaded!" });
+        queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      } else {
+        toast({ variant: "destructive", title: "Upload failed" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "Upload failed" });
+    }
+    setSelfieUploading(false);
+    if (selfieInputRef.current) selfieInputRef.current.value = "";
   };
 
   const today = new Date();
@@ -233,14 +260,23 @@ export default function CheckInPage() {
           </div>
 
           <div className="flex items-center gap-3 w-full">
+            <input
+              ref={selfieInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleSelfieCapture}
+            />
             <Button
               variant="outline"
               className="flex-1"
-              onClick={resetForm}
+              onClick={() => selfieInputRef.current?.click()}
+              disabled={selfieUploading}
               data-testid="button-add-selfie"
             >
               <Camera className="w-4 h-4 mr-2" />
-              ADD SELFIE
+              {selfieUploading ? "UPLOADING..." : "ADD SELFIE"}
             </Button>
             <Button
               className="flex-1"

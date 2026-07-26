@@ -252,22 +252,8 @@ export default function ClubPage() {
       <div className="border-b border-divider" />
 
       {tab === "feed" && <FeedTab />}
-      {tab === "noticeboard" && <NoticeboardTab clubId={club?.id} />}
+      {tab === "noticeboard" && <NoticeboardTab clubId={club?.id} canPost={isAdminOrCoach} />}
       {tab === "roster" && <RosterTab />}
-
-      {/* FAB for admins/coaches */}
-      {isAdminOrCoach && tab === "noticeboard" && (
-        <button
-          className="fixed bottom-20 right-4 w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-40"
-          style={{
-            backgroundColor: `hsl(var(--club-primary))`,
-            color: `hsl(var(--club-primary-foreground))`,
-          }}
-          data-testid="button-post-notice"
-        >
-          <Plus className="w-5 h-5" strokeWidth={2} />
-        </button>
-      )}
     </div>
   );
 }
@@ -341,7 +327,7 @@ function FeedTab() {
   );
 }
 
-function NoticeboardTab({ clubId }: { clubId?: number }) {
+function NoticeboardTab({ clubId, canPost }: { clubId?: number; canPost?: boolean }) {
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
@@ -402,6 +388,19 @@ function NoticeboardTab({ clubId }: { clubId?: number }) {
           ))}
           {notices?.length === 0 && <p className="text-center text-sm text-muted-foreground py-8">No announcements yet.</p>}
         </div>
+      )}
+      {canPost && (
+        <button
+          onClick={() => setShowForm(!showForm)}
+          className="fixed bottom-20 right-4 w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-40"
+          style={{
+            backgroundColor: `hsl(var(--club-primary))`,
+            color: `hsl(var(--club-primary-foreground))`,
+          }}
+          data-testid="button-post-notice"
+        >
+          <Plus className="w-5 h-5" strokeWidth={2} />
+        </button>
       )}
     </div>
   );
