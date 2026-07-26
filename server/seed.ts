@@ -52,19 +52,30 @@ export async function seedDatabase() {
   });
 
   // Ensure teambase_admin account
-  let admin = (await db.select().from(users).where(eq(users.phone, "+255654729774")).limit(1))[0];
+  const OLD_ADMIN_PHONE = "+255777100007";
+  const ADMIN_PHONE = "+255654729774";
+
+  let admin = (await db.select().from(users).where(eq(users.phone, ADMIN_PHONE)).limit(1))[0];
   if (!admin) {
-    admin = (await db.insert(users).values({
-      federationId: zrf.id,
-      fullName: "Peter Cheek",
-      phone: "+255654729774",
-      password: hashedPw,
-      role: "teambase_admin",
-      preferredLanguage: "en",
-      xpTotal: 9999,
-      tier: "gold",
-    }).returning())[0];
-    console.log("Created teambase_admin account");
+    // Check if the old admin phone exists and migrate it
+    admin = (await db.select().from(users).where(eq(users.phone, OLD_ADMIN_PHONE)).limit(1))[0];
+    if (admin) {
+      // Update existing admin to use the real phone number
+      await db.update(users).set({ phone: ADMIN_PHONE }).where(eq(users.id, admin.id));
+      console.log("Updated admin phone to " + ADMIN_PHONE);
+    } else {
+      admin = (await db.insert(users).values({
+        federationId: zrf.id,
+        fullName: "Peter Cheek",
+        phone: ADMIN_PHONE,
+        password: hashedPw,
+        role: "teambase_admin",
+        preferredLanguage: "en",
+        xpTotal: 9999,
+        tier: "gold",
+      }).returning())[0];
+      console.log("Created teambase_admin account");
+    }
   }
 
   // Ensure notices
