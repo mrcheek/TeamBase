@@ -74,7 +74,14 @@ export async function seedDatabase() {
 
   const hashedPw = await hashPassword("rugby123");
 
-  const [user1] = await db.insert(users).values({
+  async function ensureUser(data: any) {
+    const existing = await db.select().from(users).where(eq(users.phone, data.phone));
+    if (existing.length > 0) return existing[0];
+    const [created] = await db.insert(users).values(data).returning();
+    return created;
+  }
+
+  const user1 = await ensureUser({
     federationId: zrf.id,
     fullName: "Juma Hassan",
     phone: "+255777100001",
@@ -83,9 +90,9 @@ export async function seedDatabase() {
     preferredLanguage: "sw",
     xpTotal: 450,
     tier: "blue",
-  }).returning();
+  });
 
-  const [user2] = await db.insert(users).values({
+  const user2 = await ensureUser({
     federationId: zrf.id,
     fullName: "Amina Said",
     phone: "+255777100002",
@@ -94,9 +101,9 @@ export async function seedDatabase() {
     preferredLanguage: "en",
     xpTotal: 820,
     tier: "silver",
-  }).returning();
+  });
 
-  const [user3] = await db.insert(users).values({
+  const user3 = await ensureUser({
     federationId: zrf.id,
     fullName: "Bakari Mohamed",
     phone: "+255777100003",
@@ -105,9 +112,9 @@ export async function seedDatabase() {
     preferredLanguage: "en",
     xpTotal: 280,
     tier: "blue",
-  }).returning();
+  });
 
-  const [user4] = await db.insert(users).values({
+  const user4 = await ensureUser({
     federationId: zrf.id,
     fullName: "Fatma Ali",
     phone: "+255777100004",
@@ -116,9 +123,9 @@ export async function seedDatabase() {
     preferredLanguage: "sw",
     xpTotal: 150,
     tier: "green",
-  }).returning();
+  });
 
-  const [user5] = await db.insert(users).values({
+  const user5 = await ensureUser({
     federationId: zrf.id,
     fullName: "Omar Khamis",
     phone: "+255777100005",
@@ -127,9 +134,9 @@ export async function seedDatabase() {
     preferredLanguage: "en",
     xpTotal: 1100,
     tier: "gold",
-  }).returning();
+  });
 
-  const [user6] = await db.insert(users).values({
+  const user6 = await ensureUser({
     federationId: zrf.id,
     fullName: "Salma Rashid",
     phone: "+255777100006",
@@ -138,9 +145,9 @@ export async function seedDatabase() {
     preferredLanguage: "sw",
     xpTotal: 75,
     tier: "green",
-  }).returning();
+  });
 
-  const [user7] = await db.insert(users).values({
+  const user7 = await ensureUser({
     federationId: zrf.id,
     fullName: "Peter Cheek",
     phone: "+255777100007",
@@ -149,9 +156,9 @@ export async function seedDatabase() {
     preferredLanguage: "en",
     xpTotal: 9999,
     tier: "gold",
-  }).returning();
+  });
 
-  const [user8] = await db.insert(users).values({
+  const user8 = await ensureUser({
     federationId: zrf.id,
     fullName: "Dr. Mwanaidi Juma",
     phone: "+255777100008",
@@ -163,7 +170,7 @@ export async function seedDatabase() {
     preferredLanguage: "sw",
     xpTotal: 320,
     tier: "blue",
-  }).returning();
+  });
 
   await db.insert(memberships).values([
     { userId: user1.id, clubId: sharks.id, status: "active" },
@@ -261,36 +268,39 @@ export async function seedDatabase() {
     { userId: user5.id, amount: 10, source: "activity", description: "Club social" },
   ]);
 
-  await db.insert(notices).values([
-    {
-      federationId: zrf.id,
-      authorId: user5.id,
-      title: "Welcome to the Season!",
-      body: "The Zanzibar Rugby Federation welcomes all clubs, players, and supporters to the new season. Training schedules are now live on the calendar.",
-      priority: "high",
-    },
-    {
-      clubId: sharks.id,
-      federationId: zrf.id,
-      authorId: user2.id,
-      title: "Sharks Tactical Session Friday",
-      body: "This Friday we'll have a tactical session ahead of our friendly against Stone Town. All players expected to attend.",
-      priority: "normal",
-    },
-    {
-      federationId: zrf.id,
-      authorId: user5.id,
-      title: "Coaching Clinic Registration Open",
-      body: "World Rugby Level 1 coaching course available March 15-16. Limited spots. Contact federation office to register.",
-      priority: "normal",
-    },
-  ]);
+  const existingNotices = await db.select({ id: notices.id }).from(notices).limit(3);
+  if (existingNotices.length < 3) {
+    await db.insert(notices).values([
+      {
+        federationId: zrf.id,
+        authorId: user5.id,
+        title: "Welcome to the Season!",
+        body: "The Zanzibar Rugby Federation welcomes all clubs, players, and supporters to the new season. Training schedules are now live on the calendar.",
+        priority: "high",
+      },
+      {
+        clubId: sharks.id,
+        federationId: zrf.id,
+        authorId: user2.id,
+        title: "Sharks Tactical Session Friday",
+        body: "This Friday we'll have a tactical session ahead of our friendly against Stone Town. All players expected to attend.",
+        priority: "normal",
+      },
+      {
+        federationId: zrf.id,
+        authorId: user5.id,
+        title: "Coaching Clinic Registration Open",
+        body: "World Rugby Level 1 coaching course available March 15-16. Limited spots. Contact federation office to register.",
+        priority: "normal",
+      },
+    ]);
+  }
 
   await db.insert(appSettings).values([
     { key: "registration_open", value: JSON.stringify(true) },
     { key: "season_terms", value: JSON.stringify("2025/2026 Season – Zanzibar Rugby Federation") },
     { key: "max_clubs_per_user", value: JSON.stringify(3) },
-  ]);
+  ]).onConflictDoNothing();
 
   await db.insert(auditLogs).values([
     {
