@@ -74,7 +74,7 @@ export async function sendEmail(to: string, subject: string, body: string): Prom
     await execFileAsync(himalayaPath(), [
       "--config", join(tmpDir, "config.toml"),
       "message", "send",
-      ...rawMessage,
+      "--", ...rawMessage,
     ]);
     console.log("[email] Sent successfully to", to);
     return true;
