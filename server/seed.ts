@@ -268,8 +268,8 @@ export async function seedDatabase() {
     { userId: user5.id, amount: 10, source: "activity", description: "Club social" },
   ]);
 
-  const existingNotices = await db.select({ id: notices.id }).from(notices).limit(3);
-  if (existingNotices.length < 3) {
+  const noticeCount = await db.select({ id: notices.id }).from(notices).limit(3);
+  if (noticeCount.length < 3) {
     await db.insert(notices).values([
       {
         federationId: zrf.id,
